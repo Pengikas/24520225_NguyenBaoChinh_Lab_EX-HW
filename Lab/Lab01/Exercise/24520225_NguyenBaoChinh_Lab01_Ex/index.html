@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroPartsAI Marketplace</title>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <p>AI-Enhanced B2B Aviation Engine &amp; Parts E-Commerce Marketplace</p>
+        <h1>AeroPartsAI Marketplace</h1>
+        <p>Lead Engineer, MRO Procurement</p>
+    </header>
+
+    <nav role="navigation" aria-label="Primary">
+        <ul>
+            <li><a href="#file_search">Search Parts</a></li>
+            <li><a href="#rul-dashboard">RUL Prediction</a></li>
+            <li><a href="#recommendations">Recommendations</a></li>
+            <li><a href="#marketplace">Marketplace</a></li>
+            <li><a href="#orders">Orders</a></li>
+            <li><a href="#suppliers">Suppliers</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content" role="main">
+        <section id="file_search" aria-labelledby="search-title">
+            <h2 id="search-title">Search Parts</h2>
+            <form>
+                <label for="part-search">Search engine and aircraft parts</label>
+                <input id="part-search" type="search" name="part-search" placeholder="Enter part number or aircraft model">
+                <button type="submit">Search</button>
+            </form>
+        </section>
+
+        <section id="rul-dashboard" aria-labelledby="rul-title">
+            <h2 id="rul-title">RUL Prediction Dashboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Part</th>
+                        <th>RUL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CFM56-7B</td>
+                        <td>High-Pressure Turbine Blade</td>
+                        <td>180 days</td>
+                        <td>Watch</td>
+                    </tr>
+                    <tr>
+                        <td>LEAP-1A</td>
+                        <td>Fuel Nozzle</td>
+                        <td>92 days</td>
+                        <td>Critical</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="recommendations" aria-labelledby="recommendations-title">
+            <h2 id="recommendations-title">AI Replacement Recommendations</h2>
+            <article>
+                <h3>Recommended action: Replace fuel nozzle assembly</h3>
+                <p>Predicted RUL is below threshold. Recommend replacement within 30 days to minimize downtime risk.</p>
+            </article>
+            <article>
+                <h3>Supplier match: AeroSupply International</h3>
+                <p>Certified OEM-compatible part available with same-day dispatch for MRO hubs in Singapore and Dubai.</p>
+            </article>
+        </section>
+
+        <section id="marketplace" aria-labelledby="marketplace-title">
+            <h2 id="marketplace-title">Marketplace</h2>
+            <ul>
+                <li>
+                    <article>
+                        <h3>Engine Fan Blade</h3>
+                        <p>Next-gen alloy fan blade for twin-aisle aircraft fleets.</p>
+                    </article>
+                </li>
+                <li>
+                    <article>
+                        <h3>Auxiliary Power Unit Kit</h3>
+                        <p>Refurbished APU kit with maintenance history and QA verification.</p>
+                    </article>
+                </li>
+                <li>
+                    <article>
+                        <h3>Hydraulic Pump Module</h3>
+                        <p>High-cycle hydraulic module for heavy-duty maintenance windows.</p>
+                    </article>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+    <aside role="complementary" aria-labelledby="alerts-title">
+        <h2 id="alerts-title">RUL Alerts</h2>
+        <ul>
+            <li>Fuel nozzle on LEAP-1A requires replacement in 92 days.</li>
+            <li>Hydraulic pump on A320neo shows accelerated wear pattern.</li>
+        </ul>
+    </aside>
+
+    <footer role="contentinfo">
+        <p>AeroPartsAI Marketplace © 2026</p>
+    </footer>
+</body>
+</html>
