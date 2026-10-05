@@ -15,7 +15,7 @@ const pads = [
     )
 ];
 
-const recordButton =
+const recordButton = 
     document.querySelector(
         "#record-button"
     );
