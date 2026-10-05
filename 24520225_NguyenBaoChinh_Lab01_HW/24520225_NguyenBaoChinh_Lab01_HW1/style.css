@@ -82,3 +82,9 @@ a {
     padding: 0.75rem;
     z-index: 1000;
 }
+
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 4px;
+}
