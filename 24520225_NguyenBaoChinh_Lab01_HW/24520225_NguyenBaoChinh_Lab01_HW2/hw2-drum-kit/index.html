@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        http-equiv="Content-Security-Policy"
+        content="
+            default-src 'self';
+            script-src 'self';
+            style-src 'self';
+            media-src 'self';
+            connect-src 'self';
+            object-src 'none';
+            base-uri 'self';
+        "
+    >
+
+    <title>Web Audio Drum Kit</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<main>
+
+    <h1>Web Audio Drum Kit</h1>
+
+    <p>
+        Use your keyboard or click the pads.
+    </p>
+
+    <section
+        class="drum-kit"
+        aria-label="Drum pads"
+    >
+
+        <button
+            class="drum-pad"
+            data-key="a"
+            data-sound="sounds/kick.wav"
+            type="button"
+        >
+            <span>A</span>
+            Kick
+        </button>
+
+        <button
+            class="drum-pad"
+            data-key="s"
+            data-sound="sounds/snare.wav"
+            type="button"
+        >
+            <span>S</span>
+            Snare
+        </button>
+
+        <button
+            class="drum-pad"
+            data-key="d"
+            data-sound="sounds/hihat.wav"
+            type="button"
+        >
+            <span>D</span>
+            Hi-Hat
+        </button>
+
+        <button
+            class="drum-pad"
+            data-key="f"
+            data-sound="sounds/clap.wav"
+            type="button"
+        >
+            <span>F</span>
+            Clap
+        </button>
+
+    </section>
+
+    <section aria-labelledby="recorder-heading">
+
+        <h2 id="recorder-heading">
+            Beat Recorder
+        </h2>
+
+        <div class="controls">
+
+            <button
+                id="record-button"
+                type="button"
+            >
+                Record
+            </button>
+
+            <button
+                id="play-button"
+                type="button"
+            >
+                Play
+            </button>
+
+            <button
+                id="clear-button"
+                type="button"
+            >
+                Clear
+            </button>
+
+        </div>
+
+        <p
+            id="record-status"
+            aria-live="polite"
+        >
+            Ready
+        </p>
+
+    </section>
+
+</main>
+
+<script
+    type="module"
+    src="app.js"
+></script>
+
+</body>
+
+</html>
