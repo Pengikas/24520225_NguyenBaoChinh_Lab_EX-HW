@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
 <body>
 
     <main>
+
         <section class="hero">
 
             <h1>Coming Soon</h1>
@@ -20,6 +22,7 @@
                 Our new production experience is launching soon.
             </p>
 
+            <!-- Slice 1: Countdown -->
             <div
                 id="countdown"
                 aria-live="polite"
@@ -28,10 +31,41 @@
                 Loading...
             </div>
 
+            <!-- Slice 2: State-Machine Form -->
+            <form id="signup-form">
+
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+                <button
+                    id="submit-button"
+                    type="submit"
+                >
+                    Notify Me
+                </button>
+
+                <p
+                    id="form-status"
+                    aria-live="polite"
+                ></p>
+
+            </form>
+
         </section>
+
     </main>
 
     <script src="app.js"></script>
 
 </body>
+
 </html>
