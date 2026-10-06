@@ -89,14 +89,44 @@ function submitForm() {
                 reject(new Error("Submission failed"));
             }
 
-        }, 1000);
+        }, 3000);
     });
+}
+
+function sanitizeInput(value) {
+    return value
+        .trim()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function validateEmail(email) {
+    return emailInput.checkValidity() && email.length > 0;
 }
 
 form.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
+    // Prevent double submission
+    if (currentState === FORM_STATES.SUBMITTING) {
+        return;
+    }
+
+    // Sanitize input
+    const sanitizedEmail = sanitizeInput(emailInput.value);
+
+    // Validate email
+    if (!validateEmail(sanitizedEmail)) {
+        setFormState(FORM_STATES.ERROR);
+        formStatus.textContent = "Please enter a valid email address.";
+        return;
+    }
+
+    // Change state to SUBMITTING
     setFormState(FORM_STATES.SUBMITTING);
 
     try {
@@ -110,5 +140,3 @@ form.addEventListener("submit", async (event) => {
         setFormState(FORM_STATES.ERROR);
     }
 });
-
-setFormState(FORM_STATES.IDLE);
