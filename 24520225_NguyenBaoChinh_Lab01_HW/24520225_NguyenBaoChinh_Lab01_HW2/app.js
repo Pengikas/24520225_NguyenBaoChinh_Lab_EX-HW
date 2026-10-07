@@ -4,6 +4,8 @@ from "./audio-engine.js";
 import { BeatRecorder }
 from "./recorder.js";
 
+window.__DRUM_KIT_LOADED__ = true;
+
 const recorder =
     new BeatRecorder();
 
