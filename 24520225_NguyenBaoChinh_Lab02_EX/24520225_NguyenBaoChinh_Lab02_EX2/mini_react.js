@@ -161,7 +161,7 @@ export function renderApp() {
   const start = active?.selectionStart;
   const end = active?.selectionEnd;
 
-  stateCursor = 0;
+  stateCursor = 1;
   nodeId = 0;
   eventRegistry = new Map();
 
