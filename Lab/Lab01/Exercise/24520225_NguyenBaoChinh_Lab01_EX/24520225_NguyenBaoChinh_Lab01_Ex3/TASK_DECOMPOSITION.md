@@ -88,3 +88,49 @@ Document
 | T-01.11 | Add Skip Link | Add accessible skip link to main content |
 | T-01.12 | Accessibility Verification | Verify landmark tree in Chrome DevTools Accessibility |
 
+# Exercise 3 - Resilient Component Architecture
+
+## State Machine
+
+The resilient component has four states:
+
+1. LOADING
+   - Display CSS shimmer skeleton.
+   - Hide live data.
+   - No JavaScript-generated skeleton.
+
+2. LIVE
+   - Display metadata badges.
+   - Display data items using CSS Grid.
+   - Hide loading, empty and error states.
+
+3. EMPTY
+   - Display an accessible empty-state message.
+   - Provide a clear action to retry/load data.
+
+4. ERROR
+   - Display an error message.
+   - Provide an accessible Retry button.
+   - Retry returns the component to LOADING state.
+
+## State Transition
+
+LOADING
+   ↓
+LIVE
+
+LOADING
+   ↓
+EMPTY
+
+LOADING
+   ↓
+ERROR
+
+ERROR
+   ↓ Retry
+LOADING
+
+EMPTY
+   ↓ Retry
+LOADING

@@ -24,6 +24,8 @@ and remains accessible for assistive technology users.
 - Avoid layout-level `<div>` elements and prefer semantic structure.
 - Prepare the page for future product, vendor, and AI recommendation features.
 
+
+
 ### Deliverable
 
 - `index.html`
