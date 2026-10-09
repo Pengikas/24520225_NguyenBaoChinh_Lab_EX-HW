@@ -52,6 +52,7 @@ export function useState(initialValue) {
   }
 
   stateCursor++;
+
   return [stateStore[currentIndex], setState];
 }
 
