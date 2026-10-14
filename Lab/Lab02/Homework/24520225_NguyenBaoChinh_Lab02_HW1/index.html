@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accessible enterprise employee data grid">
+    <title>Enterprise Data Grid</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+</head>
+
+<body>
+    <main class="container">
+        <header class="page-header">
+            <p class="eyebrow">HOMEWORK 1</p>
+            <h1>Enterprise Data Grid</h1>
+            <p>Accessible employee directory</p>
+        </header>
+
+        <section aria-labelledby="directory-heading">
+            <h2 id="directory-heading">Employee Directory</h2>
+
+            <div class="toolbar">
+                <label for="search">Search employees</label>
+                <input id="search" type="search" placeholder="Search name, email, or department" autocomplete="off">
+            </div>
+
+            <p id="result-count" aria-live="polite"></p>
+
+            <div class="table-wrapper">
+                <table id="employee-grid" role="grid" aria-label="Employee directory">
+                    <thead>
+                        <tr role="row">
+                            <th scope="col" role="columnheader">
+                                <button class="sort-button" data-key="name" aria-label="Sort by employee name">
+                                    Name <span aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                            <th scope="col" role="columnheader">
+                                <button class="sort-button" data-key="email" aria-label="Sort by email">
+                                    Email <span aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                            <th scope="col" role="columnheader">
+                                <button class="sort-button" data-key="department" aria-label="Sort by department">
+                                    Department <span aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                            <th scope="col" role="columnheader">Status</th>
+                            <th scope="col" role="columnheader">Select</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grid-body"></tbody>
+                </table>
+            </div>
+
+            <nav class="pagination" aria-label="Table pagination">
+                <button id="previous" type="button">Previous</button>
+                <span id="page-info" aria-live="polite"></span>
+                <button id="next" type="button">Next</button>
+            </nav>
+
+            <p id="selection-status" role="status" aria-live="polite">
+                No employee selected.
+            </p>
+        </section>
+
+        <footer>
+            <p>Enterprise Data Grid · Accessibility-focused interface</p>
+        </footer>
+    </main>
+</body>
+
+</html>
