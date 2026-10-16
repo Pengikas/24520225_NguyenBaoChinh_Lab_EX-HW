@@ -33,11 +33,13 @@ export function App() {
     const [activeRecord, setActiveRecord] = useState<EmployeeRecord | null>(null);
 
     return (
-        <main style={{ maxWidth: '1024px', margin: '0 auto', padding: '1rem' }}>
-            <h1>Enterprise Employee Directory</h1>
-            <p>
-                Use <strong>Arrow Keys</strong> to navigate cells, <strong>Space</strong> to toggle row selection, and <strong>Enter</strong> to inspect a record.
-            </p>
+        <>
+            <header style={{ marginBottom: '1rem' }}>
+                <h1>Enterprise Employee Directory</h1>
+                <p>
+                    Use <strong>Arrow Keys</strong> to navigate cells, <strong>Space</strong> to toggle row selection, and <strong>Enter</strong> to inspect a record.
+                </p>
+            </header>
 
             <DataGrid<EmployeeRecord>
                 data={SAMPLE_DATA}
@@ -61,7 +63,7 @@ export function App() {
                     <strong>Selected Record Action (Enter):</strong> {activeRecord.name} ({activeRecord.id}) — {activeRecord.role}
                 </aside>
             )}
-        </main>
+        </>
     );
 }
 
