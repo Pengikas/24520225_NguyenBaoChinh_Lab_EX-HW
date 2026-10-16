@@ -22,6 +22,13 @@
     /* Tương phản 5.7:1 */
 }
 
+#root {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: block;
+}
+
 .dg-wrapper {
     font-family: system-ui, -apple-system, sans-serif;
     color: var(--text-primary);
