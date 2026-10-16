@@ -195,6 +195,16 @@ export class AudioTaskQueue {
             if (isAbort) {
                 task.status = 'cancelled';
                 task.errorMessage = 'Operation aborted via AbortController.';
+                console.info(
+                    '%c[AbortController Evidence]%c Task cancelled successfully via AbortSignal token!%c\n' +
+                    `• Task ID: ${task.id}\n` +
+                    `• Signal Aborted: ${task.controller.signal.aborted}\n` +
+                    `• Error Type: ${err instanceof Error ? err.name : 'AbortError'}\n` +
+                    `• Reason: ${task.errorMessage}`,
+                    'background: #8a2be2; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;',
+                    'color: #00f2ff; font-weight: bold;',
+                    'color: #94a3b8;'
+                );
             } else {
                 task.status = 'error';
                 task.errorMessage = err instanceof Error ? err.message : String(err);
