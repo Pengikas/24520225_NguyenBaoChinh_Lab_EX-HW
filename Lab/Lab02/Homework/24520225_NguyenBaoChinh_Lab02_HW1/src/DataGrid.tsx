@@ -8,7 +8,7 @@ interface SortConfig<T> {
     direction: 'ascending' | 'descending';
 }
 
-export function DataGrid<T extends { id: string | number }>({
+export function DataGrid<T>({
     data,
     columns,
     onRowSelect,
@@ -153,8 +153,8 @@ export function DataGrid<T extends { id: string | number }>({
 
     return (
         <section className="dg-wrapper" aria-label={`${ariaLabel} container`}>
-            <div className="dg-toolbar">
-                <div className="dg-filter-group">
+            <header className="dg-toolbar" role="toolbar" aria-label="Table controls">
+                <p className="dg-filter-group">
                     <label htmlFor={searchInputId} className="dg-filter-label">
                         Filter records:
                     </label>
@@ -170,12 +170,12 @@ export function DataGrid<T extends { id: string | number }>({
                         }}
                         placeholder="Type to search..."
                     />
-                </div>
-                <div id={liveRegionId} className="sr-only" aria-live="polite" aria-atomic="true">
+                </p>
+                <output id={liveRegionId} className="sr-only" aria-live="polite" aria-atomic="true">
                     Showing {paginatedData.length} of {sortedData.length} rows. Page {currentPage} of{' '}
                     {totalPages}.
-                </div>
-            </div>
+                </output>
+            </header>
 
             <table
                 ref={gridRef}
@@ -229,11 +229,12 @@ export function DataGrid<T extends { id: string | number }>({
                 <tbody>
                     {paginatedData.map((item, rIdx) => {
                         const actualRowIndex = rIdx + 1;
-                        const isSelected = selectedRowIds.has(item.id);
+                        const rowId = (item as any)?.id ?? actualRowIndex;
+                        const isSelected = selectedRowIds.has(rowId);
 
                         return (
                             <tr
-                                key={item.id}
+                                key={rowId}
                                 role="row"
                                 aria-rowindex={(currentPage - 1) * pageSize + actualRowIndex + 1}
                                 aria-selected={isSelected}
@@ -264,12 +265,12 @@ export function DataGrid<T extends { id: string | number }>({
                 </tbody>
             </table>
 
-            <div className="dg-pagination">
+            <nav className="dg-pagination" aria-label="Table pagination">
                 <span>
                     Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong> (
                     {sortedData.length} total items)
                 </span>
-                <div className="dg-page-controls">
+                <p className="dg-page-controls">
                     <button
                         type="button"
                         className="dg-page-btn"
@@ -294,8 +295,8 @@ export function DataGrid<T extends { id: string | number }>({
                     >
                         Next
                     </button>
-                </div>
-            </div>
+                </p>
+            </nav>
         </section>
     );
 }
