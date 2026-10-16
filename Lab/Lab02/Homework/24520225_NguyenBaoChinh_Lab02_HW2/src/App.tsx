@@ -296,7 +296,7 @@ export const App: React.FC = () => {
                             onClick={handlePlayPause}
                             title={playbackState === 'playing' ? 'Pause' : 'Play'}
                         >
-                            {playbackState === 'playing' ? '⏸️ Pause' : '▶️ Play'}
+                            {playbackState === 'playing' ? 'Pause' : 'Play'}
                         </button>
 
                         <button
@@ -306,7 +306,7 @@ export const App: React.FC = () => {
                             disabled={playbackState === 'stopped'}
                             title="Stop Playback and Clean Up AudioBufferSourceNode"
                         >
-                            ⏹️ Stop
+                            Stop
                         </button>
                     </div>
 
@@ -318,7 +318,7 @@ export const App: React.FC = () => {
                             onClick={handleToggleMute}
                             title={isMuted ? 'Unmute' : 'Mute'}
                         >
-                            {isMuted ? '🔇 Muted' : '🔊 Sound'}
+                            {isMuted ? 'Muted' : 'Sound'}
                         </button>
                         <input
                             type="range"
@@ -343,7 +343,7 @@ export const App: React.FC = () => {
                 <section className="card" aria-label="FIFO Queue Controller">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <h2 className="card-title">
-                            <span>⚡</span> FIFO Concurrency Queue
+                            FIFO Concurrency Queue
                         </h2>
 
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -353,7 +353,7 @@ export const App: React.FC = () => {
                                 onClick={handleSimulateConcurrentLoad}
                                 title="Enqueue 4 tracks simultaneously to demonstrate FIFO queuing"
                             >
-                                🚀 Concurrency Stress Test (4x)
+                                Concurrency Stress Test (4x)
                             </button>
                             <button
                                 type="button"
@@ -362,7 +362,7 @@ export const App: React.FC = () => {
                                 disabled={queueItems.length === 0 && !activeTask}
                                 title="Abort all pending and inflight tasks via AbortController tokens"
                             >
-                                🛑 Abort All
+                                Abort All
                             </button>
                         </div>
                     </div>
@@ -382,7 +382,6 @@ export const App: React.FC = () => {
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ animation: 'spin 1.5s linear infinite' }}>⏳</span>
                                     <strong>Active Concurrency Task:</strong> {activeTask.title}
                                 </div>
                                 <button
@@ -508,25 +507,25 @@ export const App: React.FC = () => {
                                                             }}
                                                             title="Replay decoded buffer"
                                                         >
-                                                            ▶ Play
+                                                            Play
                                                         </button>
                                                     )}
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </section>
+                                 </table>
+                             </div>
+                         </div>
+                     )}
+                 </section>
 
                 {/* Right Column: Track Ingestion & Diagnostics */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {/* Demo Preset Library Card */}
                     <section className="card" aria-label="Preset Tracks">
                         <h2 className="card-title">
-                            <span>🎼</span> Preset Audio Engine Library
+                            Preset Audio Engine Library
                         </h2>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                             {PRESET_TRACKS.map((preset) => (
@@ -614,7 +613,7 @@ export const App: React.FC = () => {
                     {/* Memory Safety & Real-time Telemetry Card */}
                     <section className="card" aria-label="Memory Safety Telemetry">
                         <h2 className="card-title">
-                            <span>🛡️</span> Memory Safety & Telemetry Monitor
+                            Memory Safety & Telemetry Monitor
                         </h2>
                         <div className="telemetry-grid">
                             <div className="telemetry-item">
