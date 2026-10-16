@@ -1,0 +1,15 @@
+:root {
+  --primary: #ee4d2d;
+  --primary-glow: rgba(238, 77, 45, 0.4);
+  --bg-dark: #0b0f19;
+  --card-bg: #131b2e;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent-gold: #f59e0b;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+}
