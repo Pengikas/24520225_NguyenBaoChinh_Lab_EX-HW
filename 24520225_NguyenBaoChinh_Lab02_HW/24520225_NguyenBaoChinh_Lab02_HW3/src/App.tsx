@@ -8,6 +8,7 @@ import {
   formatCountdown,
   blockMainThreadSync,
 } from './anti-drift-timer';
+import { runConcurrencyInvariantTest, benchmarkTimerDrift } from './telemetry-verifier';
 import { INITIAL_PRODUCTS, FLASH_VOUCHERS, FlashSaleVoucher } from './products-data';
 import { ConcurrencyEngine } from './concurrency-engine';
 import { ProductInventory, InventoryLockLease, OrderRecord } from './types';
@@ -60,6 +61,12 @@ export default function App() {
       engine.destroy();
     };
   }, [engine]);
+
+  // Auto-run verification suite on mount to populate DevTools Console with empirical proof
+  useEffect(() => {
+    runConcurrencyInvariantTest(5, 50);
+    benchmarkTimerDrift(1500, 50);
+  }, []);
 
   // Initialize Zero-Drift Countdown Timer & Drift-Prone Timer
   useEffect(() => {
