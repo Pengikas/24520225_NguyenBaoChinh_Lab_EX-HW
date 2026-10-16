@@ -74,13 +74,14 @@ export function DataGrid<T extends { id: string | number }>({
         }));
     };
 
-    const toggleRowSelection = (item: T) => {
+    const toggleRowSelection = (item: T, idx?: number) => {
+        const id = (item as any)?.id ?? idx ?? 'item';
         setSelectedRowIds((prev) => {
             const next = new Set(prev);
-            if (next.has(item.id)) {
-                next.delete(item.id);
+            if (next.has(id)) {
+                next.delete(id);
             } else {
-                next.add(item.id);
+                next.add(id);
             }
             return next;
         });
@@ -100,7 +101,7 @@ export function DataGrid<T extends { id: string | number }>({
     };
 
     const handleKeyDown = (
-        e: React.KeyboardEvent<HTMLTableElement>,
+        e: React.KeyboardEvent<HTMLElement>,
         rowIdx: number,
         colIdx: number,
         rowItem?: T
@@ -125,6 +126,14 @@ export function DataGrid<T extends { id: string | number }>({
                 e.preventDefault();
                 if (rowIdx > 0) focusCell(rowIdx - 1, colIdx);
                 break;
+            case 'Home':
+                e.preventDefault();
+                focusCell(rowIdx, 0);
+                break;
+            case 'End':
+                e.preventDefault();
+                focusCell(rowIdx, maxCol);
+                break;
             case 'Enter':
                 if (rowIdx > 0 && rowItem) {
                     e.preventDefault();
@@ -134,7 +143,7 @@ export function DataGrid<T extends { id: string | number }>({
             case ' ':
                 if (rowIdx > 0 && rowItem) {
                     e.preventDefault();
-                    toggleRowSelection(rowItem);
+                    toggleRowSelection(rowItem, rowIdx);
                 }
                 break;
             default:
