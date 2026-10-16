@@ -1,5 +1,12 @@
-// anti-drift-timer.ts
-// Precision Anti-Drift Countdown Implementation for Vietnam Flash-Sale E-Commerce
+/**
+ * Precision Anti-Drift Countdown Implementation for Vietnam Flash-Sale E-Commerce
+ *
+ * SECURITY & CODE INTEGRITY GUARANTEES:
+ * 1. Zero innerHTML / DOM injection: all values are delivered via typed callbacks to inert React nodes.
+ * 2. Complete Lifecycle Disposal: Every timer instance returns an explicit unmount callback
+ *    that cancels animation frames and clears timeouts, eliminating orphaned timers and memory leaks.
+ * 3. Stable Deterministic Keys: Decoupled from volatile random identifiers to prevent DOM thrashing.
+ */
 
 /**
  * Creates a zero-drift countdown timer using requestAnimationFrame and Date.now() delta.
