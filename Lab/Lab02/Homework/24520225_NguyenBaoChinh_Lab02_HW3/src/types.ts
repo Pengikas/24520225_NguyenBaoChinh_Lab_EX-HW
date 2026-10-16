@@ -62,7 +62,7 @@ export interface ConcurrencyLogEntry {
   productId: string;
   productName: string;
   userId: string;
-  status: 200 | 409 | 410 | 408 | 500;
+  status: 200 | 400 | 404 | 408 | 409 | 410 | 500;
   message: string;
   version: number;
 }
