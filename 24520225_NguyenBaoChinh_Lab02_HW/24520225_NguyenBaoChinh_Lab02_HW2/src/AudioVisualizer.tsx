@@ -236,7 +236,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>🎛️</span>
                     <div>
                         <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#f8fafc' }}>
                             Hardware-Accelerated Audio Visualizer
@@ -331,7 +330,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
                         }}
                         title="Toggle 60FPS diagnostic telemetry overlay"
                     >
-                        ⚡ FPS HUD
+                        FPS HUD
                     </button>
                 </div>
             </header>
