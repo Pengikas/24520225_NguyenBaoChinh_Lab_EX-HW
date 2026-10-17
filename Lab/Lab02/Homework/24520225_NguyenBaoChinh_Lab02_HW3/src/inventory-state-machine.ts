@@ -68,7 +68,7 @@ export class InventoryLockFSM {
             success: false,
             previousState: 'OUT_OF_STOCK',
             nextState: 'OUT_OF_STOCK',
-            error: 'Sản phẩm đã hết suất Flash Sale! (410 Gone)',
+            error: 'Flash Sale inventory allocation exhausted! (410 Gone)',
             statusCode: 410,
           };
         }
@@ -119,7 +119,7 @@ export class InventoryLockFSM {
             success: false,
             previousState: 'AVAILABLE',
             nextState: 'AVAILABLE',
-            error: 'Mã giữ chỗ không tồn tại hoặc đã hết hạn! (404 Not Found)',
+            error: 'Reservation lock token not found or already expired! (404 Not Found)',
             statusCode: 404,
           };
         }
@@ -130,7 +130,7 @@ export class InventoryLockFSM {
             success: false,
             previousState: 'RESERVED',
             nextState: 'LOCK_EXPIRED',
-            error: 'Thời gian giữ chỗ đã hết hạn! (408 Request Timeout)',
+            error: 'Reservation lease duration expired! (408 Request Timeout)',
             statusCode: 408,
           };
         }
@@ -154,7 +154,7 @@ export class InventoryLockFSM {
             success: false,
             previousState: 'AVAILABLE',
             nextState: 'AVAILABLE',
-            error: 'Khóa giữ chỗ không hợp lệ hoặc đã bị hủy. (409 Conflict)',
+            error: 'Invalid lock token or reservation already cancelled. (409 Conflict)',
             statusCode: 409,
           };
         }
@@ -165,7 +165,7 @@ export class InventoryLockFSM {
             success: false,
             previousState: lease.state,
             nextState: 'LOCK_EXPIRED',
-            error: 'Quá thời hạn thanh toán! Suất mua đã được trả về kho. (408 Request Timeout)',
+            error: 'Payment timeout exceeded! Reserved inventory released back to pool. (408 Request Timeout)',
             statusCode: 408,
           };
         }

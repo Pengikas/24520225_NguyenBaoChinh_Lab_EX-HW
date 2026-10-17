@@ -146,7 +146,7 @@ export class ConcurrencyEngine {
       productName: p.name,
       userId,
       status: 200,
-      message: `${userName} đang gửi yêu cầu đặt chỗ Flash Sale...`,
+      message: `${userName} submitting Flash Sale reservation request...`,
       version: p.version,
     });
 
@@ -167,7 +167,7 @@ export class ConcurrencyEngine {
         productName: p.name,
         userId,
         status: 200,
-        message: `ĐÃ GIỮ CHỖ THÀNH CÔNG! Token: ${res.lease.lockId.slice(0, 16)}... (Hạn: ${leaseDurationMs / 1000}s)`,
+        message: `RESERVATION SUCCESSFUL! Token: ${res.lease.lockId.slice(0, 16)}... (TTL: ${leaseDurationMs / 1000}s)`,
         version: fsm.getProduct().version,
       });
       this.verifyInventoryInvariant(productId);
@@ -182,7 +182,7 @@ export class ConcurrencyEngine {
           productName: p.name,
           userId,
           status: 410,
-          message: `THẤT BẠI: Sản phẩm đã cháy hàng! (410 Gone)`,
+          message: `FAILED: Product is sold out! (410 Gone)`,
           version: p.version,
         });
       } else {
@@ -194,7 +194,7 @@ export class ConcurrencyEngine {
           productName: p.name,
           userId,
           status: 409,
-          message: `XUNG ĐỘT KHO: Không thể giữ chỗ do tranh chấp concurrency! (409 Conflict)`,
+          message: `INVENTORY CONFLICT: Reservation rejected due to concurrency race condition! (409 Conflict)`,
           version: p.version,
         });
       }
@@ -245,7 +245,7 @@ export class ConcurrencyEngine {
         productName: p.name,
         userId: res.lease.userId,
         status: 200,
-        message: `THANH TOÁN THÀNH CÔNG! Mã đơn: ${order.orderId} - ${p.flashSalePrice.toLocaleString('vi-VN')}₫`,
+        message: `PAYMENT SUCCESSFUL! Order ID: ${order.orderId} - ${p.flashSalePrice.toLocaleString('en-US')} VND`,
         version: fsm.getProduct().version,
       });
 
@@ -263,7 +263,7 @@ export class ConcurrencyEngine {
         productName: p.name,
         userId: 'buyer',
         status: res.statusCode,
-        message: `LỖI THANH TOÁN: ${res.error}`,
+        message: `PAYMENT ERROR: ${res.error}`,
         version: p.version,
       });
       this.verifyInventoryInvariant(productId);
@@ -288,7 +288,7 @@ export class ConcurrencyEngine {
         productName: fsm.getProduct().name,
         userId: 'client',
         status: 200,
-        message: `HỦY GIỮ CHỖ: Đã giải phóng 1 suất về lại kho hàng.`,
+        message: `LEASE CANCELLED: Released 1 inventory unit back to available pool.`,
         version: fsm.getProduct().version,
       });
       this.verifyInventoryInvariant(productId);
