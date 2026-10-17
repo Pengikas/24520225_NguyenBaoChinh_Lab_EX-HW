@@ -1,5 +1,5 @@
 // App.tsx
-// High-Concurrency Flash-Sale E-Commerce Engine | Vietnam 11.11 Simulation
+// High-Concurrency Flash-Sale E-Commerce Engine | Global 11.11 Simulation
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
@@ -36,8 +36,8 @@ export default function App() {
 
   // Active User Checkout Modal State
   const [activeCheckoutLease, setActiveCheckoutLease] = useState<InventoryLockLease | null>(null);
-  const [buyerName, setBuyerName] = useState<string>('Nguyễn Bảo Chính (MSSV: 24520225)');
-  const [shippingAddress, setShippingAddress] = useState<string>('Khu phố 6, P. Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh');
+  const [buyerName, setBuyerName] = useState<string>('Nguyen Bao Chinh (ID: 24520225)');
+  const [shippingAddress, setShippingAddress] = useState<string>('Linh Trung Ward, Thu Duc City, Ho Chi Minh City');
   const [paymentMethod, setPaymentMethod] = useState<'MOMO' | 'VNPAY' | 'SHOPEEPAY' | 'COD'>('MOMO');
   const [selectedVoucher, setSelectedVoucher] = useState<FlashSaleVoucher | null>(null);
   const [isSimulatingBots, setIsSimulatingBots] = useState<boolean>(false);
@@ -114,7 +114,7 @@ export default function App() {
     const res = engine.reserveItem(
       productId,
       clientUserId.current,
-      'Nguyễn Bảo Chính (Bạn)',
+      'Nguyen Bao Chinh (You)',
       'HUMAN',
       30000, // 30-second optimistic lock
       'client-ui-thread'
@@ -141,7 +141,7 @@ export default function App() {
     if (res.success) {
       setActiveCheckoutLease(null);
     } else {
-      alert(`Không thể hoàn tất đơn hàng: ${res.error}`);
+      alert(`Unable to finalize order: ${res.error}`);
     }
   };
 
@@ -164,7 +164,7 @@ export default function App() {
   const handleBlockCpu = () => {
     const actualBlockMs = blockMainThreadSync(300);
     setCpuBlockResult(
-      `Đã chặn luồng chính ${actualBlockMs}ms. Kiểm tra đồng hồ: setInterval trôi thêm ~${actualBlockMs}ms, trong khi Zero-Drift Timer giữ nguyên 0ms trôi!`
+      `Blocked main thread for ${actualBlockMs}ms. Telemetry check: setInterval lagged by ~${actualBlockMs}ms, while Zero-Drift Timer preserved exact 0ms drift!`
     );
     setTimeout(() => setCpuBlockResult(null), 8000);
   };
@@ -183,7 +183,7 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="brand-title">VIETNAM MEGA-SALE 11.11 | SIÊU SALE NỬA ĐÊM</h1>
+            <h1 className="brand-title">GLOBAL MEGA-SALE 11.11 | MIDNIGHT SUPER SALE</h1>
             <p className="brand-subtitle">
               High-Concurrency Flash-Sale E-Commerce Engine & Optimistic Inventory State Machine
             </p>
@@ -191,10 +191,10 @@ export default function App() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span className="student-tag">Sinh viên: Nguyễn Bảo Chính | MSSV: 24520225</span>
+          <span className="student-tag">Student: Nguyen Bao Chinh | Student ID: 24520225</span>
           {myLeases.length > 0 && (
             <div style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.5)', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, color: '#fbbf24' }}>
-              Đang giữ chỗ: {myLeases.length} suất
+              Reserved: {myLeases.length} item(s)
             </div>
           )}
         </div>
@@ -204,36 +204,36 @@ export default function App() {
       <section className="hero-countdown-section" aria-label="Flash Sale Countdown">
         <div className="hero-badge-strip">
           <span className="flame-pulse">🔥</span>
-          <span>FLASH SALE SẮP KẾT THÚC TRONG</span>
+          <span>FLASH SALE ENDS IN</span>
           <span className="flame-pulse">🔥</span>
         </div>
 
-        <h2 className="hero-main-title">ĐẠI TIỆC CÔNG NGHỆ & GIA DỤNG GIẢM ĐẾN 70%</h2>
+        <h2 className="hero-main-title">MIDNIGHT TECH & APPLIANCES GALA - UP TO 70% OFF</h2>
         <p className="hero-description">
-          Hệ thống countdown thời gian thực sử dụng <code>requestAnimationFrame</code> & <code>Date.now()</code> delta
-          đảm bảo độ chính xác tuyệt đối 0ms trôi lệch (Zero-Drift Invariant).
+          Real-time countdown system driven by <code>requestAnimationFrame</code> & <code>Date.now()</code> delta
+          guaranteeing absolute 0ms cumulative drift (Zero-Drift Invariant).
         </p>
 
         {/* TIME DIGITS */}
         <div className="timer-digits-container" role="timer" aria-live="polite">
           <div className="timer-box">
             <span className="timer-value">{antiDriftFormatted.hours}</span>
-            <span className="timer-label">GIỜ</span>
+            <span className="timer-label">HOURS</span>
           </div>
           <span className="timer-colon">:</span>
           <div className="timer-box">
             <span className="timer-value">{antiDriftFormatted.minutes}</span>
-            <span className="timer-label">PHÚT</span>
+            <span className="timer-label">MINUTES</span>
           </div>
           <span className="timer-colon">:</span>
           <div className="timer-box">
             <span className="timer-value">{antiDriftFormatted.seconds}</span>
-            <span className="timer-label">GIÂY</span>
+            <span className="timer-label">SECONDS</span>
           </div>
           <span className="timer-colon">.</span>
           <div className="timer-box" style={{ minWidth: '105px' }}>
             <span className="timer-value" style={{ color: '#fbbf24' }}>{antiDriftFormatted.milliseconds}</span>
-            <span className="timer-label">MILI GIÂY</span>
+            <span className="timer-label">MILLISECONDS</span>
           </div>
         </div>
 
@@ -245,10 +245,10 @@ export default function App() {
               <span className="drift-metric-val" style={{ color: '#34d399' }}>0 ms Drift</span>
             </div>
             <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', color: '#f8fafc' }}>
-              Thời gian thực: {antiDriftFormatted.totalFormatted}
+              Real-time: {antiDriftFormatted.totalFormatted}
             </div>
             <div className="drift-explanation">
-              Mỗi frame tính lại delta từ mốc <code>targetTime - Date.now()</code>. Bất chấp tab bị ẩn hay CPU bị nghẽn, thời gian luôn tuyệt đối chính xác với đồng hồ hệ thống.
+              Recalculates delta on every frame from <code>targetTime - Date.now()</code>. Preserves exact physical wall-clock accuracy despite background tab throttling or CPU congestion.
             </div>
           </div>
 
@@ -256,14 +256,14 @@ export default function App() {
             <div className="drift-header">
               <span style={{ color: '#f87171' }}>✗ Drift-Prone setInterval(100ms)</span>
               <span className="drift-metric-val" style={{ color: '#f87171' }}>
-                +{Math.max(0, cumulativeDriftMs)} ms Trôi
+                +{Math.max(0, cumulativeDriftMs)} ms Drift
               </span>
             </div>
             <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', color: '#f8fafc' }}>
-              Hiển thị: {setIntervalFormatted.totalFormatted}
+              Display: {setIntervalFormatted.totalFormatted}
             </div>
             <div className="drift-explanation">
-              Bị trễ tích lũy bởi Event Loop macrotask, Garbage Collection và điều tiết CPU khi người dùng đổi tab.
+              Suffers cumulative drift caused by event loop macrotask queue latency, garbage collection pauses, and browser tab background throttling.
             </div>
           </div>
         </div>
@@ -272,7 +272,7 @@ export default function App() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
           </svg>
-          Thử Nghiệm: Bơm Tải CPU Đồng Bộ 300ms (Gây Trôi setInterval)
+          Benchmark Test: Inject 300ms Synchronous CPU Lag (Trigger setInterval Drift)
         </button>
 
         {cpuBlockResult && (
@@ -283,7 +283,7 @@ export default function App() {
       </section>
 
       {/* VOUCHER CAROUSEL STRIP */}
-      <div className="voucher-strip" aria-label="Danh sách Voucher 11.11">
+      <div className="voucher-strip" aria-label="Flash Sale Vouchers">
         {FLASH_VOUCHERS.map((v) => {
           const isSelected = selectedVoucher?.code === v.code;
           return (
@@ -301,8 +301,8 @@ export default function App() {
               <div className="voucher-info">
                 <h4>{v.name}</h4>
                 <p>
-                  Đơn từ {v.minOrderVnd.toLocaleString('vi-VN')}₫ • Mã: <strong>{v.code}</strong>
-                  {isSelected && <span style={{ color: '#34d399', marginLeft: '6px' }}>(Đã chọn)</span>}
+                  Min. spend {v.minOrderVnd.toLocaleString('en-US')} VND • Code: <strong>{v.code}</strong>
+                  {isSelected && <span style={{ color: '#34d399', marginLeft: '6px' }}>(Applied)</span>}
                 </p>
               </div>
             </div>
@@ -314,13 +314,13 @@ export default function App() {
       <section aria-labelledby="products-heading">
         <div className="section-title-wrap">
           <div>
-            <h2 id="products-heading" className="section-title">DEAL SỐC NỬA ĐÊM - SỐ LƯỢNG CỰC KỲ GIỚI HẠN</h2>
+            <h2 id="products-heading" className="section-title">MIDNIGHT FLASH DEALS - STRICTLY LIMITED ALLOCATION</h2>
             <p className="section-subtitle">
-              Cơ chế Optimistic Lock giữ chỗ sản phẩm trong 30 giây khi bấm mua để bạn an tâm thanh toán.
+              Optimistic locking reserves inventory for 30 seconds upon click to guarantee a secure checkout experience.
             </p>
           </div>
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            Phiên bản đồng bộ OCC: <strong>v{products.reduce((acc, p) => acc + p.version, 0)}</strong>
+            OCC Synchronized Version: <strong>v{products.reduce((acc, p) => acc + p.version, 0)}</strong>
           </div>
         </div>
 
@@ -346,19 +346,19 @@ export default function App() {
                   <p className="product-desc">{p.description}</p>
 
                   <div className="price-row">
-                    <span className="flash-price">{p.flashSalePrice.toLocaleString('vi-VN')}₫</span>
-                    <span className="original-price">{p.originalPrice.toLocaleString('vi-VN')}₫</span>
+                    <span className="flash-price">{p.flashSalePrice.toLocaleString('en-US')} VND</span>
+                    <span className="original-price">{p.originalPrice.toLocaleString('en-US')} VND</span>
                   </div>
 
                   {/* STOCK PROGRESS BAR */}
                   <div className="stock-meter-wrap">
                     <div className="stock-meter-labels">
                       <span style={{ color: p.availableStock <= 2 ? '#f87171' : 'var(--text-muted)' }}>
-                        {isSoldOut ? 'HẾT HÀNG' : `Còn lại: ${p.availableStock} suất`}
+                        {isSoldOut ? 'SOLD OUT' : `In Stock: ${p.availableStock} units`}
                       </span>
-                      <span>Đã bán: {p.soldStock}/{p.totalStock}</span>
+                      <span>Claimed: {p.soldStock}/{p.totalStock}</span>
                     </div>
-                    <div className="stock-meter-bar" title={`Đã bán: ${p.soldStock}, Đang giữ chỗ: ${p.reservedStock}, Sẵn sàng: ${p.availableStock}`}>
+                    <div className="stock-meter-bar" title={`Sold: ${p.soldStock}, Reserved: ${p.reservedStock}, Available: ${p.availableStock}`}>
                       <div className="stock-progress-sold" style={{ width: `${soldPercent}%` }}></div>
                       <div className="stock-progress-reserved" style={{ width: `${reservedPercent}%` }}></div>
                     </div>
@@ -367,9 +367,9 @@ export default function App() {
                   {/* LOCK STATUS TAG */}
                   {myLease && (
                     <div className="lease-status-box">
-                      <span>Bạn đang giữ chỗ:</span>
+                      <span>You have reserved:</span>
                       <span className="lease-countdown-tag">
-                        00:{Math.ceil(myLease.remainingMs / 1000).toString().padStart(2, '0')}
+                        00:{Math.ceil(myLease.remainingMs / 1000).toString().padStart(2, '0')}s
                       </span>
                     </div>
                   )}
@@ -377,7 +377,7 @@ export default function App() {
                   {otherLeases.length > 0 && !myLease && (
                     <div style={{ fontSize: '12px', color: '#fbbf24', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>⏳</span>
-                      <span>{otherLeases.length} khách khác đang giữ chỗ thanh toán</span>
+                      <span>{otherLeases.length} other shoppers reserving right now</span>
                     </div>
                   )}
 
@@ -391,15 +391,15 @@ export default function App() {
                           onClick={() => setActiveCheckoutLease(myLease)}
                           type="button"
                         >
-                          Thanh Toán Ngay
+                          Checkout Now
                         </button>
                         <button
                           className="btn-release-lock"
                           onClick={() => handleReleaseLock(p.id, myLease.lockId)}
                           type="button"
-                          title="Hủy giữ chỗ và trả suất về cho khách khác"
+                          title="Cancel reservation and release unit back to available pool"
                         >
-                          Hủy
+                          Cancel
                         </button>
                       </>
                     ) : (
@@ -410,15 +410,15 @@ export default function App() {
                         type="button"
                       >
                         {isSoldOut ? (
-                          'ĐÃ CHÁY HÀNG'
+                          'SOLD OUT'
                         ) : p.availableStock <= 0 ? (
-                          'TẤT CẢ SUẤT ĐANG ĐƯỢC GIỮ'
+                          'ALL ALLOCATIONS RESERVED'
                         ) : (
                           <>
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                             </svg>
-                            MUA NGAY (Giữ Chỗ 30s)
+                            BUY NOW (30s Lock)
                           </>
                         )}
                       </button>
@@ -436,10 +436,10 @@ export default function App() {
         <div className="lab-header">
           <div>
             <h2 id="concurrency-lab-title" style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>
-              PHÒNG THÍ NGHIỆM CONCURRENCY & BOT FLOOD RACE CONDITION
+              CONCURRENCY BENCHMARK & BOT FLOOD STRESS LAB
             </h2>
             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Mô phỏng đợt bùng nổ truy cập của hàng chục bot săn sale cùng lúc tranh chấp tài nguyên kho giới hạn.
+              Simulate sudden traffic spikes from dozens of automated bots competing for scarce flash-sale stock.
             </p>
           </div>
 
@@ -452,7 +452,7 @@ export default function App() {
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name.slice(0, 30)}... (Còn {p.availableStock})
+                  {p.name.slice(0, 30)}... (Stock: {p.availableStock})
                 </option>
               ))}
             </select>
@@ -476,7 +476,7 @@ export default function App() {
               disabled={isSimulatingBots}
               type="button"
             >
-              {isSimulatingBots ? 'Đang Bắn Bot...' : `Kích Hoạt ${botCountChoice} Bot Tấn Công`}
+              {isSimulatingBots ? 'Simulating Bots...' : `Launch ${botCountChoice} Bot Workers`}
             </button>
 
             <button
@@ -484,7 +484,7 @@ export default function App() {
               onClick={() => engine.resetInventory(INITIAL_PRODUCTS)}
               type="button"
             >
-              Reset Kho Hàng
+              Reset Inventory Pools
             </button>
           </div>
         </div>
@@ -493,11 +493,11 @@ export default function App() {
         <div className="metrics-dashboard-grid">
           <div className="metric-card">
             <div className="metric-card-number" style={{ color: '#38bdf8' }}>{metrics.totalRequests}</div>
-            <div className="metric-card-label">Tổng Request Gửi Đến</div>
+            <div className="metric-card-label">Total Requests Dispatched</div>
           </div>
           <div className="metric-card">
             <div className="metric-card-number" style={{ color: '#34d399' }}>{metrics.successfulReservations}</div>
-            <div className="metric-card-label">Giữ Chỗ Thành Công</div>
+            <div className="metric-card-label">Successful Reservations</div>
           </div>
           <div className="metric-card">
             <div className="metric-card-number" style={{ color: '#fbbf24' }}>{metrics.conflicts409}</div>
@@ -505,11 +505,11 @@ export default function App() {
           </div>
           <div className="metric-card">
             <div className="metric-card-number" style={{ color: '#a855f7' }}>{metrics.completedOrders}</div>
-            <div className="metric-card-label">Đơn Hoàn Tất</div>
+            <div className="metric-card-label">Orders Finalized</div>
           </div>
           <div className="metric-card" style={{ borderColor: 'rgba(16, 185, 129, 0.4)', background: 'rgba(16, 185, 129, 0.06)' }}>
             <div className="metric-card-number" style={{ color: '#10b981' }}>{metrics.oversellViolations}</div>
-            <div className="metric-card-label">Vi Phạm Bán Vượt (Oversell)</div>
+            <div className="metric-card-label">Oversell Violations</div>
           </div>
         </div>
 
@@ -517,12 +517,12 @@ export default function App() {
         <div className="logs-terminal-wrap">
           <div className="terminal-header">
             <span>LIVE CONCURRENCY LOG AUDIT (OPTIMISTIC LOCK & OCC VERSIONING)</span>
-            <span>{logs.length} bản ghi</span>
+            <span>{logs.length} entries</span>
           </div>
           <div className="terminal-body" tabIndex={0} aria-label="Terminal Log">
             {logs.length === 0 ? (
               <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '40px 0' }}>
-                Chưa có thao tác nào. Bấm &quot;MUA NGAY&quot; hoặc &quot;Kích Hoạt Bot&quot; để quan sát luồng concurrency theo mili giây.
+                No transactions yet. Click &quot;BUY NOW&quot; or &quot;Launch Bots&quot; to observe sub-millisecond race condition telemetry.
               </div>
             ) : (
               logs.map((log) => (
@@ -544,18 +544,18 @@ export default function App() {
       {orders.length > 0 && (
         <section style={{ marginBottom: '40px' }} aria-labelledby="orders-title">
           <h3 id="orders-title" style={{ fontSize: '18px', fontWeight: 800, marginBottom: '14px' }}>
-            DANH SÁCH ĐƠN HÀNG ĐÃ THANH TOÁN THÀNH CÔNG ({orders.length})
+            RECENTLY COMPLETED ORDERS ({orders.length})
           </h3>
           <div style={{ overflowX: 'auto', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
               <thead>
                 <tr style={{ background: '#131b2e', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                  <th style={{ padding: '12px 16px' }}>Mã Đơn</th>
-                  <th style={{ padding: '12px 16px' }}>Sản Phẩm</th>
-                  <th style={{ padding: '12px 16px' }}>Người Mua</th>
-                  <th style={{ padding: '12px 16px' }}>Loại</th>
-                  <th style={{ padding: '12px 16px' }}>Thanh Toán</th>
-                  <th style={{ padding: '12px 16px' }}>Tổng Tiền</th>
+                  <th style={{ padding: '12px 16px' }}>Order ID</th>
+                  <th style={{ padding: '12px 16px' }}>Product</th>
+                  <th style={{ padding: '12px 16px' }}>Customer</th>
+                  <th style={{ padding: '12px 16px' }}>Type</th>
+                  <th style={{ padding: '12px 16px' }}>Payment</th>
+                  <th style={{ padding: '12px 16px' }}>Amount Paid</th>
                 </tr>
               </thead>
               <tbody>
@@ -571,7 +571,7 @@ export default function App() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>{ord.paymentMethod}</td>
                     <td style={{ padding: '12px 16px', fontFamily: 'JetBrains Mono', fontWeight: 700, color: '#f59e0b' }}>
-                      {ord.pricePaid.toLocaleString('vi-VN')}₫
+                      {ord.pricePaid.toLocaleString('en-US')} VND
                     </td>
                   </tr>
                 ))}
@@ -586,19 +586,19 @@ export default function App() {
         <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="checkout-modal-title">
           <div className="checkout-modal-card">
             <h3 id="checkout-modal-title" style={{ margin: '0 0 14px 0', fontSize: '20px', fontWeight: 800 }}>
-              XÁC NHẬN ĐƠN HÀNG FLASH SALE
+              CONFIRM FLASH SALE ORDER
             </h3>
 
             {/* LEASE EXPIRY ALERT */}
             <div className="checkout-expiry-alert">
-              <span>Đang khóa giữ chỗ sản phẩm:</span>
+              <span>Locking Product Allocation:</span>
               <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 800, color: '#fbbf24', fontSize: '16px' }}>
                 00:{Math.ceil(activeCheckoutLease.remainingMs / 1000).toString().padStart(2, '0')}s
               </span>
             </div>
 
             <div className="form-group">
-              <label htmlFor="input-name">Họ và tên người nhận</label>
+              <label htmlFor="input-name">Recipient Full Name</label>
               <input
                 id="input-name"
                 className="form-control"
@@ -609,7 +609,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="input-addr">Địa chỉ nhận hàng (Hỏa tốc 2H)</label>
+              <label htmlFor="input-addr">Delivery Address (Express 2H Delivery)</label>
               <input
                 id="input-addr"
                 className="form-control"
@@ -620,7 +620,7 @@ export default function App() {
             </div>
 
             <div className="form-group">
-              <label>Phương thức thanh toán bảo mật</label>
+              <label>Secure Payment Method</label>
               <div className="payment-methods-grid">
                 {(['MOMO', 'VNPAY', 'SHOPEEPAY', 'COD'] as const).map((m) => (
                   <button
@@ -637,7 +637,7 @@ export default function App() {
 
             {selectedVoucher && (
               <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', color: '#34d399', marginBottom: '16px' }}>
-                Đã áp dụng Voucher <strong>{selectedVoucher.code}</strong> (-{selectedVoucher.discountVnd.toLocaleString('vi-VN')}₫)
+                Applied Voucher: <strong>{selectedVoucher.code}</strong> (-{selectedVoucher.discountVnd.toLocaleString('en-US')} VND)
               </div>
             )}
 
@@ -648,14 +648,14 @@ export default function App() {
                 type="button"
                 style={{ flex: 2 }}
               >
-                Xác Nhận Đặt Hàng Ngay
+                Confirm & Pay Now
               </button>
               <button
                 style={{ flex: 1, background: '#1e293b', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}
                 onClick={() => setActiveCheckoutLease(null)}
                 type="button"
               >
-                Đóng
+                Close
               </button>
             </div>
           </div>
