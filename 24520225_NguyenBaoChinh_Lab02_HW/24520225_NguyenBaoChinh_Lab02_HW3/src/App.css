@@ -146,9 +146,20 @@ body {
 }
 
 @keyframes pulseFlame {
-  0% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.18); filter: brightness(1.3); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+
+  50% {
+    transform: scale(1.18);
+    filter: brightness(1.3);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
 }
 
 .hero-main-title {
@@ -667,10 +678,25 @@ body {
   flex-shrink: 0;
 }
 
-.log-status.st-200 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-.log-status.st-409 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.log-status.st-410 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-.log-status.st-408 { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+.log-status.st-200 {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.log-status.st-409 {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.log-status.st-410 {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.log-status.st-408 {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
 
 .log-msg {
   color: #e2e8f0;
@@ -773,6 +799,7 @@ body {
   .products-grid {
     grid-template-columns: 1fr;
   }
+
   .payment-methods-grid {
     grid-template-columns: repeat(2, 1fr);
   }
