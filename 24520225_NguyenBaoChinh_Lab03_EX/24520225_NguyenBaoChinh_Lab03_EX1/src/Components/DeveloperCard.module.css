@@ -1,0 +1,209 @@
+.card {
+    --card-bg: #ffffff;
+    --text-primary: #172033;
+    --text-muted: #64748b;
+    --accent: #4f46e5;
+    --border: #e2e8f0;
+
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+    padding: 24px;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.avatar,
+.avatarFallback {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+}
+
+.avatar {
+    display: block;
+    object-fit: cover;
+    background: #e2e8f0;
+}
+
+.avatarFallback {
+    display: grid;
+    place-items: center;
+    color: white;
+    background: var(--accent);
+    font-weight: 700;
+}
+
+.header h2 {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.header p {
+    color: var(--text-muted);
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.metrics dt {
+    overflow-wrap: anywhere;
+    color: var(--text-muted);
+}
+
+.metrics dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.skillBadge {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    color: #312e81;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.skillLevel {
+    font-weight: 700;
+}
+
+@media (max-width: 375px) {
+    .card {
+        padding: 16px;
+    }
+
+    .header {
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
+
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.avatar {
+    flex: 0 0 72px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e0e7ff;
+}
+
+.eyebrow {
+    margin: 0 0 6px;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.header h2 {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: clamp(1.25rem, 4vw, 1.7rem);
+}
+
+.role {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+}
+
+.section {
+    padding-top: 22px;
+}
+
+.section h3 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    margin: 0;
+}
+
+.metrics dt {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.metrics dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.footer {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+@media (max-width: 400px) {
+    .card {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .header {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .avatar {
+        flex-basis: 56px;
+        width: 56px;
+        height: 56px;
+    }
+}

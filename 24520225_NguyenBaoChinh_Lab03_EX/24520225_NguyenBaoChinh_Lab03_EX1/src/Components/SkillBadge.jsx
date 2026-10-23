@@ -1,9 +1,10 @@
+import styles from './DeveloperCard.module.css';
 
-export function SkillBadge({ name = 'React 19', tier = 'Core' }) {
+export function SkillBadge({ name = 'React 19', level = 'Core' }) {
     return (
-        <span className={`skill-badge skill-badge--${tier.toLowerCase()}`}>
+        <span className={styles.skillBadge}>
             <span>{name}</span>
-            <span className="skill-badge__tier">{tier}</span>
+            <span className={styles.skillLevel}>{level}</span>
         </span>
     );
 }
