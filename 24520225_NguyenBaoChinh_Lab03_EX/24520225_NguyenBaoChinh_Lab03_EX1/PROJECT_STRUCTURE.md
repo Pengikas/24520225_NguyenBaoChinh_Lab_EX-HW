@@ -12,7 +12,7 @@
 
 ```text
 24520225_NguyenBaoChinh_Lab03_EX1 /
-├── index.html                               # HTML5 entry host mounting React at <div id="root">
+├── index.html                               # HTML5 entry host mounting React at <section id="root">
 ├── package.json                             # Project metadata, scripts (dev, build, preview), and dependencies
 ├── package-lock.json                        # Pinned dependency lockfile ensuring reproducible builds
 ├── AI_FAILURE_AUDIT.md                      # Audit of 6 AI-generated implementation defects and verified fixes
@@ -43,7 +43,7 @@
 
 | File Path | Category | Core Responsibility | Key Invariants & Contracts |
 |---|---|---|---|
-| `index.html` | Host Document | Host HTML shell for Vite and React; mounts `<div id="root">` | Declares viewport meta, language, and links to `/src/main.jsx` module. |
+| `index.html` | Host Document | Host HTML shell for Vite and React; mounts `<section id="root">` | Declares viewport meta, language, and links to `/src/main.jsx` module. |
 | `package.json` | Manifest | Defines project dependencies (`react@^19.0.0`, `react-dom@^19.0.0`, `vite@^8.3.5`) and run scripts | Strictly aligned with `package-lock.json` so `npm ls` passes cleanly. |
 | `package-lock.json` | Lockfile | Locks deterministic dependency versions | Preserves exact resolved versions (`vite@8.3.5`, `react@19.3.1`). |
 | `src/main.jsx` | App Entry Point | Bootstraps React 19 root using `createRoot` | Enforces `StrictMode` and injects `src/index.css`. |
@@ -94,7 +94,7 @@ src/components/DeveloperCard.jsx (<article className={styles.card} aria-labelled
 ```
 
 ### Rendering Sequence Breakdown:
-1. **Host HTML (`index.html`):** The browser loads `index.html`, which contains `<div id="root"></div>` and a `<script type="module" src="/src/main.jsx">` entry tag.
+1. **Host HTML (`index.html`):** The browser loads `index.html`, which contains `<section id="root"></section>` and a `<script type="module" src="/src/main.jsx">` entry tag.
 2. **Bootstrap (`src/main.jsx`):** Vite resolves `/src/main.jsx`. `createRoot(document.getElementById('root'))` creates a React 19 concurrent root and renders `<App />` wrapped in `<StrictMode>`. Global styles from `src/index.css` are applied.
 3. **Page Shell (`src/App.jsx`):** Renders a semantic `<main className="page">` landmark with a descriptive `<header>` and mounts the `<DeveloperCard />`.
 4. **Developer Card (`src/components/DeveloperCard.jsx`):**

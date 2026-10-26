@@ -126,12 +126,12 @@ export function App() {
     // Render Exercise 2 View
     const renderExercise2 = () =>
         h("section", { className: "exercise-card", id: "exercise-2" },
-            h("div", { className: "card-title-bar" },
+            h("header", { className: "card-title-bar" },
                 h("h2", {}, "Reactive Task Manager"),
                 h("span", { className: "card-badge" }, "Exercise 2")
             ),
 
-            h("div", { className: "task-stats" },
+            h("section", { className: "task-stats" },
                 h("span", {}, "Total: ", h("strong", {}, String(tasks.length))),
                 h("span", {}, "Remaining: ", h("strong", {}, String(tasks.filter(t => !t.completed).length)))
             ),
@@ -164,10 +164,10 @@ export function App() {
                 )
             ),
 
-            h("div", { className: "task-list", "aria-label": "Task list" },
+            h("ul", { className: "task-list", "aria-label": "Task list" },
                 ...(visibleTasks.length
                     ? visibleTasks.map(task =>
-                        h("div", { className: "task", key: task.id },
+                        h("li", { className: "task", key: task.id },
                             h("input", {
                                 type: "checkbox",
                                 checked: task.completed,
@@ -186,7 +186,7 @@ export function App() {
                         )
                     )
                     : [
-                        h("p", { className: "empty" }, "No tasks to display.")
+                        h("li", { className: "empty" }, "No tasks to display.")
                     ]
                 )
             )
@@ -195,7 +195,7 @@ export function App() {
     // Render Exercise 3 View
     const renderExercise3 = () =>
         h("section", { className: "exercise-card", id: "exercise-3" },
-            h("div", { className: "card-title-bar" },
+            h("header", { className: "card-title-bar" },
                 h("h2", {}, "Resilient Data Feed"),
                 h("span", { className: "card-badge" }, "Exercise 3")
             ),
@@ -205,7 +205,7 @@ export function App() {
             ),
 
             feedState.status === STATES.IDLE
-                ? h("div", { className: "state-panel" },
+                ? h("section", { className: "state-panel" },
                     h("p", {}, "Ready to load data feed."),
                     h("button", {
                         type: "button",
@@ -216,26 +216,26 @@ export function App() {
                 : null,
 
             feedState.status === STATES.LOADING
-                ? h("div", {
+                ? h("ul", {
                     className: "skeleton-list",
                     "aria-label": "Loading data",
                     "aria-busy": "true"
                 },
                     ...[1, 2, 3].map(id =>
-                        h("div", {
+                        h("li", {
                             className: "skeleton-card",
                             key: id
                         },
-                            h("div", { className: "skeleton skeleton-title" }),
-                            h("div", { className: "skeleton skeleton-line" }),
-                            h("div", { className: "skeleton skeleton-short" })
+                            h("span", { className: "skeleton skeleton-title" }),
+                            h("span", { className: "skeleton skeleton-line" }),
+                            h("span", { className: "skeleton skeleton-short" })
                         )
                     )
                 )
                 : null,
 
             feedState.status === STATES.SUCCESS
-                ? h("div", { className: "feed-list" },
+                ? h("section", { className: "feed-list" },
                     h("h3", {}, "Loaded Feed Items"),
                     ...(feedState.data || []).map(item =>
                         h("article", {
@@ -245,7 +245,7 @@ export function App() {
                             h("h4", {}, item.title)
                         )
                     ),
-                    h("div", { className: "feed-actions" },
+                    h("footer", { className: "feed-actions" },
                         h("button", {
                             type: "button",
                             className: "primary-btn",
@@ -256,7 +256,7 @@ export function App() {
                 : null,
 
             feedState.status === STATES.ERROR
-                ? h("div", {
+                ? h("section", {
                     className: "error-panel",
                     role: "alert"
                 },
@@ -276,7 +276,7 @@ export function App() {
     const showEx3 = activeTab === "ALL" || activeTab === "EX3";
 
     return h(
-        "div",
+        "section",
         { className: "app-wrapper" },
 
         h("header", { className: "app-header" },

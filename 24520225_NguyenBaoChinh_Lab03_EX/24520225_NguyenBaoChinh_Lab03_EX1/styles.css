@@ -225,6 +225,9 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .task {
@@ -335,9 +338,13 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .skeleton {
+    display: block;
     margin-bottom: 12px;
     border-radius: 6px;
     background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
