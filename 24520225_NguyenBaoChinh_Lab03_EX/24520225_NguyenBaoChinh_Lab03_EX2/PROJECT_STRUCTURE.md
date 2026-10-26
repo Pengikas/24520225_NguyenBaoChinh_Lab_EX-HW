@@ -1,232 +1,157 @@
 # PROJECT_STRUCTURE.md
 
-## Exercise 3: Resilient State Machine & Skeleton Loader
+## Exercise 2: Scientist & Pioneer Reactive Directory Explorer
 
-**Course:** Web Application Development (Lab 02 — Exercise 3)  
-**Deliverable:** Robust 4-state lifecycle handling (`IDLE`, `LOADING`, `SUCCESS`, `ERROR`), race-condition-free async data pipeline, pulsing CSS skeleton loader, human-readable error boundary with "Retry Connection" button, and unified Mini-React integration.  
-**Core Technologies:** Pure Vanilla ES6+ JavaScript, Finite State Machine (FSM) Pattern, CSS3 Keyframe Animations, W3C Semantic HTML5 & WAI-ARIA Accessibility Standards.
+**Course:** Web Application Development (Lab 03 — Exercise 2)  
+**Deliverable:** Accessible, responsive, and reactive Scientist Directory built with **React 19**, **Vite 8**, Semantic HTML5, accessible form controls, dynamic derived list filtering, and focus-preserving item deletion.  
+**Student Name:** Nguyen Bao Chinh | **Student ID:** 24520225  
+**Date:** October 26, 2026  
 
 ---
 
-## 1. Directory Structure
+## 1. Directory Tree
 
 ```text
-24520225_NguyenBaoChinh_Lab02_EX3/
-├── index.html              # HTML host mounting container (#app) with responsive styling & meta tags
-├── mini_react.js           # Lightweight Virtual DOM engine: useState, createRoot, event delegation, focus preservation
-├── state_machine.js        # Deterministic 4-state FSM: STATES, createInitialState, transition validator
-├── app.js                  # Combined interactive application: Exercise 2 (Task Manager) & Exercise 3 (Resilient Feed)
-├── styles.css              # Dark-mode design system, CSS keyframe skeleton pulse, responsive layout & error styles
-├── test_runner.js          # Automated security & mounting assertion suite (XSS immunity, DOM integrity)
-├── TASK_DECOMPOSITION.md   # In-class sprint timeline, Work Breakdown Structure (WBS), risk matrix & DoD checklist
-├── AI_FAILURE_AUDIT.md     # In-depth engineering audit documenting 3 AI failure modes, diagnostics & clean fixes
-└── PROJECT_STRUCTURE.md    # Architecture map, file responsibilities, data contracts, state machines & quality gates
+24520225_NguyenBaoChinh_Lab03_EX2/
+├── package.json                             # Root manifest with npm proxy scripts routing to scientist-directory
+├── package-lock.json                        # Root lockfile
+├── AI_FAILURE_AUDIT.md                      # Detailed audit of 7 AI-generated bugs, build failures, and a11y risks
+├── TASK_DECOMPOSITION.md                    # 5-phase Work Breakdown Structure (WBS) with commit mapping
+├── PROJECT_STRUCTURE.md                     # Comprehensive architecture specification and file role directory
+│
+├── scientist-directory/                     # Primary React 19 + Vite 8 Application
+│   ├── index.html                           # HTML5 host document mounting React root (<div id="root">)
+│   ├── package.json                         # Project dependencies (React 19.3.1, Vite 8.3.4, ESLint 10)
+│   ├── package-lock.json                    # Pinned dependency tree for reproducible builds
+│   ├── vite.config.js                       # Vite build configuration using @vitejs/plugin-react
+│   ├── eslint.config.js                     # ESLint configuration enforcing React Hooks and Refresh rules
+│   ├── .gitignore                           # Git ignore rules for node_modules, dist, and local logs
+│   ├── README.md                            # Starter documentation for Vite template
+│   ├── public/                              # Static public assets served directly
+│   │   ├── favicon.svg                      # Application browser favicon
+│   │   └── icons.svg                        # SVG symbol sprite definitions
+│   └── src/                                 # Application source code
+│       ├── main.jsx                         # React 19 bootstrapping entry point (createRoot, StrictMode)
+│       ├── App.jsx                          # Root component hosting <ScientistDirectory />
+│       ├── style.css                        # Active directory layout, CSS grid controls, cards, and focus styling
+│       ├── index.css                        # Global CSS reset and default typography tokens
+│       ├── App.css                          # Legacy template CSS (retained from Vite scaffolding)
+│       ├── components/                      # UI Component modular hierarchy
+│       │   └── ScientistDirectory.jsx       # Core reactive directory component with search, filter, sort & delete
+│       ├── data/                            # Static data definitions
+│       │   └── smartPeople.js               # Normalized scientist dataset with stable unique IDs (sp-1..sp-8)
+│       └── assets/                          # Static image and SVG assets
+│           ├── hero.png                     # Hero graphic asset
+│           ├── react.svg                    # React framework logo
+│           └── vite.svg                     # Vite bundler logo
+│
+└── [Preserved Legacy Standalone Files — Lab 02]
+    ├── mini_react.js                        # Custom Virtual DOM & useState runtime (preserved from Lab 02)
+    ├── state_machine.js                     # 4-state Finite State Machine validator (preserved from Lab 02)
+    ├── app.js                               # Standalone script for Lab 02 Task Manager & State Machine
+    ├── styles.css                           # Standalone dark-mode stylesheet for Lab 02
+    ├── index.html                           # Standalone HTML mounting host for Lab 02 app.js
+    └── test_runner.js                       # Standalone automated assertion test runner for Lab 02
 ```
 
 ---
 
-## 2. File Responsibilities
+## 2. File Responsibilities & Architectural Roles
 
-| File | Responsibility | Key Exports / Elements | Design Constraints & Invariants |
+### 2.1. Primary React 19 Application Files (`scientist-directory/`)
+
+| File Path | Classification | Primary Responsibility | Key Invariants & Contracts |
 |---|---|---|---|
-| `state_machine.js` | Finite State Machine engine & state transition validator | `STATES`, `createInitialState()`, `transition()` | Pure function logic; frozen state constants; strict validation of state names & payload shapes (`Array.isArray(data)` on `SUCCESS`). |
-| `app.js` | Unified application controller & UI component | `App()`, `fetchFeed()`, `loadFeedData()`, `renderExercise2()`, `renderExercise3()` | Monotonic request sequence token guard (`latestRequestId`) against race conditions; unconditional hook calls at top level; 4-state UI dispatch. |
-| `styles.css` | Comprehensive styling system & skeleton loader animation | `@keyframes skeleton-pulse`, `.skeleton`, `.error-panel`, `.feed-card`, `.tab-nav` | Zero-CLS dimension matching between skeletons and cards; `@media (prefers-reduced-motion: reduce)` accessibility fallback. |
-| `mini_react.js` | Custom Virtual DOM & reactive hook runtime | `createElement()`, `createTextElement()`, `useState()`, `createRoot()`, `renderApp()`, `renderToDOM()` | Zero external dependencies; safe text node creation (`document.createTextNode()`); root event delegation with zero orphan listeners; caret retention. |
-| `index.html` | Browser host entrypoint | `<div id="app"></div>`, `<script type="module" src="./app.js">` | Clean semantic markup; viewport metadata configured for mobile responsiveness. |
-| `test_runner.js` | Checkpoint 1 security & DOM mounting test suite | Security test suite assertions, `vApp` XSS verification | Verifies XSS immunity against `<script>` and `<img>` vectors; verifies root rendering. |
-| `TASK_DECOMPOSITION.md` | In-class sprint breakdown & execution blueprint | 7-phase WBS schedule, Checkpoint 3 protocol, risk matrix | Prescribes atomic Git commits, race condition mitigation, and Definition of Done. |
-| `AI_FAILURE_AUDIT.md` | Audit report of AI-generated defects | 3 AI defects: XSS injection, caret desynchronization, async race condition | Documents root causes, DevTools reproduction steps, refactored clean code, and oral defense guide. |
-| `PROJECT_STRUCTURE.md` | Architectural specification & reference manual | Architecture schemas, state transition matrices, sequence diagrams, verification gates | Single source of truth for technical design, data contracts, and quality verification. |
+| `scientist-directory/src/components/ScientistDirectory.jsx` | Core UI Component | Main interactive directory view managing search, minimum IQ filtering, multi-criteria sorting, deletion, and full reset | Derives `visiblePeople` purely during rendering using `.filter()` and `.toSorted()`; enforces accessible focus restoration via `useLayoutEffect` and `deleteButtonRefs`. |
+| `scientist-directory/src/data/smartPeople.js` | Data Model | Exports immutable `SMART_PEOPLE` baseline array of scientist figures | Every entity possesses a unique persistent `id` (`sp-1` through `sp-8`), `name`, `age`, and `iq`. |
+| `scientist-directory/src/App.jsx` | Root Component | Top-level view container rendering `<ScientistDirectory />` | Lightweight container decoupling the application wrapper from directory domain logic. |
+| `scientist-directory/src/main.jsx` | Application Bootstrap | Entry point initializing React 19 root into `#root` DOM element | Enforces `StrictMode`, asserts existence of `#root` container, imports `./style.css`. |
+| `scientist-directory/src/style.css` | Component Styles | Defines CSS grid layout for `.controls` (3 columns), responsive card grid (`.people-list`), and high-contrast `:focus-visible` rings | Mobile-first media query at `600px` collapsing controls and card grid to single column. |
+| `scientist-directory/index.html` | Host Document | Host HTML shell for Vite dev server and production builds | Configures viewport meta tags, browser favicon, and module script entry `<script type="module" src="/src/main.jsx">`. |
+| `scientist-directory/package.json` | Project Manifest | Declares dependencies (`react@^19.3.1`, `react-dom@^19.3.1`) and devDependencies (`vite@^8.3.4`, `eslint@^10.13.0`) | Exposes `dev`, `build`, `lint`, and `preview` npm scripts. |
+| `scientist-directory/vite.config.js` | Build Configuration | Configures Vite build pipeline with `@vitejs/plugin-react` | Enables Fast Refresh and optimized JSX transformation. |
+| `scientist-directory/eslint.config.js` | Code Quality Config | Flat ESLint config checking React hooks and refresh rules | Enforces strict Hook dependency rules (`react-hooks/exhaustive-deps`). |
+
+### 2.2. Root Workspace Files
+
+| File Path | Classification | Primary Responsibility |
+|---|---|---|
+| `package.json` | Root Proxy Manifest | Provides top-level npm script aliases (`dev`, `build`, `preview`) using `--prefix scientist-directory` to ensure seamless command execution from workspace root. |
+| `AI_FAILURE_AUDIT.md` | Audit Documentation | Formal engineering report documenting 7 AI failure modes and anti-patterns with empirical verification evidence. |
+| `TASK_DECOMPOSITION.md` | Process Documentation | 5-phase Work Breakdown Structure (WBS) with task acceptance criteria, verification matrix, and Git milestone mapping. |
+| `PROJECT_STRUCTURE.md` | Architecture Documentation | Single source of truth detailing directory structure, file roles, and runtime rendering flow. |
+
+### 2.3. Preserved Legacy Files (Lab 02 Standalone Artifacts)
+
+The files `mini_react.js`, `state_machine.js`, `app.js`, `test_runner.js`, `styles.css`, and root `index.html` were inherited from earlier laboratory exercises (Lab 02). In accordance with assignment instructions:
+1. **Preservation:** They are intentionally kept in the workspace root without deletion.
+2. **Isolation:** Source code inspection confirms that **none** of these files are imported by `scientist-directory/src/main.jsx`, `App.jsx`, or any component in the React 19 application. They do not pollute the Vite module dependency graph or affect production builds.
 
 ---
 
-## 3. Architectural Specifications & Data Contracts
+## 3. Data Flow & Component Architecture
 
-### 3.1 Finite State Machine (`state_machine.js`)
-
-Component state is strictly modeled as a discriminated union conforming to the following formal contract:
-
-```typescript
-type ViewState<T> =
-  | { status: 'IDLE' }
-  | { status: 'LOADING' }
-  | { status: 'SUCCESS'; data: T }
-  | { status: 'ERROR'; error: string };
-```
-
-#### State Transition Matrix:
-
-| Current State | Target State | Trigger / Action | Payload Required | Validator Rule (`transition()`) |
-|:---:|:---:|:---|:---|:---|
-| `IDLE` | `LOADING` | User clicks "Load Data" | None | Permitted unconditionally. |
-| `LOADING` | `SUCCESS` | Network call resolves successfully | `{ data: Array<Item> }` | Asserts `Array.isArray(nextState.data)`. Throws if invalid. |
-| `LOADING` | `ERROR` | Network drops / timeout / failure | `{ error: string }` | Normalizes error to string with fallback `"Unknown error"`. |
-| `SUCCESS` | `LOADING` | User clicks "Refresh Data" | None | Permitted; resets view to skeleton loader. |
-| `ERROR` | `LOADING` | User clicks "Retry Connection" | None | Permitted; resets view to skeleton loader. |
-| *Any* | *Invalid* | Malformed payload or unlisted status | N/A | **Throws explicit Error:** `Invalid state: ${status}`. |
-
-```mermaid
-stateDiagram-v2
-    [*] --> IDLE : Initial Mount
-    IDLE --> LOADING : User clicks "Load Data"
-    LOADING --> SUCCESS : fetchFeed() resolves (data)
-    LOADING --> ERROR : fetchFeed() rejects (error)
-    SUCCESS --> LOADING : User clicks "Refresh Data"
-    ERROR --> LOADING : User clicks "Retry Connection"
-```
-
----
-
-### 3.2 Asynchronous Data Pipeline & Race Condition Guard (`app.js`)
-
-In asynchronous UI environments, multiple rapid network dispatches can settle out-of-order, leading to stale responses corrupting newer state. Exercise 3 enforces a **Monotonic Sequence Token Guard**:
-
-```javascript
-let latestRequestId = 0;
-
-const loadFeedData = async () => {
-  // 1. Monotonically increment local invocation token
-  const requestId = ++latestRequestId;
-
-  setFeedState({ status: STATES.LOADING });
-
-  try {
-    const items = await fetchFeed();
-
-    // 2. Guard: If another request started while this was in-flight, discard stale result
-    if (requestId !== latestRequestId) {
-      return;
-    }
-
-    setFeedState(transition({ status: STATES.SUCCESS, data: items }));
-  } catch (error) {
-    // 3. Guard: Discard stale error responses
-    if (requestId !== latestRequestId) {
-      return;
-    }
-
-    setFeedState(transition({
-      status: STATES.ERROR,
-      error: error instanceof Error ? error.message : "An unexpected error occurred."
-    }));
-  }
-};
-```
-
-#### Sequence Diagram of Race Condition Prevention:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant App as UI Controller (app.js)
-    participant Guard as Monotonic Sequence Guard
-    participant API as Network Simulation (fetchFeed)
-
-    User->>App: Click "Load Data" (Request #1)
-    App->>Guard: requestId = ++latestRequestId (1)
-    App->>App: setFeedState(LOADING)
-    App->>API: fetchFeed() (Slow 3G, delayed 2500ms)
-
-    User->>App: Click "Retry Connection" (Request #2)
-    App->>Guard: requestId = ++latestRequestId (2)
-    App->>App: setFeedState(LOADING)
-    App->>API: fetchFeed() (Fast connection, resolves 1000ms)
-
-    API-->>App: Request #2 Resolves with Items
-    App->>Guard: Check: requestId (2) === latestRequestId (2) -> PASS
-    App->>App: setFeedState(SUCCESS, data) [UI Displays Data]
-
-    API-->>App: Request #1 Rejects with Connection Error
-    App->>Guard: Check: requestId (1) !== latestRequestId (2) -> DISCARD
-    Note over App: Stale error safely ignored! UI remains SUCCESS.
+```text
+[smartPeople.js]
+       │
+       │ (initialData)
+       ▼
+[ScientistDirectory.jsx]
+       ├── State: [people, setPeople]            (Initialized to initialData copy)
+       ├── State: [query, setQuery]              (Search string)
+       ├── State: [minIq, setMinIq]              (Numeric threshold, default 160)
+       ├── State: [sortBy, setSortBy]            (Sort key: "iq-desc" | "iq-asc" | "age-asc" | "age-desc")
+       ├── Ref:   deleteButtonRefs               (Map<personId, HTMLButtonElement>)
+       ├── Ref:   focusAfterDeleteId             (Tracks adjacent target ID post-deletion)
+       ├── Ref:   searchInputRef                 (Fallback focus target)
+       │
+       ▼ (Pure Derivation during Render)
+   visiblePeople = people
+       .filter(p => matchesName(p.name, query) && p.iq >= minIq)
+       .toSorted(sortComparator(sortBy))
+       │
+       ├──► <header>           (Title & subtitle)
+       ├──► <section.controls> (Search input, Min IQ number input, Sort select, Reset button)
+       ├──► <p.results-count>  (Live status announcement: role="status" aria-live="polite")
+       └──► <ul.people-list>   (Cards mapped by key={person.id})
+                 └── <li.person-card>
+                          ├── <h2>{person.name}</h2>
+                          ├── <dl> Age & IQ </dl>
+                          └── <button> Delete (stores ref, calls handleDelete)
 ```
 
 ---
 
-### 3.3 Skeleton Loader & Perceptual Loading System (`styles.css`)
+## 4. Execution & Verification Guide
 
-The skeleton loader is rendered during the `'LOADING'` state to provide visual continuity and avoid layout jump:
-
-1. **Dimensional Parity:** `.skeleton-card` uses the exact same padding (20px), margin-bottom (14px), and border-radius (12px) as `.feed-card`.
-2. **GPU-Accelerated Gradient Sweep:**
-   ```css
-   .skeleton {
-       background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-       background-size: 200% 100%;
-       animation: skeleton-pulse 1.4s ease-in-out infinite;
-   }
-
-   @keyframes skeleton-pulse {
-       0% { background-position: 100% 0; }
-       100% { background-position: -100% 0; }
-   }
-   ```
-3. **Accessibility Integration:**
-   - Wrapper elements are marked with `aria-busy="true"` and `aria-label="Loading data"`.
-   - Reduced-motion media query deactivates continuous animations for vestibular sensitivity:
-     ```css
-     @media (prefers-reduced-motion: reduce) {
-         .skeleton { animation: none; }
-     }
-     ```
-
----
-
-### 3.4 Error Boundary & Self-Healing Resilience
-
-When an asynchronous network request fails:
-- State transitions to `{ status: 'ERROR', error: string }`.
-- An isolated `.error-panel` is displayed with W3C `role="alert"` so assistive technologies announce the failure.
-- The UI exposes an interactive "Retry Connection" button that directly re-invokes `loadFeedData()`, providing an immediate recovery path without page refresh.
-
----
-
-### 3.5 Integration with Mini-React & Multi-Tab Layout
-
-The application integrates both exercises into a unified, responsive interface:
-- **Top-Level Hooks:** React hooks are called unconditionally in exact sequence:
-  ```javascript
-  const [activeTab, setActiveTab] = useState("ALL"); // "ALL" | "EX2" | "EX3"
-  const [tasks, setTasks] = useState([...]);
-  const [filter, setFilter] = useState("ALL");
-  const [input, setInput] = useState("");
-  const [feedState, setFeedState] = useState(createInitialState());
-  ```
-- **Tabbed Switching:** Switching between views ("Tất cả", "Exercise 2", "Exercise 3") alters DOM visibility without desynchronizing state indices or losing hook values in `stateStore`.
-
----
-
-## 4. Mandatory Git Milestone Commits
-
-| Commit Identifier | Type & Scope | Commit Message | Verified Deliverable |
-|:---:|:---:|:---|:---|
-| **Milestone 1** | `feat(ui)` | `feat(ui): implement multi-state data component with skeleton feedback` | 4-state lifecycle handling (`IDLE`, `LOADING`, `SUCCESS`, `ERROR`), animated CSS skeleton feedback, and retry connection mechanism. |
-| **Documentation** | `docs(audit)` | `docs(audit): add mandatory AI failure mode audit report (AI_FAILURE_AUDIT.md)` | Comprehensive root cause analysis, diagnostic methods, and verified fixes for 3 AI failure modes. |
-| **Documentation** | `docs(audit)` | `docs(audit): update AI_FAILURE_AUDIT.md formatting` | Enhanced markdown presentation, table formatting, and code references. |
-
----
-
-## 5. Quality Gates & Verification Protocols
-
+### 4.1. Development Server
+Run from either the workspace root or inside `scientist-directory/`:
 ```bash
-# 1. Verify file presence and zero lint errors
-ls -la state_machine.js app.js styles.css mini_react.js index.html
+# From workspace root
+npm run dev
 
-# 2. Run automated security and mounting test suite in browser console
-# Open index.html via local server (e.g. npx serve . or python3 -m http.server)
-# Verify console asserts pass:
-# "✅ Checkpoint 1 & Security tests passed successfully!"
-
-# 3. Verify Finite State Machine transitions in DevTools Console:
-# - Transition to LOADING: state.status === "LOADING"
-# - Transition to SUCCESS: Array.isArray(state.data) === true
-# - Transition to ERROR: typeof state.error === "string"
-# - Invalid transition: transition({ status: "FOO" }) throws Error
-
-# 4. Verify race condition immunity:
-# - Set Chrome DevTools Network to "Slow 3G"
-# - Trigger "Retry Connection" repeatedly in rapid succession (< 500ms intervals)
-# - Confirm no stale responses overwrite the UI
+# Or directly within the subproject
+cd scientist-directory && npm run dev
 ```
+*Expected Output:* Vite dev server initializes and serves the application (default port `http://localhost:5173/` or `http://localhost:5175/` if port 5173 is occupied).
+
+### 4.2. Production Build
+```bash
+# From workspace root
+npm run build
+```
+*Expected Output:*
+```text
+vite v8.3.5 building client environment for production...
+✓ 18 modules transformed.
+dist/index.html                   0.46 kB │ gzip:  0.29 kB
+dist/assets/index-mesNBpTX.css    0.93 kB │ gzip:  0.49 kB
+dist/assets/index-BDuXk9en.js   222.89 kB │ gzip: 69.83 kB
+✓ built in 597ms
+```
+
+### 4.3. Code Quality & Linting
+```bash
+npm --prefix scientist-directory run lint
+```
+*Expected Output:* Exits with code 0 (clean output, 0 errors, 0 warnings).
