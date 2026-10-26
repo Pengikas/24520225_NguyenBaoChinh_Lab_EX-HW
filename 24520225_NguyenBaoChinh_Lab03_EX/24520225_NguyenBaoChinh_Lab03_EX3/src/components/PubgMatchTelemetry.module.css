@@ -108,6 +108,7 @@
  }
 
  .status {
+     margin: 0;
      padding: 12px 14px;
      color: #bfdbfe;
      background: #172d48;
@@ -122,6 +123,7 @@
  }
 
  .error h2 {
+     margin-top: 0;
      color: #fecdd3;
  }
 
@@ -158,8 +160,16 @@
          grid-template-columns: repeat(2, minmax(0, 1fr));
      }
 
+     .metric:last-child {
+         grid-column: 1 / -1;
+     }
+
      .skeletonMetrics {
          grid-template-columns: repeat(2, minmax(0, 1fr));
+     }
+
+     .skeletonMetric:last-child {
+         grid-column: 1 / -1;
      }
  }
 

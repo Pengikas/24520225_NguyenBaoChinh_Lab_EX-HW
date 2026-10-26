@@ -95,6 +95,7 @@ export default function PubgMatchTelemetry({ squadId }) {
         <section
             className={styles.panel}
             aria-label={`${squad.name} match telemetry`}
+            aria-live="polite"
         >
             <h2>{squad.name}</h2>
             <p className={styles.subtitle}>
