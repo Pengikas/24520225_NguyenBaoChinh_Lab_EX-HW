@@ -7,11 +7,27 @@ export function ScientistDirectory({ initialData = SMART_PEOPLE }) {
     const iqId = useId();
     const sortId = useId();
 
-    const [people] = useState(() => [...initialData]);
+    const [people, setPeople] = useState(() => [...initialData]);
     const [query, setQuery] = useState("");
     const [minIq, setMinIq] = useState(160);
     const [sortBy, setSortBy] = useState("iq-desc");
 
+    // Delete a scientist by their unique ID.
+    function handleDelete(id) {
+        setPeople((currentPeople) =>
+            currentPeople.filter((person) => person.id !== id)
+        );
+    }
+
+    // Restore the original list and reset all controls.
+    function handleReset() {
+        setPeople([...initialData]);
+        setQuery("");
+        setMinIq(160);
+        setSortBy("iq-desc");
+    }
+
+    // Derive filtered and sorted results during rendering.
     const visiblePeople = people
         .filter((person) => {
             const matchesName = person.name
@@ -28,6 +44,7 @@ export function ScientistDirectory({ initialData = SMART_PEOPLE }) {
                     return a.age - b.age;
                 case "age-desc":
                     return b.age - a.age;
+                case "iq-desc":
                 default:
                     return b.iq - a.iq;
             }
@@ -35,10 +52,13 @@ export function ScientistDirectory({ initialData = SMART_PEOPLE }) {
 
     return (
         <main className="directory">
-            <h1>Scientist &amp; Pioneer Directory</h1>
+            <header className="directory-header">
+                <h1>Scientist &amp; Pioneer Directory</h1>
+                <p>Explore, filter, and organize scientist records.</p>
+            </header>
 
-            <div className="controls">
-                <div>
+            <section className="controls" aria-label="Directory controls">
+                <div className="control-group">
                     <label htmlFor={searchId}>Search by name</label>
                     <input
                         id={searchId}
@@ -49,21 +69,22 @@ export function ScientistDirectory({ initialData = SMART_PEOPLE }) {
                     />
                 </div>
 
-                <div>
+                <div className="control-group">
                     <label htmlFor={iqId}>Minimum IQ</label>
                     <input
                         id={iqId}
                         type="number"
                         min="0"
+                        step="1"
                         value={minIq}
                         onChange={(event) => {
                             const value = event.target.valueAsNumber;
-                            setMinIq(Number.isNaN(value) ? 0 : value);
+                            setMinIq(Number.isNaN(value) ? 0 : Math.max(0, value));
                         }}
                     />
                 </div>
 
-                <div>
+                <div className="control-group">
                     <label htmlFor={sortId}>Sort by</label>
                     <select
                         id={sortId}
@@ -76,25 +97,46 @@ export function ScientistDirectory({ initialData = SMART_PEOPLE }) {
                         <option value="age-desc">Age: old to young</option>
                     </select>
                 </div>
-            </div>
 
-            <p role="status" aria-live="polite">
-                {visiblePeople.length} scientists found
+                <button type="button" onClick={handleReset}>
+                    Reset directory
+                </button>
+            </section>
+
+            <p className="results-count" role="status" aria-live="polite">
+                {visiblePeople.length}{" "}
+                {visiblePeople.length === 1 ? "scientist" : "scientists"} found
             </p>
 
-            <ul className="people-list">
-                {visiblePeople.map((person) => (
-                    <li key={person.id} className="person-card">
-                        <h2>{person.name}</h2>
-                        <dl>
-                            <dt>Age</dt>
-                            <dd>{person.age}</dd>
-                            <dt>IQ</dt>
-                            <dd>{person.iq}</dd>
-                        </dl>
-                    </li>
-                ))}
-            </ul>
+            {visiblePeople.length === 0 ? (
+                <p className="empty-state">
+                    No scientists match your search. Try changing your filters.
+                </p>
+            ) : (
+                <ul className="people-list">
+                    {visiblePeople.map((person) => (
+                        <li key={person.id} className="person-card">
+                            <h2>{person.name}</h2>
+
+                            <dl>
+                                <dt>Age</dt>
+                                <dd>{person.age}</dd>
+
+                                <dt>IQ</dt>
+                                <dd>{person.iq}</dd>
+                            </dl>
+
+                            <button
+                                type="button"
+                                onClick={() => handleDelete(person.id)}
+                                aria-label={`Delete ${person.name}`}
+                            >
+                                Delete
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </main>
     );
 }
