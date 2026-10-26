@@ -1,173 +1,173 @@
-.panel {
-    padding: 24px;
-    background: #111c2e;
-    border: 1px solid #2c3d56;
-    border-radius: 16px;
-    box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
-}
+ .panel {
+     padding: 24px;
+     background: #111c2e;
+     border: 1px solid #2c3d56;
+     border-radius: 16px;
+     box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+ }
 
-.panel h2 {
-    margin-top: 0;
-    margin-bottom: 8px;
-}
+ .panel h2 {
+     margin-top: 0;
+     margin-bottom: 8px;
+ }
 
-.subtitle {
-    color: #a7b3c5;
-    margin-top: 0;
-}
+ .subtitle {
+     color: #a7b3c5;
+     margin-top: 0;
+ }
 
-.skeleton {
-    min-height: 220px;
-    padding: 24px;
-    overflow: hidden;
-    background: #101d30;
-    border: 1px solid #284567;
-    border-radius: 16px;
-}
+ .skeleton {
+     min-height: 220px;
+     padding: 24px;
+     overflow: hidden;
+     background: #101d30;
+     border: 1px solid #284567;
+     border-radius: 16px;
+ }
 
-.skeletonTitle,
-.skeletonLine,
-.skeletonMetric {
-    background: linear-gradient(
-        90deg,
-        #1b2d46 25%,
-        #315477 50%,
-        #1b2d46 75%
-    );
-    background-size: 200% 100%;
-    animation: blueZonePulse 1.5s ease-in-out infinite;
-    border-radius: 8px;
-}
+ .skeletonTitle,
+ .skeletonLine,
+ .skeletonMetric {
+     background: linear-gradient(90deg,
+             #1b2d46 25%,
+             #315477 50%,
+             #1b2d46 75%);
+     background-size: 200% 100%;
+     animation: blueZonePulse 1.5s ease-in-out infinite;
+     border-radius: 8px;
+ }
 
-.skeletonTitle {
-    width: 48%;
-    height: 24px;
-    margin-bottom: 24px;
-}
+ .skeletonTitle {
+     width: 48%;
+     height: 24px;
+     margin-bottom: 24px;
+ }
 
-.skeletonLine {
-    width: 70%;
-    height: 14px;
-    margin-bottom: 14px;
-}
+ .skeletonLine {
+     width: 70%;
+     height: 14px;
+     margin-bottom: 14px;
+ }
 
-.skeletonLineShort {
-    width: 42%;
-}
+ .skeletonLineShort {
+     width: 42%;
+ }
 
-.skeletonMetrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 22px;
-}
+ .skeletonMetrics {
+     display: grid;
+     grid-template-columns: repeat(3, minmax(0, 1fr));
+     gap: 12px;
+     margin-top: 22px;
+ }
 
-.skeletonMetric {
-    height: 58px;
-}
+ .skeletonMetric {
+     height: 58px;
+ }
 
-@keyframes blueZonePulse {
-    0% {
-        background-position: 100% 0;
-        opacity: 0.65;
-    }
+ @keyframes blueZonePulse {
+     0% {
+         background-position: 100% 0;
+         opacity: 0.65;
+     }
 
-    50% {
-        opacity: 1;
-    }
+     50% {
+         opacity: 1;
+     }
 
-    100% {
-        background-position: -100% 0;
-        opacity: 0.65;
-    }
-}
+     100% {
+         background-position: -100% 0;
+         opacity: 0.65;
+     }
+ }
 
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin: 24px 0;
-}
+ .metrics {
+     display: grid;
+     grid-template-columns: repeat(3, minmax(0, 1fr));
+     gap: 12px;
+     margin: 24px 0;
+ }
 
-.metric {
-    min-width: 0;
-    padding: 16px;
-    background: #17263b;
-    border: 1px solid #2c3d56;
-    border-radius: 10px;
-}
+ .metric {
+     min-width: 0;
+     padding: 16px;
+     background: #17263b;
+     border: 1px solid #2c3d56;
+     border-radius: 10px;
+ }
 
-.metric dt {
-    color: #a7b3c5;
-    font-size: 13px;
-}
+ .metric dt {
+     color: #a7b3c5;
+     font-size: 13px;
+ }
 
-.metric dd {
-    margin: 8px 0 0;
-    font-size: 25px;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-}
+ .metric dd {
+     margin: 8px 0 0;
+     font-size: 25px;
+     font-weight: 700;
+     overflow-wrap: anywhere;
+ }
 
-.status {
-    padding: 12px 14px;
-    color: #bfdbfe;
-    background: #172d48;
-    border-radius: 8px;
-}
+ .status {
+     padding: 12px 14px;
+     color: #bfdbfe;
+     background: #172d48;
+     border-radius: 8px;
+ }
 
-.error {
-    padding: 24px;
-    background: #321b26;
-    border: 1px solid #a94460;
-    border-radius: 16px;
-}
+ .error {
+     padding: 24px;
+     background: #321b26;
+     border: 1px solid #a94460;
+     border-radius: 16px;
+ }
 
-.error h2 {
-    color: #fecdd3;
-}
+ .error h2 {
+     color: #fecdd3;
+ }
 
-.error p {
-    color: #f5cbd4;
-}
+ .error p {
+     color: #f5cbd4;
+ }
 
-.retryButton {
-    padding: 11px 16px;
-    color: white;
-    background: #b4233d;
-    border: 1px solid #fb7185;
-    border-radius: 8px;
-}
+ .retryButton {
+     padding: 11px 16px;
+     color: white;
+     background: #b4233d;
+     border: 1px solid #fb7185;
+     border-radius: 8px;
+ }
 
-.retryButton:hover {
-    background: #d12e4b;
-}
+ .retryButton:hover {
+     background: #d12e4b;
+ }
 
-.retryButton:focus-visible {
-    outline: 3px solid #fda4af;
-    outline-offset: 3px;
-}
+ .retryButton:focus-visible {
+     outline: 3px solid #fda4af;
+     outline-offset: 3px;
+ }
 
-@media (max-width: 520px) {
-    .panel,
-    .skeleton,
-    .error {
-        padding: 18px;
-    }
+ @media (max-width: 520px) {
 
-    .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+     .panel,
+     .skeleton,
+     .error {
+         padding: 18px;
+     }
 
-    .skeletonMetrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
+     .metrics {
+         grid-template-columns: repeat(2, minmax(0, 1fr));
+     }
 
-@media (prefers-reduced-motion: reduce) {
-    .skeletonTitle,
-    .skeletonLine,
-    .skeletonMetric {
-        animation: none;
-    }
-}
+     .skeletonMetrics {
+         grid-template-columns: repeat(2, minmax(0, 1fr));
+     }
+ }
+
+ @media (prefers-reduced-motion: reduce) {
+
+     .skeletonTitle,
+     .skeletonLine,
+     .skeletonMetric {
+         animation: none;
+     }
+ }
