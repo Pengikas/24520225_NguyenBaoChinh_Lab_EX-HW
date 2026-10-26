@@ -1,0 +1,92 @@
+:root {
+    font-family: system-ui, sans-serif;
+    color: #1f2937;
+    background: #f3f4f6;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+.directory {
+    width: min(100% - 32px, 1000px);
+    margin: 40px auto;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.controls>div {
+    display: grid;
+    gap: 8px;
+}
+
+input,
+select,
+button {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 12px;
+    font: inherit;
+}
+
+.people-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.person-card {
+    padding: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: white;
+}
+
+.person-card h2 {
+    margin-top: 0;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+}
+
+dt {
+    font-weight: 600;
+}
+
+dd {
+    margin: 0;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+
+    .controls,
+    .people-list {
+        grid-template-columns: 1fr;
+    }
+
+    .directory {
+        margin-top: 24px;
+    }
+}

@@ -1,4 +1,11 @@
 {
+  "name": "lab03-ex2",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix scientist-directory run dev",
+    "build": "npm --prefix scientist-directory run build",
+    "preview": "npm --prefix scientist-directory run preview"
+  },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
