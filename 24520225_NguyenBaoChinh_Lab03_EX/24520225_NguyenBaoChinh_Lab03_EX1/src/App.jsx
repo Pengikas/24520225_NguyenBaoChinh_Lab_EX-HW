@@ -1,15 +1,16 @@
 
-import { DeveloperCard } from './Components/DeveloperCard.jsx';
+import DeveloperCard from './components/DeveloperCard.jsx';
 
 export default function App() {
-  return (
-    <main className="app">
-      <header className="app__header">
-        <h1>Developer Showcase</h1>
-        <p>A semantic React 19 developer profile.</p>
-      </header>
+    return (
+        <main className="page">
+            <header className="page-heading">
+                <p className="eyebrow">SPRINT 1 · EXERCISE 1</p>
+                <h1>Developer Profile</h1>
+                <p>Semantic HTML, reusable React components, and responsive CSS.</p>
+            </header>
 
-      <DeveloperCard />
-    </main>
-  );
+            <DeveloperCard />
+        </main>
+    );
 }
