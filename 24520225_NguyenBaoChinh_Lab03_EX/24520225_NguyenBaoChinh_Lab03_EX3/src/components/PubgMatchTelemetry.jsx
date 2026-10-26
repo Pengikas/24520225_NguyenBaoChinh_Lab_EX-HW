@@ -1,30 +1,95 @@
-import { useEffect, useState } from 'react';
-import { fetchKraftonPubgTelemetry } from '../services/pubgTelemetry';
 
-export function PubgMatchTelemetry({ squadId = 'te' }) {
-  const [view, setView] = useState({ status: 'IDLE', data: null, error: null });
-  const [retryTick, setRetryTick] = useState(0);
+import { useEffect, useState } from "react";
+import { fetchKraftonPubgTelemetry } from "../services/pubgTelemetry";
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setView({ status: 'LOADING', data: null, error: null });
-    fetchKraftonPubgTelemetry(squadId, { signal: controller.signal })
-      .then((payload) => setView({ status: 'SUCCESS', data: payload, error: null }))
-      .catch((err) => {
-        if (err.name === 'AbortError') return;
-        setView({ status: 'ERROR', data: null, error: err.message });
-      });
-    return () => controller.abort();
-  }, [squadId, retryTick]);
+const INITIAL_VIEW = {
+    status: "IDLE",
+    data: null,
+    error: null,
+};
 
-  if (view.status === 'LOADING') return <section aria-busy='true' className='skeleton'>Syncing KRAFTON Radar...</section>;
-  if (view.status === 'ERROR') return (
-    <section role='alert'>
-      <p>Blue-Zone Link Lost: {view.error}</p>
-      <button type='button' onClick={() => setRetryTick((t) => t + 1)}>Reconnect Satellite</button>
-    </section>
-  );
-  return <article aria-live='polite'><h3>{view.data?.name} — Kills: {view.data?.kills}</h3></article>;
+export default function PubgMatchTelemetry({ squadId }) {
+    const [view, setView] = useState(INITIAL_VIEW);
+    const [retryTick, setRetryTick] = useState(0);
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        setView({
+            status: "LOADING",
+            data: null,
+            error: null,
+        });
+
+        fetchKraftonPubgTelemetry(squadId, {
+            signal: controller.signal,
+        })
+            .then((data) => {
+                setView({
+                    status: "SUCCESS",
+                    data,
+                    error: null,
+                });
+            })
+            .catch((error) => {
+                if (error.name === "AbortError") {
+                    return;
+                }
+
+                setView({
+                    status: "ERROR",
+                    data: null,
+                    error: error.message || "Unable to load telemetry.",
+                });
+            });
+
+        return () => controller.abort();
+    }, [squadId, retryTick]);
+
+    if (view.status === "IDLE" || view.status === "LOADING") {
+        return (
+            <section aria-busy="true" aria-label="Loading match telemetry">
+                <p>Loading PUBG VN telemetry...</p>
+            </section>
+        );
+    }
+
+    if (view.status === "ERROR") {
+        return (
+            <section role="alert">
+                <h2>Satellite Connection Lost</h2>
+                <p>{view.error}</p>
+                <button onClick={() => setRetryTick((tick) => tick + 1)}>
+                    Reconnect Satellite (Retry)
+                </button>
+            </section>
+        );
+    }
+
+    const squad = view.data;
+
+    return (
+        <section aria-label={`${squad.name} match telemetry`}>
+            <h2>{squad.name}</h2>
+            <dl>
+                <dt>Map</dt>
+                <dd>{squad.map}</dd>
+
+                <dt>Blue Zone Phase</dt>
+                <dd>{squad.phase}</dd>
+
+                <dt>Players Alive</dt>
+                <dd>{squad.alive}</dd>
+
+                <dt>Kills</dt>
+                <dd>{squad.kills}</dd>
+
+                <dt>WWCD Probability</dt>
+                <dd>{squad.wwcdProb}%</dd>
+
+                <dt>Status</dt>
+                <dd>{squad.status}</dd>
+            </dl>
+        </section>
+    );
 }
-
-export default PubgMatchTelemetry;

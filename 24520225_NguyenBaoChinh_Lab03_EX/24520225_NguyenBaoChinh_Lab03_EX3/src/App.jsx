@@ -1,6 +1,7 @@
+
 import { useState } from "react";
-import { PUBG_VN_SQUADS } from "./data/pubgVnSquads";
-import { PubgMatchTelemetry } from "./components/PubgMatchTelemetry";
+import { pubgVnSquads } from "./data/pubgVnSquads";
+import PubgMatchTelemetry from "./components/PubgMatchTelemetry";
 
 export default function App() {
     const [squadId, setSquadId] = useState("te");
@@ -14,7 +15,7 @@ export default function App() {
             </header>
 
             <nav className="squad-selector" aria-label="Select PUBG squad">
-                {PUBG_VN_SQUADS.map((squad) => (
+                {pubgVnSquads.map((squad) => (
                     <button
                         key={squad.id}
                         type="button"

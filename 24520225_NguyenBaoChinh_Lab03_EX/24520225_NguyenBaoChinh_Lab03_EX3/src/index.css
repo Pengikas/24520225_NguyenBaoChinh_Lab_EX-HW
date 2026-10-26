@@ -1,252 +1,84 @@
-:root {
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #edf2f7;
-    background: #0b1220;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-}
+ :root {
+     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+     color: #edf2f7;
+     background: #0b1220;
+     font-synthesis: none;
+     text-rendering: optimizeLegibility;
+ }
 
-* {
-    box-sizing: border-box;
-}
+ * {
+     box-sizing: border-box;
+ }
 
-body {
-    margin: 0;
-    min-width: 320px;
-    min-height: 100vh;
-    background-color: #0b1220;
-}
+ body {
+     margin: 0;
+     min-width: 320px;
+     min-height: 100vh;
+ }
 
-button {
-    font: inherit;
-    cursor: pointer;
-}
+ button {
+     font: inherit;
+     cursor: pointer;
+ }
 
-button:focus-visible {
-    outline: 3px solid #60a5fa;
-    outline-offset: 3px;
-}
+ button:focus-visible {
+     outline: 3px solid #60a5fa;
+     outline-offset: 3px;
+ }
 
-.app {
-    width: min(840px, calc(100% - 32px));
-    margin: 0 auto;
-    padding: 48px 0;
-}
+ .app {
+     width: min(900px, calc(100% - 32px));
+     margin: 0 auto;
+     padding: 48px 0;
+ }
 
-.page-header {
-    margin-bottom: 28px;
-}
+ .page-header {
+     margin-bottom: 28px;
+ }
 
-.eyebrow {
-    color: #60a5fa;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    margin: 0 0 6px;
-    text-transform: uppercase;
-}
+ .eyebrow {
+     color: #60a5fa;
+     font-size: 12px;
+     font-weight: 700;
+     letter-spacing: 0.14em;
+ }
 
-.page-header h1 {
-    margin: 8px 0;
-    font-size: clamp(28px, 5vw, 40px);
-    font-weight: 800;
-    color: #f8fafc;
-}
+ .page-header h1 {
+     margin: 8px 0;
+     font-size: clamp(28px, 5vw, 42px);
+ }
 
-.page-header > p:last-child {
-    margin: 4px 0 0;
-    color: #94a3b8;
-    font-size: 15px;
-}
+ .page-header>p:last-child {
+     color: #a7b3c5;
+ }
 
-.squad-selector {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 24px;
-}
+ .squad-selector {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 10px;
+     margin-bottom: 20px;
+ }
 
-.squad-button {
-    padding: 11px 18px;
-    color: #cbd5e1;
-    background: #172337;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
+ .squad-button {
+     padding: 10px 14px;
+     color: #dbeafe;
+     background: #172337;
+     border: 1px solid #34445e;
+     border-radius: 8px;
+ }
 
-.squad-button:hover {
-    background: #1e293b;
-    border-color: #475569;
-    color: #f8fafc;
-}
+ .squad-button.active {
+     color: #fff;
+     background: #1d4ed8;
+     border-color: #60a5fa;
+ }
 
-.squad-button.active {
-    color: #ffffff;
-    background: #2563eb;
-    border-color: #60a5fa;
-    box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
-}
+ @media (max-width: 480px) {
+     .app {
+         padding-top: 28px;
+     }
 
-/* 220px Pulsing Blue-Zone Skeleton Card (CLS 0.00) */
-.skeleton {
-    height: 220px;
-    min-height: 220px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: linear-gradient(
-        90deg,
-        #0f172a 0%,
-        #1e293b 35%,
-        #1e3a5f 50%,
-        #1e293b 65%,
-        #0f172a 100%
-    );
-    background-size: 200% 100%;
-    animation: blueZonePulse 1.6s ease-in-out infinite;
-    border: 1px solid #3b82f6;
-    border-radius: 16px;
-    color: #93c5fd;
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    box-shadow: 0 0 24px rgba(59, 130, 246, 0.2);
-}
-
-@keyframes blueZonePulse {
-    0% {
-        background-position: 100% 0;
-        opacity: 0.75;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        background-position: -100% 0;
-        opacity: 0.75;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .skeleton {
-        animation: none;
-    }
-}
-
-/* Accessible Satellite Packet Loss Error Panel */
-section[role="alert"] {
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 32px;
-    background: #201217;
-    border: 1px solid #e11d48;
-    border-radius: 16px;
-    box-shadow: 0 0 24px rgba(225, 29, 72, 0.18);
-}
-
-section[role="alert"] p {
-    margin: 0 0 20px;
-    color: #fecdd3;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-section[role="alert"] button {
-    padding: 12px 20px;
-    color: #ffffff;
-    background: #e11d48;
-    border: 1px solid #fb7185;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: background 0.2s ease;
-}
-
-section[role="alert"] button:hover {
-    background: #be123c;
-}
-
-/* Telemetry Stats Card */
-article[aria-live="polite"] {
-    min-height: 220px;
-    padding: 28px;
-    background: #111c2e;
-    border: 1px solid #1e3a5f;
-    border-radius: 16px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
-}
-
-article[aria-live="polite"] h3 {
-    margin: 0 0 20px;
-    font-size: 22px;
-    font-weight: 700;
-    color: #f8fafc;
-}
-
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
-    margin: 0;
-    align-items: stretch;
-}
-
-.metric {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 16px 14px;
-    background: #17263b;
-    border: 1px solid #283e58;
-    border-radius: 10px;
-    min-height: 96px;
-}
-
-.metric dt {
-    min-height: 32px;
-    display: flex;
-    align-items: flex-start;
-    color: #94a3b8;
-    font-size: 11px;
-    line-height: 1.35;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-}
-
-.metric dd {
-    margin: 8px 0 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #60a5fa;
-    line-height: 1.25;
-}
-
-@media (max-width: 768px) {
-    .metrics {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 520px) {
-    .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 480px) {
-    .app {
-        padding-top: 28px;
-    }
-
-    .squad-selector {
-        flex-direction: column;
-    }
-}
+     .squad-selector {
+         flex-direction: column;
+     }
+ }
