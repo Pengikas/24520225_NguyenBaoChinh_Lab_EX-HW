@@ -1,55 +1,28 @@
-
 import { useEffect, useState } from "react";
 import { fetchKraftonPubgTelemetry } from "../services/pubgTelemetry";
 
-const INITIAL_VIEW = {
-    status: "IDLE",
-    data: null,
-    error: null,
-};
-
-export default function PubgMatchTelemetry({ squadId }) {
-    const [view, setView] = useState(INITIAL_VIEW);
+export function PubgMatchTelemetry({ squadId = "te" }) {
+    const [view, setView] = useState({ status: "IDLE", data: null, error: null });
     const [retryTick, setRetryTick] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
+        setView({ status: "LOADING", data: null, error: null });
 
-        setView({
-            status: "LOADING",
-            data: null,
-            error: null,
-        });
-
-        fetchKraftonPubgTelemetry(squadId, {
-            signal: controller.signal,
-        })
-            .then((data) => {
-                setView({
-                    status: "SUCCESS",
-                    data,
-                    error: null,
-                });
-            })
-            .catch((error) => {
-                if (error.name === "AbortError") {
-                    return;
-                }
-
-                setView({
-                    status: "ERROR",
-                    data: null,
-                    error: error.message || "Unable to load telemetry.",
-                });
+        fetchKraftonPubgTelemetry(squadId, { signal: controller.signal })
+            .then((payload) => setView({ status: "SUCCESS", data: payload, error: null }))
+            .catch((err) => {
+                if (err.name === "AbortError") return;
+                setView({ status: "ERROR", data: null, error: err.message });
             });
 
         return () => controller.abort();
     }, [squadId, retryTick]);
 
-    if (view.status === "IDLE" || view.status === "LOADING") {
+    if (view.status === "LOADING") {
         return (
-            <section aria-busy="true" aria-label="Loading match telemetry">
-                <p>Loading PUBG VN telemetry...</p>
+            <section aria-busy="true" className="skeleton">
+                Syncing KRAFTON Radar...
             </section>
         );
     }
@@ -57,39 +30,43 @@ export default function PubgMatchTelemetry({ squadId }) {
     if (view.status === "ERROR") {
         return (
             <section role="alert">
-                <h2>Satellite Connection Lost</h2>
-                <p>{view.error}</p>
-                <button onClick={() => setRetryTick((tick) => tick + 1)}>
-                    Reconnect Satellite (Retry)
+                <p>Blue-Zone Link Lost: {view.error}</p>
+                <button type="button" onClick={() => setRetryTick((t) => t + 1)}>
+                    Reconnect Satellite
                 </button>
             </section>
         );
     }
 
-    const squad = view.data;
-
     return (
-        <section aria-label={`${squad.name} match telemetry`}>
-            <h2>{squad.name}</h2>
-            <dl>
-                <dt>Map</dt>
-                <dd>{squad.map}</dd>
-
-                <dt>Blue Zone Phase</dt>
-                <dd>{squad.phase}</dd>
-
-                <dt>Players Alive</dt>
-                <dd>{squad.alive}</dd>
-
-                <dt>Kills</dt>
-                <dd>{squad.kills}</dd>
-
-                <dt>WWCD Probability</dt>
-                <dd>{squad.wwcdProb}%</dd>
-
-                <dt>Status</dt>
-                <dd>{squad.status}</dd>
-            </dl>
-        </section>
+        <article aria-live="polite">
+            <h3>{view.data?.name} — Kills: {view.data?.kills}</h3>
+            {view.data && (
+                <dl className="metrics">
+                    <div className="metric">
+                        <dt>Map</dt>
+                        <dd>{view.data.map}</dd>
+                    </div>
+                    <div className="metric">
+                        <dt>Blue Zone Phase</dt>
+                        <dd>{view.data.phase}</dd>
+                    </div>
+                    <div className="metric">
+                        <dt>Players Alive</dt>
+                        <dd>{view.data.alive}</dd>
+                    </div>
+                    <div className="metric">
+                        <dt>WWCD Probability</dt>
+                        <dd>{view.data.wwcdProb}</dd>
+                    </div>
+                    <div className="metric">
+                        <dt>Status</dt>
+                        <dd>{view.data.status}</dd>
+                    </div>
+                </dl>
+            )}
+        </article>
     );
 }
+
+export default PubgMatchTelemetry;

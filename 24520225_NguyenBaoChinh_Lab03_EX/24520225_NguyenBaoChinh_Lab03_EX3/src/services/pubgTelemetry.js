@@ -1,12 +1,11 @@
-
-import { pubgVnSquads } from "../data/pubgVnSquads";
+import { PUBG_VN_SQUADS } from "../data/pubgVnSquads";
 
 export function fetchKraftonPubgTelemetry(
     squadId,
     { signal } = {},
 ) {
     return new Promise((resolve, reject) => {
-        const squad = pubgVnSquads.find(
+        const squad = PUBG_VN_SQUADS.find(
             (item) => item.id === squadId,
         );
 
