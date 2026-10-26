@@ -7,5 +7,5 @@ export const SMART_PEOPLE = [
     { id: "sp-5", name: "James Maxwell", age: 48, iq: 190 },
     { id: "sp-6", name: "William Sidis", age: 46, iq: 200 },
     { id: "sp-7", name: "Nguyen Bao Chinh", age: 20, iq: 110 },
-    { id: "sp-8", name: "Tran Vinh Khien", age: 25, iq: 150 },
+    { id: "sp-8", name: "Tran Vinh Khiem", age: 25, iq: 150 },
 ];
