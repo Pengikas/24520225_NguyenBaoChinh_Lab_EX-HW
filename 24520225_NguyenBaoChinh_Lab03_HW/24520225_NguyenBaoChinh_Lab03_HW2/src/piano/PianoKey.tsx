@@ -1,10 +1,21 @@
 import React, { memo, useCallback, useState } from 'react';
 import type { PianoKeyData } from './piano-types';
 
-interface PianoKeyProps {
+export interface PianoKeyProps {
     note: PianoKeyData;
     onNoteOn: (midi: number) => void;
     onNoteOff: (midi: number) => void;
+}
+
+export function shallowEqual(prevProps: PianoKeyProps, nextProps: PianoKeyProps): boolean {
+    return (
+        prevProps.note.midi === nextProps.note.midi &&
+        prevProps.note.keyType === nextProps.note.keyType &&
+        prevProps.note.noteName === nextProps.note.noteName &&
+        prevProps.note.frequency === nextProps.note.frequency &&
+        prevProps.onNoteOn === nextProps.onNoteOn &&
+        prevProps.onNoteOff === nextProps.onNoteOff
+    );
 }
 
 const PianoKey = memo(function PianoKey({
@@ -79,6 +90,6 @@ const PianoKey = memo(function PianoKey({
             <span>{note.noteName}</span>
         </button>
     );
-});
+}, shallowEqual);
 
 export default PianoKey;

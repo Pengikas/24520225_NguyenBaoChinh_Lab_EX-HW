@@ -6,9 +6,15 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
-import { PolyphonicEngine } from './audio/polyphonic-engine';
+import { PolyphonicSynth } from './audio/PolyphonicSynth.js';
 import { AudioEngine, FFTSize, AudioEngineMetrics, PlaybackState } from './audio-engine';
-import { AudioTaskQueue, AudioTask } from './audio-queue-controller';
+import {
+    AudioTaskQueue,
+    AudioTask,
+    RecordedNoteEvent,
+    PlaybackSpeed,
+    SequencerState,
+} from './audio-queue-controller';
 import { AudioVisualizer } from './AudioVisualizer';
 import { PRESET_TRACKS, PresetTrack } from './audio-synth';
 import Piano from './piano/Piano';
@@ -16,8 +22,16 @@ import { midiToNoteName, midiToFrequency } from './piano/piano-generator';
 
 // Singleton instances for persistent audio graph across renders
 const audioEngine = new AudioEngine(256);
-const polyphonicEngine = new PolyphonicEngine(audioEngine);
+const polyphonicEngine = new PolyphonicSynth(8);
+polyphonicEngine.setAudioEngine(audioEngine);
 const audioQueue = new AudioTaskQueue(audioEngine.getAudioContext());
+audioQueue.setSynth(polyphonicEngine);
+
+// Expose on window for runtime DevTools inspection & verification
+if (typeof window !== 'undefined') {
+    (window as unknown as Record<string, unknown>).__polyphonicSynth = polyphonicEngine;
+    (window as unknown as Record<string, unknown>).__audioQueue = audioQueue;
+}
 
 // 8-Voice test chord (MIDI numbers: C4, E4, G4, B4, C5, E5, G5, B5)
 const TEST_CHORD = [60, 64, 67, 71, 72, 76, 79, 83];
@@ -28,6 +42,12 @@ export const App: React.FC = () => {
     const [activeTask, setActiveTask] = useState<AudioTask | null>(null);
     const [historyItems, setHistoryItems] = useState<readonly AudioTask[]>([]);
     const [isQueueProcessing, setIsQueueProcessing] = useState<boolean>(false);
+
+    // FIFO Note Recording & Variable-Speed Replay state
+    const [sequencerState, setSequencerState] = useState<SequencerState>('idle');
+    const [recordedEvents, setRecordedEvents] = useState<readonly RecordedNoteEvent[]>([]);
+    const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1.0);
+    const [replayingIndex, setReplayingIndex] = useState<number | null>(null);
 
     // 88-Key Polyphonic Piano voice counter & allocation
     const [activeVoiceCount, setActiveVoiceCount] = useState<number>(0);
@@ -50,28 +70,57 @@ export const App: React.FC = () => {
     const [customUrl, setCustomUrl] = useState<string>('');
     const [customTitle, setCustomTitle] = useState<string>('');
 
-    // Piano key trigger handlers
+    // Piano key trigger handlers (dispatch to PolyphonicSynth and record into FIFO AudioTaskQueue)
     const handlePianoNoteOn = useCallback((midi: number) => {
-        polyphonicEngine.noteOn(midi);
+        const freqHz = midiToFrequency(midi);
+        polyphonicEngine.noteOn(midi, freqHz);
+        audioQueue.recordNoteOn(midi, freqHz);
     }, []);
 
     const handlePianoNoteOff = useCallback((midi: number) => {
         polyphonicEngine.noteOff(midi);
+        audioQueue.recordNoteOff(midi);
     }, []);
 
     const handleTestEightVoices = useCallback(() => {
         TEST_CHORD.forEach((midi) => {
-            polyphonicEngine.noteOn(midi);
+            polyphonicEngine.noteOn(midi, midiToFrequency(midi));
         });
     }, []);
 
     const handleTriggerNinthNote = useCallback(() => {
         // Trigger 9th note (MIDI 90) to demonstrate FIFO voice stealing
-        polyphonicEngine.noteOn(90);
+        polyphonicEngine.noteOn(90, midiToFrequency(90));
     }, []);
 
     const handleStopAllVoices = useCallback(() => {
         polyphonicEngine.dispose();
+    }, []);
+
+    // FIFO Recording & Variable-Speed Replay handlers
+    const handleToggleRecording = useCallback(() => {
+        if (audioQueue.getState() === 'recording') {
+            audioQueue.stopRecording();
+        } else {
+            audioQueue.startRecording();
+        }
+    }, []);
+
+    const handleReplaySequence = useCallback(() => {
+        void audioQueue.replay(playbackSpeed, polyphonicEngine);
+    }, [playbackSpeed]);
+
+    const handleStopSequence = useCallback(() => {
+        audioQueue.stopSequence();
+    }, []);
+
+    const handleClearRecording = useCallback(() => {
+        audioQueue.clearRecording();
+    }, []);
+
+    const handleSpeedChange = useCallback((speed: PlaybackSpeed) => {
+        setPlaybackSpeed(speed);
+        audioQueue.setPlaybackSpeed(speed);
     }, []);
 
     // Seek interval reference (polled at modest 4Hz for UI seek bar, decoupled from 60fps canvas)
@@ -88,16 +137,25 @@ export const App: React.FC = () => {
         return () => {
             unsubCount();
             unsubVoices();
+            // Cancel active sequence replay & silence active voices on unmount
+            audioQueue.stopSequence();
+            polyphonicEngine.dispose();
         };
     }, []);
 
-    // Synchronize queue updates
+    // Synchronize queue and FIFO sequencer updates
     useEffect(() => {
         const updateQueueState = () => {
             setQueueItems(audioQueue.getQueue());
             setActiveTask(audioQueue.getActiveTask());
             setHistoryItems(audioQueue.getHistory());
             setIsQueueProcessing(audioQueue.getIsProcessing());
+
+            const snap = audioQueue.getSnapshot();
+            setSequencerState(snap.state);
+            setRecordedEvents(snap.recordedEvents);
+            setPlaybackSpeed(snap.playbackSpeed);
+            setReplayingIndex(snap.replayingIndex);
         };
 
         const unsubscribeQueue = audioQueue.subscribe(updateQueueState);
@@ -399,6 +457,156 @@ export const App: React.FC = () => {
                     onNoteOn={handlePianoNoteOn}
                     onNoteOff={handlePianoNoteOff}
                 />
+
+                {/* FIFO Note Recording & Variable-Speed Async Replay Panel */}
+                <div
+                    style={{
+                        marginTop: '1rem',
+                        padding: '1rem',
+                        backgroundColor: '#080b11',
+                        border: '1px solid #1e293b',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                    }}
+                    aria-label="FIFO Note Sequencer Controls"
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                            <strong style={{ color: '#00f2ff', fontSize: '0.95rem' }}>
+                                Async FIFO Note Recorder &amp; Replay Engine
+                            </strong>
+                            <span
+                                className={`badge ${
+                                    sequencerState === 'recording'
+                                        ? 'badge-danger'
+                                        : sequencerState === 'replaying'
+                                        ? 'badge-green'
+                                        : 'badge-purple'
+                                }`}
+                            >
+                                State: {sequencerState.toUpperCase()}
+                            </span>
+                            <span className="badge badge-cyan">
+                                Recorded FIFO Events: {recordedEvents.length}
+                            </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <button
+                                type="button"
+                                className={`btn btn-sm ${sequencerState === 'recording' ? 'btn-danger' : 'btn-primary'}`}
+                                onClick={handleToggleRecording}
+                            >
+                                {sequencerState === 'recording' ? 'Stop Recording' : 'Start Recording'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={handleReplaySequence}
+                                disabled={recordedEvents.length === 0 || sequencerState === 'recording'}
+                            >
+                                Replay Sequence ({playbackSpeed}x)
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-danger btn-sm"
+                                onClick={handleStopSequence}
+                                disabled={sequencerState !== 'replaying'}
+                            >
+                                Stop Sequence
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={handleClearRecording}
+                                disabled={recordedEvents.length === 0 && sequencerState === 'idle'}
+                            >
+                                Clear Recording
+                            </button>
+
+                            {/* Playback Speed Selector: 0.5x, 1.0x, 2.0x */}
+                            <div
+                                role="group"
+                                aria-label="Replay Speed Selector"
+                                style={{
+                                    display: 'inline-flex',
+                                    backgroundColor: '#1e293b',
+                                    padding: '2px',
+                                    borderRadius: '6px',
+                                    gap: '2px',
+                                }}
+                            >
+                                {([0.5, 1.0, 2.0] as PlaybackSpeed[]).map((spd) => (
+                                    <button
+                                        key={spd}
+                                        type="button"
+                                        onClick={() => handleSpeedChange(spd)}
+                                        style={{
+                                            border: 'none',
+                                            background: playbackSpeed === spd ? '#00f2ff' : 'transparent',
+                                            color: playbackSpeed === spd ? '#080b11' : '#94a3b8',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        {spd.toFixed(1)}x
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {recordedEvents.length > 0 && (
+                        <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
+                            <table className="queue-table" aria-label="Recorded FIFO Note Events Table">
+                                <thead>
+                                    <tr>
+                                        <th># (FIFO)</th>
+                                        <th>midi</th>
+                                        <th>Note</th>
+                                        <th>freqHz</th>
+                                        <th>durationMs</th>
+                                        <th>deltaMs</th>
+                                        <th>Scaled ({playbackSpeed}x)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {recordedEvents.map((ev, idx) => {
+                                        const isCurrent = sequencerState === 'replaying' && replayingIndex === idx;
+                                        return (
+                                            <tr
+                                                key={`${idx}-${ev.midi}`}
+                                                style={{
+                                                    backgroundColor: isCurrent ? 'rgba(0, 242, 255, 0.15)' : 'transparent',
+                                                }}
+                                            >
+                                                <td style={{ fontFamily: 'JetBrains Mono', color: isCurrent ? '#00f2ff' : '#64748b' }}>
+                                                    {idx + 1} {isCurrent ? '▶' : ''}
+                                                </td>
+                                                <td style={{ fontFamily: 'JetBrains Mono', fontWeight: 700 }}>{ev.midi}</td>
+                                                <td>{midiToNoteName(ev.midi)}</td>
+                                                <td style={{ fontFamily: 'JetBrains Mono', color: '#38bdf8' }}>{ev.freqHz} Hz</td>
+                                                <td style={{ fontFamily: 'JetBrains Mono' }}>{ev.durationMs} ms</td>
+                                                <td style={{ fontFamily: 'JetBrains Mono' }}>{ev.deltaMs} ms</td>
+                                                <td style={{ fontFamily: 'JetBrains Mono', color: '#4ade80' }}>
+                                                    delay: {Math.round(ev.deltaMs / playbackSpeed)}ms / dur: {Math.round(ev.durationMs / playbackSpeed)}ms
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </section>
 
             {/* Playback Transport & Track Control Card */}
