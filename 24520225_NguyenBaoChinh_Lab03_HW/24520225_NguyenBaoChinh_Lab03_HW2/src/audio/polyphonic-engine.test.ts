@@ -71,6 +71,33 @@ describe('M4: FIFO Voice Stealing Polyphonic Synthesizer', () => {
         polyEngine = new PolyphonicEngine(mockAudioEngine);
     });
 
+    it('E02.1: plays a single note, connects oscillator and gain, and updates voice monitor to 1/8', () => {
+        const counts: number[] = [];
+        polyEngine.subscribeVoiceCount((c) => counts.push(c));
+
+        const ok = polyEngine.noteOn(60);
+        expect(ok).toBe(true);
+        expect(polyEngine.getActiveVoiceCount()).toBe(1);
+        expect(polyEngine.getActiveMidiNotes()).toEqual([60]);
+        expect(counts[counts.length - 1]).toBe(1);
+
+        expect(createdOscillators).toHaveLength(1);
+        expect(createdGains).toHaveLength(1);
+        expect(createdOscillators[0].connect).toHaveBeenCalledWith(createdGains[0]);
+        expect(createdGains[0].connect).toHaveBeenCalled();
+        expect(createdOscillators[0].start).toHaveBeenCalled();
+    });
+
+    it('E02.2: plays 3 simultaneous notes (C Major triad: 60, 64, 67) and updates voice monitor to 3/8', () => {
+        const triad = [60, 64, 67];
+        triad.forEach((m) => expect(polyEngine.noteOn(m)).toBe(true));
+
+        expect(polyEngine.getActiveVoiceCount()).toBe(3);
+        expect(polyEngine.getActiveMidiNotes()).toEqual(triad);
+        expect(createdOscillators).toHaveLength(3);
+        expect(createdGains).toHaveLength(3);
+    });
+
     it('Test A: supports up to eight simultaneous voices without stealing', () => {
         const initialChord = [60, 64, 67, 72, 76, 79, 84, 88];
         const voiceCounts: number[] = [];
