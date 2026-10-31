@@ -1,198 +1,193 @@
-# TASK_DECOMPOSITION.md
+# TASK_DECOMPOSITION.md – 88-Key Polyphonic Piano & Concurrent FIFO Sequencer
 
-## Homework 2: Concurrent FIFO Audio Visualizer Queue Engine
-
-**Course:** Web Application Development (Lab 02 — Homework 2)  
+**Course:** Web Application Development (Lab 03 — Homework 2)  
 **Student:** Nguyen Bao Chinh (MSSV: 24520225)  
-**Project:** Concurrent FIFO Audio Visualizer Queue Engine  
-**Timeline:** 1-Week Production Engineering Sprint  
-**Deliverables:** Web Audio API frequency analysis engine (FFT 256/512 bins), strict FIFO concurrency queue controller with `AbortSignal` cancellation tokens, explicit memory safety lifecycle management for `AudioBufferSourceNode`s, 60fps hardware-accelerated Canvas visualizer with zero React state thrashing, offline synthetic PCM WAV audio generator, telemetry dashboard, and comprehensive AI failure mode audit report.
+**Project:** 88-Key Polyphonic Piano Studio & Concurrent FIFO Audio Sequencer  
+**Repository Branch:** `main`  
+**Current Baseline Commit:** `bd9440d` (`chore(hw2): initialize piano studio project`)
 
 ---
 
-## 1. Sprint Overview & Milestone Roadmap
+## 1. Engineering Roadmap Overview
 
-The objective of Homework 2 is to design and implement an industrial-strength, enterprise-grade concurrent audio streaming and visualization engine. The architecture addresses three critical challenges in modern Web Audio and real-time frontend engineering:
-1. **Asynchronous Concurrency Control:** Managing concurrent track enqueueing, stream downloading, and buffer decoding in strict FIFO sequence while enabling instantaneous user aborts.
-2. **Memory Safety & Graph Lifecycle:** Preventing leaks caused by single-use `AudioBufferSourceNode`s, orphaned `requestAnimationFrame` loops, and unmanaged closures.
-3. **High-Frequency Performance:** Rendering audio frequencies at 60 FPS without React state thrashing or garbage collection stutter.
+This document defines the comprehensive Work Breakdown Structure (WBS) and milestone roadmap for **Homework 2 (88-Key Polyphonic Piano & Concurrent FIFO Sequencer)**. The roadmap structures the project into **eight sequential engineering milestones (M0 through M7)**, bridging the algorithmic mathematical generation of acoustic piano keys with high-performance React component isolation, Web Audio polyphonic voice management, asynchronous FIFO concurrency queues, and hardware-accelerated spectrum visualization.
 
 ```text
-+---------------------------------------------------------------------------------------------------+
-|                           HOMEWORK 2: 1-WEEK PRODUCTION SPRINT ROADMAP                            |
-|                                                                                                   |
-| [Day 1]  Phase 1: Concurrency Controller & FIFO Task Queue Architecture (`audio-queue-controller`) |
-| [Day 2]  Phase 2: Web Audio API Graph & Frequency Spectrum Engine (`audio-engine.ts`)            |
-| [Day 3]  Phase 3: Memory Safety Protocol & Explicit Node Lifecycle Management                    |
-| [Day 4]  Phase 4: 60fps High-Performance Canvas Visualizer Engine (`AudioVisualizer.tsx`)       |
-| [Day 5]  Phase 5: Client-Side Synthetic Audio Generator & Offline WAV Stems (`audio-synth.ts`)     |
-| [Day 6]  Phase 6: Enterprise Control Dashboard & Real-Time Telemetry Monitor (`App.tsx`)         |
-| [Day 7]  Phase 7: Heap Snapshot Profiling, Abort Verification, AI Failure Audit & Packaging     |
-+---------------------------------------------------------------------------------------------------+
++---------------------------------------------------------------------------------------------------------+
+|                                HW2 IMPLEMENTATION MILESTONE ROADMAP                                      |
+|                                                                                                         |
+| [M0] Project Preparation & Architecture Baseline (Docs, Baseline Build, Audit Analysis)               |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M1] Algorithmic 88-Key Generation (MIDI 21–108, 52 White, 36 Black, Formula f = 440*2^((m-69)/12))    |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M2] React.memo Key Render Isolation (Isolated Pressed State, Zero Sibling Re-renders, Profiler)      |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M3] 8-Voice Polyphonic Synthesizer (Oscillator Voices, ADSR Envelope, noteOn/noteOff)                 |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M4] FIFO Voice Stealing Engine (Ordered Voice Registry, 9th Note Stealing, Click-Free Ramp)           |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M5] Concurrent FIFO AudioTaskQueue Integration (Async Fetch, AbortController, Decoding & Playback)     |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M6] Audio Visualizer & Piano Studio UI Assembly (Keyboard View, Sequencer, Canvas 60fps, Responsive) |
+|   │                                                                                                     |
+|   ▼                                                                                                     |
+| [M7] Final Quality Verification, Evidence Capture & Production Build (Profiling, Audits, Packaging)    |
++---------------------------------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 2. Work Breakdown Structure (WBS)
-
-### Phase 1: Concurrency Controller & FIFO Task Queue Architecture (Day 1)
-* **Goal:** Implement the asynchronous queue controller responsible for enqueueing audio tasks, orchestrating network streams, decoding audio buffers, and providing `AbortSignal` cancellation capabilities.
-* **Component:** [src/audio-queue-controller.ts](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/audio-queue-controller.ts)
-* **Implementation Tasks:**
-  1. **Contract Implementation:** Implement `AudioTaskQueue` matching the exact HW 2 criteria specification:
-     ```typescript
-     export class AudioTaskQueue {
-       private queue: AudioTask[] = [];
-       private isProcessing = false;
-       private activeController: AbortController | null = null;
-       async enqueue(trackUrl: string, title?: string): Promise<AudioBuffer>;
-     }
-     ```
-  2. **FIFO Execution Pipeline:**
-     - Maintain an internal queue array `queue: AudioTask[]`.
-     - When `enqueue()` is called, generate an `AudioTask` containing a dedicated `AbortController` and push to queue.
-     - Dispatch `processNext()` to process the oldest pending task first (`this.queue.shift()`).
-  3. **Streaming Download with Progress Calculation:**
-     - Fetch audio streams using `fetch(url, { signal: task.controller.signal })`.
-     - Read body via `ReadableStreamDefaultReader` to compute incremental download progress (0% to 90%).
-     - Periodically check `task.controller.signal.aborted` inside the chunk reader loop to terminate orphaned socket connections immediately upon cancellation.
-  4. **Cancellation Handlers:**
-     - `cancelActive()`: Aborts the actively downloading or decoding task.
-     - `cancelTask(taskId)`: Aborts a specific pending or active task in the queue.
-     - `clearQueue()`: Cancels active download and flushes all queued tasks with `DOMException('AbortError')`.
-  5. **Buffer Caching:** Store successfully decoded buffers in `bufferCache = new Map<string, AudioBuffer>()` to enable zero-latency replaying.
+## 2. Detailed Milestone Work Breakdown
 
 ---
 
-### Phase 2: Web Audio API Graph & Frequency Spectrum Engine (Day 2)
-* **Goal:** Architect the core Web Audio routing graph, integrate `AnalyserNode` for frequency analysis, and implement FFT resolution switching.
-* **Component:** [src/audio-engine.ts](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/audio-engine.ts)
-* **Implementation Tasks:**
-  1. **Autoplay Compliance & Lazy Context:**
-     - Create `ensureContext()` to initialize or resume `AudioContext` only after explicit user gestures, adhering to modern browser autoplay policies.
-  2. **Audio Routing Graph Construction:**
-     - Construct standard routing pipeline:
-       `AudioBufferSourceNode -> AnalyserNode -> GainNode -> AudioDestinationNode`.
-  3. **Dual FFT Resolution Switching:**
-     - Support dynamic toggle between **FFT 256** (produces 128 frequency bins) and **FFT 512** (produces 256 frequency bins) via `setFFTSize()`.
-     - Set `smoothingTimeConstant = 0.82` for visually fluid frequency decay without jitter.
-  4. **Master Volume & Muting:**
-     - Implement smooth linear gain ramps using `GainNode.gain.setValueAtTime()`.
+### Milestone M0: Project Preparation & Architectural Baseline
+
+| Field | Description |
+|---|---|
+| **Objective** | Audit inherited Lab 2 HW2 codebase, establish baseline build integrity, analyze architectural requirements for 88-key piano integration, and author project documentation. |
+| **Tasks** | 1. Inspect existing project repository: `package.json`, `src/App.tsx`, `audio-engine.ts`, `audio-queue-controller.ts`, `AudioVisualizer.tsx`.<br>2. Verify production build execution using `npm run build` (`tsc && vite build`).<br>3. Review architectural principles from Lab 2 EX2 (event delegation, state closures, avoiding orphan listeners).<br>4. Create and synchronize `AI_FAILURE_AUDIT.md`, `PROJECT_STRUCTURE.md`, and `TASK_DECOMPOSITION.md`. |
+| **Files** | • `AI_FAILURE_AUDIT.md` (Created / Updated)<br>• `PROJECT_STRUCTURE.md` (Created / Updated)<br>• `TASK_DECOMPOSITION.md` (Created / Updated) |
+| **Acceptance Criteria** | 1. `npm run build` completes with exit code 0 and zero TypeScript/Vite errors.<br>2. All 3 documentation files are fully articulated, synchronized, and grounded in the actual codebase.<br>3. Installed package versions documented without invention (React 18.3.1, TypeScript 5.6.3, Vite 5.4.21). |
+| **Testing** | Execute `npm run build` in terminal; inspect terminal output and bundle artifact sizes in `dist/`. |
+| **Suggested Git Commit** | `git commit -m "docs(hw2): prepare piano integration architecture"` *(Suggested milestone commit; not executed automatically)* |
+| **Evidence to Capture** | Terminal output of successful `npm run build`; git status confirming clean documentation files. |
 
 ---
 
-### Phase 3: Memory Safety Protocol & Explicit Node Lifecycle Management (Day 3)
-* **Goal:** Eliminate memory leaks by strictly enforcing single-use `AudioBufferSourceNode` disposal and unbinding closures.
-* **Component:** [src/audio-engine.ts](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/audio-engine.ts)
-* **Implementation Tasks:**
-  1. **Disposal Sequence (`cleanupCurrentSource`):**
-     - Step 1: Nullify `onended` handler to break circular references and prevent stale finish callbacks.
-     - Step 2: Invoke `currentSource.stop()` wrapped in a protective try-catch block.
-     - Step 3: Invoke `currentSource.disconnect()` to remove the node from the audio graph.
-     - Step 4: Set `currentSource = null` to make the node eligible for Garbage Collection.
-  2. **Fresh Node Instantiation per Playback:**
-     - Because `AudioBufferSourceNode` is strictly single-use per W3C specification, always call `cleanupCurrentSource()` before instantiating a new node with `ctx.createBufferSource()`.
-  3. **Telemetry Tracking:**
-     - Maintain atomic counters `totalNodesCreated` and `totalNodesCleaned`.
-     - Expose metrics through `getMetrics()` to verify `nodesCreated === nodesCleaned` at playback finish.
-  4. **Engine Teardown (`dispose`):**
-     - Disconnect analyser and gain nodes, close `AudioContext`, and clear all event listeners upon component unmount.
+### Milestone M1: Algorithmic 88-Key Keyboard Generation
+
+| Field | Description |
+|---|---|
+| **Objective** | Algorithmically generate all 88 piano keys from MIDI A0 (`21`) to C8 (`108`) without hardcoding individual JSX elements, computing exact frequencies and classifying white/black keys. |
+| **Tasks** | 1. Define piano data models in `src/types/piano-types.ts` (`PianoKeyData`, `KeyType`, `Octave`).<br>2. Implement algorithmic generator in `src/utils/piano-generator.ts` iterating MIDI numbers 21 through 108 inclusive.<br>3. Implement mathematical frequency formula: $f = 440 \times 2^{(midi - 69) / 12}$.<br>4. Implement semitone cycle pattern `(midi % 12)` to classify exactly 52 white keys and 36 black keys.<br>5. Format standard scientific pitch notation (e.g., $A_0$, $C_4$, $A_4 = 440\text{Hz}$, $C_8$). |
+| **Files to Create / Modify** | • `src/types/piano-types.ts` (New)<br>• `src/utils/piano-generator.ts` (New) |
+| **Acceptance Criteria** | 1. Algorithm generates an array of **exactly 88 keys**.<br>2. Contains **exactly 52 white keys** and **exactly 36 black keys**.<br>3. $A_4$ (`MIDI 69`) evaluates to exactly $440.00\text{ Hz}$; $A_0$ (`MIDI 21`) evaluates to $27.50\text{ Hz}$; $C_8$ (`MIDI 108`) evaluates to $4186.01\text{ Hz}$.<br>4. Zero hardcoded JSX keys. |
+| **Testing** | Node/browser assertions checking key counts: `keys.length === 88`, `keys.filter(k => k.keyType === 'white').length === 52`, `keys.filter(k => k.keyType === 'black').length === 36`. |
+| **Suggested Git Commit** | `git commit -m "feat(piano): generate algorithmic 88-key keyboard"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | Console assertion logs printing key count verification table and frequency calculations for reference notes ($A_0, C_4, A_4, C_8$). |
 
 ---
 
-### Phase 4: 60fps High-Performance Canvas Visualizer Engine (Day 4)
-* **Goal:** Build a 60fps audio visualizer powered by HTML5 Canvas and `requestAnimationFrame`, achieving zero React state thrashing.
-* **Component:** [src/AudioVisualizer.tsx](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/AudioVisualizer.tsx)
-* **Implementation Tasks:**
-  1. **Zero State Thrashing Architecture:**
-     - Prevent re-rendering overhead by eliminating `useState` / `setState` inside the `requestAnimationFrame` callback.
-     - Store dynamic visualizer parameters (`mode`, `analyserNode`, `isPlaying`, `showFps`) in mutable React `useRef` handles.
-  2. **In-Place Frequency Data Buffers:**
-     - Pre-allocate `Uint8Array` for frequency data (`getByteFrequencyData`) and time-domain waveform data (`getByteTimeDomainData`).
-     - Re-use arrays on every frame to avoid generating micro-garbage.
-  3. **4 Distinct Visualization Modes:**
-     - **Mode 1: Bars (Equalizer):** Vertical bars with cyber neon gradient and gravity-falling peak caps (`peaksRef`).
-     - **Mode 2: Waveform (Oscilloscope):** Continuous time-domain laser wave with outer bloom glow.
-     - **Mode 3: Radial (Circular Spectrum):** 360-degree radial frequency bars radiating from a central pulsing bass core.
-     - **Mode 4: Particles (Starfield):** Audio-reactive floating particle field whose velocity and radii pulse with frequency bins.
-  4. **Embedded Performance HUD:**
-     - Calculate moving-average FPS and frame time (ms) directly inside RAF.
-     - Render metrics directly to Canvas using `ctx.fillText()`, avoiding DOM paint thrashing.
+### Milestone M2: React.memo Key Render Isolation
+
+| Field | Description |
+|---|---|
+| **Objective** | Implement memoized `PianoKey` components using `React.memo` such that pressing or releasing any single key re-renders **only that specific key component**. |
+| **Tasks** | 1. Create `src/components/PianoKey.tsx` wrapped in `React.memo` with custom equality comparison or stable primitive props.<br>2. Maintain an isolated pressed visual state (`isPressed`, `aria-pressed`).<br>3. Ensure event callbacks (`onNoteOn`, `onNoteOff`) passed to `PianoKey` have stable references (via `useCallback` or parent event delegation).<br>4. Implement `src/components/Piano.tsx` container rendering the 88 keys in natural piano layout (white key horizontal flow with absolute-positioned black key overlays). |
+| **Files to Create / Modify** | • `src/components/PianoKey.tsx` (New)<br>• `src/components/Piano.tsx` (New)<br>• `src/App.css` (Update keyboard styles) |
+| **Acceptance Criteria** | 1. Pressing or releasing any single piano key triggers a re-render of **only 1 `PianoKey` component**.<br>2. The remaining 87 `PianoKey` components are skipped during Virtual DOM reconciliation.<br>3. Parent `Piano` container does not re-render unnecessarily on individual key presses. |
+| **Testing** | Profile key interactions with **React Developer Tools Profiler**: verify that 87 components display *"Did not render"* and only the pressed key renders. |
+| **Suggested Git Commit** | `git commit -m "feat(piano): isolate key renders with React memo"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | React DevTools Profiler flamegraph screenshot highlighting 1 active render and 87 memoized grayed-out keys. |
 
 ---
 
-### Phase 5: Client-Side Synthetic Audio Generator & Offline WAV Stems (Day 5)
-* **Goal:** Ensure 100% deterministic, offline evaluation of the audio visualizer without relying on flaky third-party CDNs or triggering CORS blocks.
-* **Component:** [src/audio-synth.ts](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/audio-synth.ts)
-* **Implementation Tasks:**
-  1. **Binary PCM WAV Encoder:**
-     - Implement `encodeWav()` to construct standard 44-byte RIFF/WAVE headers followed by interleaved 16-bit stereo PCM audio samples.
-     - Export synthetic tracks as local `Blob` URLs (`URL.createObjectURL(blob)`).
-  2. **Procedural Music Generation:**
-     - Track 1: **Cyber Synthwave** (120 BPM) — Synth leads, analog chords, and punchy kick/snare rhythm.
-     - Track 2: **Deep Bass Pulse** (95 BPM) — Sub-bass sweeps and harmonic distortion for low-frequency spectrum testing.
-     - Track 3: **Neon Ambient Odyssey** (75 BPM) — Ethereal pad textures and stereo panning for mid-to-high frequency testing.
-     - Track 4: **Fast Arpeggiator** (140 BPM) — Rapid 16th-note arpeggios for testing transient visualizer responsiveness.
+### Milestone M3: Eight-Voice Polyphonic Synthesizer
+
+| Field | Description |
+|---|---|
+| **Objective** | Build a native Web Audio polyphonic synthesizer engine supporting up to 8 simultaneous oscillator voices with dedicated gain envelopes and click-free note activation. |
+| **Tasks** | 1. Create `src/services/polyphonic-engine.ts` managing an internal array of up to 8 `Voice` instances.<br>2. For each voice, instantiate an `OscillatorNode` (customizable waveform: sine, triangle, sawtooth) and a dedicated `GainNode`.<br>3. Implement `noteOn(midiNumber, frequency)`: create and start oscillator, apply quick linear attack envelope ($5\text{ms}$) to eliminate DC clicks.<br>4. Implement `noteOff(midiNumber)`: apply exponential decay release envelope ($100\text{ms}$), then stop and disconnect nodes.<br>5. Route all active voices through a master synthesizer gain node into the studio `AnalyserNode`. |
+| **Files to Create / Modify** | • `src/services/polyphonic-engine.ts` (New)<br>• `src/audio-engine.ts` (Expose audio graph connection points) |
+| **Acceptance Criteria** | 1. Synthesizer plays up to 8 distinct notes simultaneously with clear harmonic separation and zero clipping.<br>2. Releasing a key cleanly terminates the corresponding voice node without residual background drone.<br>3. Accurate equal-tempered frequency reproduction verified against Web Audio oscillator frequency values. |
+| **Testing** | Play an 8-note chord (e.g., C Major 9: C3, E3, G3, B3, D4, F4, A4, C5); verify all 8 oscillators are active in audio graph. |
+| **Suggested Git Commit** | `git commit -m "feat(audio): implement eight-voice polyphonic synthesizer"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | Web Audio Inspector / DevTools log showing 8 concurrent active `OscillatorNode`s connected to Master Gain. |
 
 ---
 
-### Phase 6: Enterprise Control Dashboard & Real-Time Telemetry Monitor (Day 6)
-* **Goal:** Create a responsive, high-contrast studio interface with real-time queue observation and audio controls.
-* **Components:** [src/App.tsx](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/App.tsx) & [src/App.css](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/src/App.css)
-* **Implementation Tasks:**
-  1. **Real-Time Queue Dashboard:**
-     - Display active task with live streaming download percentage and animated pulse.
-     - List pending FIFO tasks with task ID, title, and individual cancel button.
-     - Provide queue history table showing completed and cancelled tasks with timestamps.
-  2. **Memory Safety Telemetry Monitor:**
-     - Real-time diagnostic cards showing:
-       - Active Source Node (`true` / `false`)
-       - Total Nodes Created vs Total Nodes Cleaned
-       - AudioContext State (`running` / `suspended` / `closed`)
-       - Current FFT Resolution & Active Frequency Bins
-  3. **Audio Transport Controls:**
-     - Play, Pause, Resume, Stop, Volume Slider, Mute Toggle.
-     - Low-frequency throttled seek bar (polled at 4Hz / 250ms interval) to keep UI interactive without interfering with 60fps canvas.
-  4. **Custom Audio Enqueueing:**
-     - Input field allowing arbitrary remote audio URLs or local file testing.
+### Milestone M4: FIFO Voice Stealing Engine
+
+| Field | Description |
+|---|---|
+| **Objective** | Implement strict First-In, First-Out (FIFO) voice stealing when a ninth concurrent note is triggered, gracefully releasing the oldest active voice to make room for the new note. |
+| **Tasks** | 1. Implement ordered `activeVoices` queue inside `PolyphonicEngine` tracking allocation timestamps.<br>2. Implement capacity detection: if `activeVoices.length >= 8` when `noteOn()` is called, trigger voice stealing.<br>3. Steal the oldest voice at index 0 (`activeVoices.shift()`):<br>   - Rapidly ramp stolen voice gain to zero over $5\text{ms}$ to prevent audible pop/click.<br>   - Stop and disconnect the stolen oscillator node.<br>4. Allocate the new 8th voice slot for the newly triggered MIDI note and push to back of queue.<br>5. Notify UI of stolen voice to update key pressed states synchronously. |
+| **Files to Create / Modify** | • `src/services/polyphonic-engine.ts` (Update voice stealing algorithm)<br>• `src/types/piano-types.ts` (Add voice telemetry types) |
+| **Acceptance Criteria** | 1. Triggering 8 notes holds all 8 active.<br>2. Triggering a 9th note immediately steals the 1st (oldest) note in strict FIFO order.<br>3. Active oscillator count never exceeds 8 at any moment.<br>4. Zero audible pops or clicks during rapid voice stealing. |
+| **Testing** | Programmatically play notes sequentially: $N_1, N_2, \dots, N_9$. Verify $N_1$ is stopped upon $N_9$ trigger, leaving $N_2 \dots N_9$ active. |
+| **Suggested Git Commit** | `git commit -m "feat(audio): implement FIFO voice stealing"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | Console telemetry log recording: `[FIFO Steal] Voice capacity reached (8/8). Stealing oldest voice: MIDI 21 (A0). Allocating new voice: MIDI 30.` |
 
 ---
 
-### Phase 7: Heap Snapshot Profiling, Abort Verification & AI Audit (Day 7)
-* **Goal:** Verify zero-leak invariants using Chrome DevTools Memory profiler, document AI failure modes, and package the deliverable.
-* **Components:** [AI_FAILURE_AUDIT.md](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/AI_FAILURE_AUDIT.md), [README.md](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW2/README.md)
-* **Implementation Tasks:**
-  1. **Memory Heap Profiling:**
-     - Take baseline heap snapshot; play, stop, and switch 50 tracks sequentially; take post-test heap snapshot.
-     - Verify zero detached `AudioBufferSourceNode` and zero detached `HTMLCanvasElement` leaks.
-  2. **AbortController Verification:**
-     - Enqueue remote tracks, trigger cancellation during download, and capture console evidence confirming `task.controller.signal.aborted === true`.
-  3. **AI Failure Mode Audit:**
-     - Document 3 UI defect scenarios: raw `innerHTML` XSS vulnerability, unmanaged Web Audio node accumulation, and 60fps state thrashing.
-     - Provide reproduction steps, root cause analysis, and verified production refactors.
+### Milestone M5: Concurrent FIFO AudioTaskQueue Integration
+
+| Field | Description |
+|---|---|
+| **Objective** | Integrate the existing asynchronous `AudioTaskQueue` architecture into the piano studio, enabling background stem loading, FIFO task execution, and `AbortController` cancellation. |
+| **Tasks** | 1. Review and bind `src/audio-queue-controller.ts` with the piano studio state.<br>2. Support loading external or synthetic PCM WAV backing tracks in strict FIFO sequence.<br>3. Verify `AbortController` / `AbortSignal` cancellation tokens during in-flight network streaming and decoding.<br>4. Enforce explicit `AudioBufferSourceNode` disposal on playback stop or track replacement.<br>5. Implement a step sequencer interface (`src/components/Sequencer.tsx`) that schedules notes against the audio clock. |
+| **Files to Create / Modify** | • `src/components/Sequencer.tsx` (New)<br>• `src/audio-queue-controller.ts` (Verify integration hooks)<br>• `src/audio-engine.ts` (Lifecycle integration) |
+| **Acceptance Criteria** | 1. Enqueued audio tracks process in strict FIFO sequence without race conditions.<br>2. Cancelling an active task halts the network stream instantly with `AbortError`.<br>3. Single-use `AudioBufferSourceNode`s are strictly cleaned up, verified via `nodesCreated === nodesCleaned` telemetry. |
+| **Testing** | Trigger concurrency stress test (enqueue 4 tracks at once); cancel active task mid-flight; verify subsequent task processes in FIFO order. |
+| **Suggested Git Commit** | `git commit -m "feat(sequencer): integrate concurrent FIFO audio queue"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | DevTools Network panel showing `(canceled)` status on aborted fetch; queue table displaying completed FIFO task history. |
 
 ---
 
-## 3. Risk Management & Mitigation Matrix
+### Milestone M6: Audio Visualizer & Piano Studio UI Assembly
 
-| # | Risk Description | Likelihood | Impact | Engineering Mitigation Strategy |
-|---|---|---|---|---|
-| **R1** | **Web Audio Node Leaks** (`AudioBufferSourceNode` retained indefinitely) | High | Critical | Implement mandatory `cleanupCurrentSource()` method that stops, disconnects, and dereferences old nodes before allocating new ones. Track nodes via live telemetry counters. |
-| **R2** | **Network Socket Leaks on Task Cancellation** | Medium | High | Pass `task.controller.signal` into `fetch()` and inspect `signal.aborted` inside the `ReadableStreamDefaultReader` loop, immediately cancelling stream readers upon abort. |
-| **R3** | **React State Thrashing at 60 FPS** | High | Critical | Completely decouple `requestAnimationFrame` loop from React's state tree. Access all frame data via React `useRef` handles and render the FPS counter directly to Canvas via `ctx.fillText()`. |
-| **R4** | **Browser Autoplay Policy Blocking Audio** | High | Medium | Instantiate or resume `AudioContext` only on explicit user interactions (`click`, `play`, `enqueue`). Guard calls with `.resume().catch(...)`. |
-| **R5** | **CORS & Network Flakiness during Evaluation** | Medium | High | Integrate client-side 16-bit PCM WAV synthesizer (`audio-synth.ts`) generating 4 offline audio stems as instant local Blob URLs. |
-| **R6** | **XSS Injection via Audio File Metadata** | Low | Critical | Completely eliminate `innerHTML` throughout the application. Rely exclusively on React JSX text escaping and secure DOM `replaceChildren()`. |
+| Field | Description |
+|---|---|
+| **Objective** | Assemble the full 88-Key Piano Studio workstation, integrating keyboard controls, polyphonic synthesizer, FIFO sequencer, and 60 FPS Canvas spectrum visualizer into a responsive interface. |
+| **Tasks** | 1. Mount `Piano.tsx` inside `App.tsx` with responsive horizontal scrolling, octave navigation, and key labels.<br>2. Connect synthesizer audio output into `AudioEngine`'s `AnalyserNode` (FFT 256/512).<br>3. Verify `AudioVisualizer.tsx` renders frequency spectrum in real time (bars, waveform, radial, particles) with zero React state updates.<br>4. Implement keyboard shortcuts (mapping computer keyboard QWERTY keys to piano octaves) with auto-repeat flood guards.<br>5. Integrate master volume, polyphony indicator, and telemetry HUD into responsive glassmorphism UI. |
+| **Files to Create / Modify** | • `src/App.tsx` (Assemble layout and state hooks)<br>• `src/App.css` (Keyboard layout, responsive styling, scroll indicators)<br>• `src/AudioVisualizer.tsx` (Verify dual audio input analysis) |
+| **Acceptance Criteria** | 1. Studio presents unified interface: 88-key piano, transport controls, FIFO queue monitor, and real-time visualizer.<br>2. Playing piano keys displays immediate real-time frequency animations on the Canvas visualizer.<br>3. UI maintains 60 FPS rendering without stuttering during polyphonic chord glissandos. |
+| **Testing** | Play rapid 8-note chords and glissandos across the piano; inspect FPS HUD in visualizer and verify frame rate remains at ~60 FPS. |
+| **Suggested Git Commit** | `git commit -m "feat(ui): assemble 88-key polyphonic piano studio"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | Full-screen workstation screenshot showing active piano keys, 60 FPS spectrum visualizer, and telemetry monitor. |
+
+---
+
+### Milestone M7: Final Testing, Verification & Production Packaging
+
+| Field | Description |
+|---|---|
+| **Objective** | Perform end-to-end verification across all assignment criteria, capture grading evidence, complete memory profiling, and execute final production build. |
+| **Tasks** | 1. Verify 88-key generation: assert 88 total, 52 white, 36 black keys, and exact frequency formulas.<br>2. Verify React.memo isolation using React Developer Tools Profiler.<br>3. Verify 8-voice polyphony and 9th-note FIFO voice stealing with audio telemetry.<br>4. Verify queue concurrency and AbortController cancellation in Chrome DevTools Network panel.<br>5. Verify zero memory leaks: `nodesCreated === nodesCleaned` and stable heap snapshots.<br>6. Execute final production build: `npm run build` (`tsc && vite build`).<br>7. Final review of documentation files: `AI_FAILURE_AUDIT.md`, `PROJECT_STRUCTURE.md`, `TASK_DECOMPOSITION.md`. |
+| **Files to Create / Modify** | • All documentation files finalized.<br>• Production artifacts compiled into `dist/`. |
+| **Acceptance Criteria** | 1. Zero build errors or TypeScript diagnostic warnings.<br>2. All 4 AI failure modes documented with reproduction protocols and DevTools evidence.<br>3. All milestones M0–M7 completed with clear verification logs. |
+| **Testing** | Run full verification test suite; run `npm run build` and `npm run preview`. |
+| **Suggested Git Commit** | `git commit -m "test(hw2): verify piano polyphony and sequencer behavior"` *(Suggested milestone commit)* |
+| **Evidence to Capture** | Comprehensive test run logs, React Profiler export, and production bundle size report. |
+
+---
+
+## 3. Mandatory Milestone Git Commit Reference
+
+The table below outlines the exact suggested commit messages matching the project specifications.
+
+> [!IMPORTANT]
+> These are suggested milestone commit messages to be executed progressively as each feature milestone is implemented and verified. They are not claimed to have been committed yet (current Git HEAD is `bd9440d`).
+
+| Milestone | Suggested Git Commit Command | Status |
+|---|---|---|
+| **M0** | `git commit -m "docs(hw2): prepare piano integration architecture"` | Planned (Current Milestone Deliverable) |
+| **M1** | `git commit -m "feat(piano): generate algorithmic 88-key keyboard"` | Planned |
+| **M2** | `git commit -m "feat(piano): isolate key renders with React memo"` | Planned |
+| **M3** | `git commit -m "feat(audio): implement eight-voice polyphonic synthesizer"` | Planned |
+| **M4** | `git commit -m "feat(audio): implement FIFO voice stealing"` | Planned |
+| **M5** | `git commit -m "feat(sequencer): integrate concurrent FIFO audio queue"` | Planned |
+| **M6** | `git commit -m "feat(ui): assemble 88-key polyphonic piano studio"` | Planned |
+| **M7** | `git commit -m "test(hw2): verify piano polyphony and sequencer behavior"` | Planned |
 
 ---
 
 ## 4. Definition of Done (DoD) Checklist
 
-- [x] **Criterion 1 (Engine):** Web Audio API integration with `AnalyserNode` supporting dynamic toggle between FFT 256 (128 bins) and FFT 512 (256 bins).
-- [x] **Criterion 2 (Concurrency Controller):** Strict FIFO Queue in `audio-queue-controller.ts` handling simultaneous track downloads and buffer decoding.
-- [x] **Criterion 3 (Memory Safety):** Explicit cleanup of `AudioBufferSourceNode`s (stop, disconnect, unbind); cancellation tokens via `AbortController` cleanly severing network streams; zero memory leaks.
-- [x] **Criterion 4 (Performance):** 60fps HTML5 Canvas visualizer driven by `requestAnimationFrame` with zero React state thrashing across 4 visualization modes (Bars, Waveform, Radial, Particles).
-- [x] **Offline Testability:** Synthetic offline WAV generator provides 4 playable tracks without external network dependencies.
-- [x] **AI Failure Audit:** Comprehensive `AI_FAILURE_AUDIT.md` delivered, analyzing XSS, memory leaks, and state thrashing.
-- [x] **Code Cleanliness & Build:** Zero TypeScript compiler errors with `npm run build` (`tsc && vite build`).
-- [x] **Specification Documentation:** `PROJECT_STRUCTURE.md` and `TASK_DECOMPOSITION.md` complete, synchronized, and committed.
+- [x] **M0 Documentation Complete:** `AI_FAILURE_AUDIT.md`, `PROJECT_STRUCTURE.md`, and `TASK_DECOMPOSITION.md` updated and synchronized.
+- [ ] **88-Key Keyboard Generation:** Algorithmically generates MIDI 21–108 (52 white, 36 black keys) without hardcoded JSX.
+- [ ] **Equal Temperament Tuning:** $f = 440 \times 2^{(midi - 69)/12}$ verified for all 88 notes.
+- [ ] **React.memo Render Isolation:** Pressing 1 key re-renders only that key component, verified via React Profiler.
+- [ ] **8-Voice Polyphony:** Synthesizer plays up to 8 concurrent oscillator voices without digital clipping.
+- [ ] **FIFO Voice Stealing:** 9th concurrent note steals the oldest voice with smooth click-free ramp.
+- [ ] **Concurrent FIFO Queue:** AudioTaskQueue processes audio loading in FIFO sequence with AbortController tokens.
+- [ ] **Memory Safety:** Explicit lifecycle cleanup of all audio nodes (`nodesCreated === nodesCleaned`).
+- [ ] **Zero State Thrashing Visualizer:** Canvas visualizer runs at 60 FPS via `requestAnimationFrame` with zero React re-renders.
+- [ ] **Production Build:** Passes `npm run build` with zero errors.

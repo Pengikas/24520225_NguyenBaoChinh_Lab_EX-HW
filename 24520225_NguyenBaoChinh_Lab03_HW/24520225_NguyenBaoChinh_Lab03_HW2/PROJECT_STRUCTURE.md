@@ -1,221 +1,314 @@
-# PROJECT_STRUCTURE.md
+# PROJECT_STRUCTURE.md – 88-Key Polyphonic Piano & Concurrent FIFO Sequencer
 
-## Homework 2: Concurrent FIFO Audio Visualizer Queue Engine
-
-**Course:** Web Application Development (Lab 02 — Homework 2)  
+**Course:** Web Application Development (Lab 03 — Homework 2)  
 **Student:** Nguyen Bao Chinh (MSSV: 24520225)  
-**Project:** Concurrent FIFO Audio Visualizer Queue Engine  
-**Deliverable:** Advanced asynchronous concurrency controller with `AbortSignal` cancellation tokens, Web Audio API frequency analysis engine (FFT 256/512 bins), zero-memory-leak lifecycle management for `AudioBufferSourceNode`s, and 60fps hardware-accelerated Canvas visualizer with zero React state thrashing.  
-**Core Technologies:** React 18, TypeScript 5, Vite, Web Audio API (`AudioContext`, `AnalyserNode`, `GainNode`, `AudioBufferSourceNode`), HTML5 Canvas 2D, AbortController/AbortSignal.
+**Project:** 88-Key Polyphonic Piano Studio & Concurrent FIFO Audio Sequencer  
+**Repository Branch:** `main`  
+**Current Baseline Commit:** `bd9440d` (`chore(hw2): initialize piano studio project`)
 
 ---
 
-## 1. Directory Structure
+## 1. Project Overview
+
+The **88-Key Polyphonic Piano Studio & Concurrent FIFO Sequencer** is an advanced interactive Web Audio synthesis and visualizer workstation built with React, TypeScript, and Vite. The system synthesizes four foundational concepts from Web Application Development:
+
+1. **Algorithmic 88-Key Generation (Legacy Slide 27):** Complete mathematical generation of all 88 acoustic piano keys from MIDI note A0 (`21`) to C8 (`108`), comprising exactly 52 white keys and 36 black keys. Frequencies are dynamically computed using standard equal temperament:
+   $$f = 440 \times 2^{\frac{\text{midi} - 69}{12}}$$
+2. **React.memo Render Isolation (Lab 2 Slide 21):** High-frequency render isolation where each piano key is wrapped in `React.memo` with isolated pressed state and stable callbacks. Pressing or releasing a key re-renders **only that single key component**, preventing catastrophic 88-element re-render cascades.
+3. **8-Voice Polyphony with Strict FIFO Voice Stealing:** Synthesizer architecture supporting up to 8 concurrent Web Audio `OscillatorNode` voices. When a 9th concurrent note is triggered, the synthesizer automatically identifies and steals the oldest active voice in First-In, First-Out (FIFO) order, applying smooth gain de-clicking before allocating the new voice.
+4. **Concurrent FIFO AudioTaskQueue & Hardware Visualizer (Lab 2 HW2):** Integration of an asynchronous audio queue featuring `AbortController` cancellation tokens, explicit memory safety lifecycle management for `AudioBufferSourceNode`s, and a 60 FPS Canvas spectrum visualizer driven by `requestAnimationFrame` with zero React state thrashing.
+5. **Architectural Principles from Lab 2 EX2:** Leveraging clean unidirectional data flow, root event delegation for pointer interactions, and ref-stabilized dispatch to avoid orphaned event listeners and stale closures.
+
+---
+
+## 2. Technology Stack & Runtime Environment
+
+The table below documents the **actual versions** installed and resolved in the project repository (`package.json` and `package-lock.json`):
+
+| Technology / Package | Specification in `package.json` | Installed / Resolved Version | Classification | Purpose in Project |
+|---|---|---|---|---|
+| **React** | `^18.3.1` | `18.3.1` | Production Dependency | Core component framework, Virtual DOM reconciliation, `React.memo` render isolation, concurrent hook dispatching |
+| **React DOM** | `^18.3.1` | `18.3.1` | Production Dependency | DOM renderer for mounting the React tree into the browser host element (`#root`) |
+| **TypeScript** | `^5.6.3` | `5.6.3` | Dev Dependency | Strict static typing, interface contracts (`PianoKeyData`, `AudioTask`, `AudioEngineMetrics`), generic state modeling |
+| **Vite** | `^5.4.10` | `5.4.21` (resolved in lockfile) | Dev Dependency | Next-generation ESM dev server (HMR < 50ms) and Rollup-based production bundler |
+| **@vitejs/plugin-react** | `^4.3.3` | `4.3.3` | Dev Dependency | Vite plugin providing Fast Refresh and Babel/SWC JSX transformation |
+| **Web Audio API** | Native W3C Standard | Browser Native (`AudioContext`) | Hardware API | Native hardware-timed audio graph (`AudioContext`, `OscillatorNode`, `GainNode`, `AnalyserNode`, `AudioBufferSourceNode`) |
+| **HTML5 Canvas 2D** | Native W3C Standard | Browser Native (`CanvasRenderingContext2D`) | Graphics API | 60 FPS frequency spectrum visualizer rendered in hardware without React DOM overhead |
+| **Vitest** | *Not Installed* | *Planned (M7)* | Testing Framework | Scheduled for addition in Milestone M7 for automated algorithmic key and frequency unit testing |
+
+*Note on React Versioning:* The project currently executes on **React 18.3.1** (with `React.StrictMode` enabled in `src/main.tsx`). Architecture and hooks are designed to be forward-compatible with **React 19** compiler optimizations and automatic memoization.
+
+---
+
+## 3. Directory Tree & Implementation Status
+
+The file structure below explicitly distinguishes between **currently implemented files** and **planned integration files**:
 
 ```text
-24520225_NguyenBaoChinh_Lab02_HW2/
-├── index.html                  # Semantic HTML5 host shell with viewport, dark theme meta & #root container
-├── package.json                # Project dependencies (React 18, TypeScript 5, Vite) & execution scripts
-├── package-lock.json           # Deterministic dependency lockfile
-├── tsconfig.json               # TypeScript compiler configuration (strict mode, JSX React 18, DOM types)
-├── vite.config.ts              # Vite bundler configuration with React plugin
-├── TASK_DECOMPOSITION.md       # 1-Week engineering roadmap, Work Breakdown Structure (WBS), risk matrix & DoD
-├── PROJECT_STRUCTURE.md        # Technical architecture, component contracts, sequence diagrams & quality gates
-├── AI_FAILURE_AUDIT.md         # Comprehensive engineering audit of 3 AI failure modes, diagnostics & clean fixes
-├── README.md                   # Assignment overview, criteria verification & execution instructions
+24520225_NguyenBaoChinh_Lab03_HW2/
+├── .gitignore                          [EXISTING] Standard node_modules, dist, and OS ignore rules
+├── index.html                          [EXISTING] HTML5 host shell with #root container and dark theme
+├── package.json                        [EXISTING] Dependency definitions and npm scripts (dev, build, preview)
+├── package-lock.json                   [EXISTING] Deterministic dependency lockfile
+├── tsconfig.json                       [EXISTING] TypeScript compiler configuration (ES2020, strict mode)
+├── vite.config.ts                      [EXISTING] Vite configuration with @vitejs/plugin-react
+├── README.md                           [EXISTING] Homework overview and setup guide
+├── AI_FAILURE_AUDIT.md                 [EXISTING / UPDATED] Detailed audit of 4 AI defect modes, DevTools proofs & fixes
+├── PROJECT_STRUCTURE.md                [EXISTING / UPDATED] Authoritative architectural blueprint & module contracts
+├── TASK_DECOMPOSITION.md               [EXISTING / UPDATED] M0–M7 execution milestones, DoD criteria & git commit plans
+├── dist/                               [EXISTING] Production build output generated by `npm run build`
+│   ├── index.html                      (Production HTML entrypoint)
+│   └── assets/                         (Compiled CSS and JS bundles)
 └── src/
-    ├── main.tsx                # React 18 bootstrapping entrypoint with React.StrictMode
-    ├── App.tsx                 # Interactive audio studio harness, telemetry dashboard & queue control interface
-    ├── App.css                 # Cyberpunk dark glassmorphism design system & responsive layout styles
-    ├── AudioVisualizer.tsx     # 60fps Canvas visualizer driven by requestAnimationFrame (zero state thrashing)
-    ├── audio-engine.ts         # Web Audio API engine, AnalyserNode (FFT 256/512), and explicit node lifecycle disposal
-    ├── audio-queue-controller.ts # Strict FIFO concurrency queue controller with AbortController cancellation tokens
-    └── audio-synth.ts          # Offline 16-bit PCM WAV synthesizer & preset audio generator (CORS-free evaluation)
+    ├── main.tsx                        [EXISTING] Application entrypoint mounting <App /> with StrictMode
+    ├── App.tsx                         [EXISTING] Studio container: UI state, telemetry dashboard & audio queue controls
+    ├── App.css                         [EXISTING] Dark glassmorphism styles, cyber neon badges & responsive layout
+    ├── AudioVisualizer.tsx             [EXISTING] 60 FPS HTML5 Canvas visualizer driven by requestAnimationFrame
+    ├── audio-engine.ts                 [EXISTING] Web Audio graph, AnalyserNode (FFT 256/512), and explicit node disposal
+    ├── audio-queue-controller.ts       [EXISTING] Concurrent FIFO task queue with AbortController tokens & caching
+    ├── audio-synth.ts                  [EXISTING] Offline 16-bit PCM WAV synthesizer producing test stems without CORS
+    │
+    │   ── PLANNED INTEGRATION MODULES (Milestones M1 – M6) ──
+    ├── types/
+    │   └── piano-types.ts              [PLANNED - M1] Types: KeyType, PianoKeyData, VoiceState, VoiceRegistry
+    ├── utils/
+    │   └── piano-generator.ts          [PLANNED - M1] Algorithmic 88-key generator & equal temperament frequency formula
+    ├── components/
+    │   ├── Piano.tsx                   [PLANNED - M2] 88-key keyboard view, horizontal scroll container & delegation
+    │   ├── PianoKey.tsx                [PLANNED - M2] Memoized single piano key component wrapped in React.memo
+    │   └── Sequencer.tsx               [PLANNED - M5] Multi-track FIFO sequencer integrating keyboard with AudioTaskQueue
+    └── services/
+        └── polyphonic-engine.ts        [PLANNED - M3/M4] 8-voice polyphonic oscillator manager & FIFO voice stealing engine
 ```
 
 ---
 
-## 2. File Responsibilities
+## 4. Module Responsibilities & Contracts
 
-| File | Responsibility | Key Exports / Elements | Design Invariants & Standards |
+### 4.1 Existing Implemented Modules
+
+| Module Path | Implementation State | Core Responsibilities | Key Exports / Classes |
 |---|---|---|---|
-| `src/audio-queue-controller.ts` | Concurrency controller & FIFO audio task processing | `AudioTaskQueue`, `AudioTask`, `QueueSubscriber` | Strict FIFO ordering; AbortSignal cancellation tokens per task; chunk-based stream downloading with progress calculation; Web Audio buffer decoding and caching. |
-| `src/audio-engine.ts` | Web Audio graph management & memory safety | `AudioEngine`, `FFTSize`, `AudioEngineMetrics`, `PlaybackState` | Graph: `Source -> Analyser -> Gain -> Destination`; dynamic FFT 256/512 bin switching; explicit cleanup via `cleanupCurrentSource()` (stop, disconnect, nullify handlers); browser autoplay policy compliance. |
-| `src/AudioVisualizer.tsx` | 60fps high-performance Canvas audio visualizer | `AudioVisualizer`, `VisualizerMode` (`bars`, `waveform`, `radial`, `particles`) | RAF render loop completely decoupled from React render cycle; all frame data accessed via React `useRef` to guarantee **Zero State Thrashing**; embedded real-time FPS & frame-time HUD. |
-| `src/audio-synth.ts` | Synthetic offline audio generation for deterministic testing | `PRESET_TRACKS`, `PresetTrack`, `encodeWav()` | Client-side 16-bit PCM WAV Blob generation; synthesizes Synthwave, Bassline, Ambient, and Arpeggio stems; eliminates CORS and third-party network failure risks during grading. |
-| `src/App.tsx` | Main studio UI, queue monitor & telemetry dashboard | `App()` | Real-time queue visualizer, active task progress bar, audio transport controls, seek bar with throttled 250ms polling, live memory node counters, custom URL enqueueing. |
-| `src/App.css` | Design system styling & responsive layout | Glassmorphism card styles, neon audio spectrum colors, responsive grid | High-contrast WCAG 2.2 compliant dark palette (`#0a0e17`, `#00f2ff`, `#8a2be2`, `#10b981`, `#ef4444`); smooth CSS transitions. |
-| `src/main.tsx` | React DOM client mounting | `ReactDOM.createRoot()` | Mounts the `<App />` root under `React.StrictMode`. |
-| `index.html` | HTML5 application host container | `<div id="root"></div>`, meta tags | Responsive viewport configuration, title, theme color `#0a0e17`, dark UI background. |
-| `TASK_DECOMPOSITION.md` | Sprint planning & milestone tracking | 7-phase WBS, risk mitigation matrix, DoD checklist | Prescribes structured execution roadmap for concurrency queue, Web Audio engine, memory safety, visualizer, and audit. |
-| `PROJECT_STRUCTURE.md` | Architectural specification manual | Directory map, component contracts, sequence diagrams, invariants | Authoritative engineering reference for code layout, data flow, concurrency, and memory safety. |
-| `AI_FAILURE_AUDIT.md` | Defect audit report on AI coding assistance | 3 AI failure modes: XSS via `innerHTML`, memory leaks in Web Audio, phantom keys & state thrashing | Documents root causes, diagnostic reproduction protocols, clean engineering implementations, and oral defense guide. |
-| `README.md` | User documentation & verification instructions | Project summary, criteria matrix, setup & build commands | Detailed overview of assignment requirements and verification steps. |
+| `src/main.tsx` | **Implemented** | Root bootstrap; mounts `<App />` under `React.StrictMode` into `#root`. | `main` |
+| `src/App.tsx` | **Implemented** | Main workstation container. Coordinates transport controls, volume, FFT size, seek bar (throttled 250ms), queue telemetry, and preset enqueueing. | `App` |
+| `src/App.css` | **Implemented** | Cyberpunk dark glassmorphism styling, responsive flex/grid layouts, neon badges, and visualizer container styling. | CSS styles |
+| `src/audio-engine.ts` | **Implemented** | Core Web Audio management. Manages `AudioContext`, `AnalyserNode`, `GainNode`, and single-use `AudioBufferSourceNode` lifecycle disposal (`stop()`, `disconnect()`). | `AudioEngine`, `FFTSize`, `AudioEngineMetrics`, `PlaybackState` |
+| `src/audio-queue-controller.ts` | **Implemented** | Asynchronous FIFO concurrency controller. Handles stream downloading with progress telemetry, `AbortController` cancellation tokens, buffer caching, and FIFO execution. | `AudioTaskQueue`, `AudioTask`, `QueueSubscriber` |
+| `src/audio-synth.ts` | **Implemented** | Offline 16-bit PCM WAV audio generator. Encodes Synthwave, Bassline, Ambient, and Arpeggio stems into Blob URLs for deterministic, CORS-free testing. | `PRESET_TRACKS`, `PresetTrack`, `encodeWav()` |
+| `src/AudioVisualizer.tsx` | **Implemented** | Hardware-accelerated Canvas visualizer. Uses `requestAnimationFrame` with mutable `useRef` handles to guarantee **zero React state thrashing** during 60 FPS rendering. Supports 4 visual modes (bars, waveform, radial, particles). | `AudioVisualizer`, `VisualizerMode` |
+
+### 4.2 Planned Integration Modules (88-Key Piano & Polyphony)
+
+| Module Path | Implementation State | Planned Responsibilities | Planned Exports / Classes |
+|---|---|---|---|
+| `src/types/piano-types.ts` | **Planned (M1)** | Type definitions for the piano subsystem: `KeyType` ('white' \| 'black'), `PianoKeyData`, `VoiceState`, `VoiceAssignment`, `ActiveVoiceRegistry`. | `KeyType`, `PianoKeyData`, `VoiceState`, `PolyphonyConfig` |
+| `src/utils/piano-generator.ts` | **Planned (M1)** | Algorithmic generation of all 88 keys (MIDI 21 to 108); calculates note names, octaves, key types (52 white, 36 black), and exact frequencies via $f = 440 \times 2^{(midi - 69)/12}$. | `generatePianoKeys()`, `calculateMidiFrequency()`, `TOTAL_PIANO_KEYS` |
+| `src/components/PianoKey.tsx` | **Planned (M2)** | Memoized single piano key component using `React.memo`. Maintains isolated pressed state, binds pointer/touch events, and prevents sibling re-renders. | `PianoKey`, `PianoKeyProps` |
+| `src/components/Piano.tsx` | **Planned (M2)** | Piano keyboard container component. Renders the 52 white keys and 36 black keys with correct positioning, horizontal scrolling/octave jumps, and root event delegation. | `Piano`, `PianoProps` |
+| `src/services/polyphonic-engine.ts` | **Planned (M3/M4)** | 8-voice polyphonic synthesizer engine. Allocates `OscillatorNode` + `GainNode` voices, manages ADSR envelope ramps, and enforces FIFO voice stealing upon triggering the 9th note. | `PolyphonicEngine`, `Voice` |
+| `src/components/Sequencer.tsx` | **Planned (M5)** | Step sequencer combining automated playback with the `AudioTaskQueue`. Dispatches notes to `PolyphonicEngine` and loads synthetic backing tracks through FIFO queue. | `Sequencer`, `SequencerProps` |
 
 ---
 
-## 3. Architectural Specifications & Component Contracts
-
-### 3.1 Concurrency Controller Contract (`src/audio-queue-controller.ts`)
-
-The `AudioTaskQueue` orchestrates simultaneous download requests and audio decoding while preserving strict FIFO execution semantics and cancellation capabilities:
-
-```typescript
-export interface AudioTask {
-  id: string;
-  trackUrl: string;
-  title: string;
-  controller: AbortController;
-  resolve: (buffer: AudioBuffer) => void;
-  reject: (reason: unknown) => void;
-  status: 'queued' | 'downloading' | 'decoding' | 'completed' | 'cancelled' | 'error';
-  progress: number; // 0 - 100
-  errorMessage?: string;
-  enqueuedAt: number;
-  completedAt?: number;
-  decodedBuffer?: AudioBuffer;
-}
-
-export class AudioTaskQueue {
-  private queue: AudioTask[] = [];
-  private isProcessing = false;
-  private activeController: AbortController | null = null;
-  private activeTask: AudioTask | null = null;
-  private bufferCache = new Map<string, AudioBuffer>();
-
-  async enqueue(trackUrl: string, title?: string): Promise<AudioBuffer>;
-  cancelActive(): boolean;
-  cancelTask(taskId: string): boolean;
-  clearQueue(): void;
-  subscribe(subscriber: QueueSubscriber): () => void;
-}
-```
-
-#### Contract Guarantees:
-1. **FIFO Invariant:** Tasks enter the queue in chronological order and are processed one by one via `processNext()`.
-2. **Cancellation Token Integration:** Each task is issued an individual `AbortController`. Passing `task.controller.signal` into `fetch()` ensures immediate TCP connection termination when cancelled.
-3. **Chunk-Level Abort Check:** During streaming download via `ReadableStreamDefaultReader`, `task.controller.signal.aborted` is inspected before processing each chunk, releasing network resources instantly.
-4. **Buffer Caching:** Successfully decoded `AudioBuffer` objects are indexed by URL in `bufferCache`, avoiding duplicate network roundtrips and decoding CPU cycles.
-
----
-
-### 3.2 Web Audio API Engine & Memory Safety Architecture (`src/audio-engine.ts`)
-
-The audio engine manages the Web Audio routing graph and enforces explicit node lifecycle disposal to prevent memory leaks:
+## 5. Architectural Data Flow & Subsystem Specifications
 
 ```mermaid
-graph LR
-    subgraph Web Audio Routing Graph
-        Source[AudioBufferSourceNode<br/>Single-use allocation] --> Analyser[AnalyserNode<br/>FFT 256 / 512 bins]
-        Analyser --> Gain[GainNode<br/>Master volume & mute]
-        Gain --> Destination[AudioDestinationNode<br/>Hardware output speakers]
+flowchart TD
+    subgraph UI_Layer ["React UI & Render Layer"]
+        App["App.tsx (Studio Harness)"]
+        Piano["Piano.tsx (88-Key Container)"]
+        Key["PianoKey.tsx (React.memo)"]
+        Viz["AudioVisualizer.tsx (Canvas 60fps)"]
+        Seq["Sequencer.tsx (FIFO Sequencer)"]
     end
+
+    subgraph Audio_Layer ["Web Audio API Hardware Graph"]
+        Context["AudioContext (Hardware Master Clock)"]
+        PolyEngine["PolyphonicEngine (8-Voice Manager)"]
+        VoiceReg["FIFO Voice Registry (Max 8 Voices)"]
+        Osc1["OscillatorNode 1..8"]
+        GainEnv["GainNode (ADSR Envelope)"]
+        MasterGain["Master GainNode"]
+        Analyser["AnalyserNode (FFT 256/512)"]
+        Destination["AudioContext.destination (Speakers)"]
+    end
+
+    subgraph Queue_Layer ["Async Concurrency Queue"]
+        ATQueue["AudioTaskQueue (FIFO Processing)"]
+        AbortTok["AbortController (Signal Tokens)"]
+        FetchPipe["Stream Fetch & Decode Pipeline"]
+        BufferCache["AudioBuffer Cache"]
+    end
+
+    App --> Piano
+    Piano -->|52 White / 36 Black Keys| Key
+    Key -->|Pointer Event / noteOn| PolyEngine
+    Seq -->|Automated Trigger| PolyEngine
+    Seq -->|Background Stem Enqueue| ATQueue
+
+    ATQueue --> AbortTok
+    ATQueue --> FetchPipe
+    FetchPipe --> BufferCache
+    BufferCache --> Context
+
+    PolyEngine --> VoiceReg
+    VoiceReg -->|Voice Stealing if count > 8| PolyEngine
+    PolyEngine --> Osc1
+    Osc1 --> GainEnv
+    GainEnv --> MasterGain
+    MasterGain --> Analyser
+    Analyser --> Destination
+
+    Analyser -.->|Byte Frequency Data| Viz
+    Viz -.->|requestAnimationFrame Loop| Viz
 ```
 
-#### Memory Safety Invariants (`cleanupCurrentSource`):
-Web Audio `AudioBufferSourceNode` instances are single-use per the W3C Web Audio specification. Once stopped, they cannot be restarted. Naive implementations create new nodes without releasing previous nodes, resulting in severe retained heap leaks.
+### 5.1 Piano Generation Pipeline (Milestone M1)
+1. **Range Definition:** MIDI notes start at $A_0$ (`MIDI 21`) and end at $C_8$ (`MIDI 108`), yielding exactly $108 - 21 + 1 = 88$ keys.
+2. **Frequency Calculation:** Each key calculates its fundamental frequency in Hertz:
+   $$f(midi) = 440 \times 2^{\frac{midi - 69}{12}}$$
+   *Example Checkpoints:*
+   - $A_0$ (`MIDI 21`): $440 \times 2^{-4} = 27.50\text{ Hz}$
+   - $A_4$ (`MIDI 69`): $440 \times 2^0 = 440.00\text{ Hz}$
+   - $C_8$ (`MIDI 108`): $440 \times 2^{39/12} \approx 4186.01\text{ Hz}$
+3. **Key Classification:** The 12-semitone cycle (`midi % 12`) classifies notes as white keys (`0=C, 2=D, 4=E, 5=F, 7=G, 9=A, 11=B`) or black keys (`1=C#, 3=D#, 6=F#, 8=G#, 10=A#`). Across 88 keys, this algorithm produces exactly **52 white keys** and **36 black keys**.
+4. **Data Contract:**
+   ```typescript
+   export interface PianoKeyData {
+       midiNumber: number;        // 21 .. 108
+       noteName: string;          // e.g. "A0", "C4", "A4", "C8"
+       octave: number;            // 0 .. 8
+       keyType: 'white' | 'black';
+       frequency: number;         // in Hz (rounded to 2 decimal places)
+       isSharp: boolean;
+   }
+   ```
 
-```typescript
-public cleanupCurrentSource(): void {
-    if (this.currentSource) {
-        try {
-            this.currentSource.onended = null; // 1. Unbind event listeners to break closure references
-            this.currentSource.stop();          // 2. Stop audio playback immediately
-        } catch { /* Handle already stopped */ }
-        try {
-            this.currentSource.disconnect();    // 3. Sever graph connections to allow GC reclamation
-        } catch { /* Handle already disconnected */ }
-        this.currentSource = null;              // 4. Dereference active pointer
-        this.totalNodesCleaned++;               // 5. Increment telemetry counter
-        this.notify();
+### 5.2 React Rendering & Isolation Pipeline (Milestone M2)
+1. **Component Separation:** The keyboard renders through memoized `PianoKey` components.
+2. **Memoization Invariant (`React.memo`):**
+   ```tsx
+   export const PianoKey = React.memo<PianoKeyProps>(({ keyData, isPressed, onNoteOn, onNoteOff }) => {
+       // Component body renders single key DOM element
+   }, (prevProps, nextProps) => {
+       return prevProps.isPressed === nextProps.isPressed &&
+              prevProps.keyData.midiNumber === nextProps.keyData.midiNumber;
+   });
+   ```
+3. **Performance Guarantee:** When key `A4` is pressed, only the `PianoKey` component representing `A4` reconciles and paints. The other 87 keys are skipped by React's memoization equality check, maintaining a rock-solid 60 FPS under rapid polyphonic playing.
+
+### 5.3 Polyphonic Audio Processing & FIFO Voice Stealing (Milestones M3 & M4)
+1. **Voice Allocation (`noteOn`):**
+   - User triggers key $\rightarrow$ calls `polyEngine.noteOn(midiNumber, frequency)`.
+   - Engine inspects `activeVoices` array.
+2. **Capacity Check & Stealing:**
+   - If `activeVoices.length < 8`: Engine allocates a new voice slot immediately.
+   - If `activeVoices.length === 8`: Polyphony limit reached. The engine performs **FIFO Voice Stealing**:
+     1. Shifts the oldest active voice from the front of the registry: `oldestVoice = activeVoices.shift()`.
+     2. Rapidly ramps the oldest voice gain to zero ($5\text{ms}$ linear ramp) to prevent audible clicks.
+     3. Calls `stop()` and `disconnect()` on the stolen oscillator node.
+     4. Instantiates and registers the new note voice at the back of the queue.
+3. **Voice Release (`noteOff`):**
+   - User releases key $\rightarrow$ calls `polyEngine.noteOff(midiNumber)`.
+   - The voice gain ramps down through its release envelope ($100\text{ms}$ exponential decay).
+   - Once silent, the oscillator is stopped and disconnected, and the slot is freed.
+
+### 5.4 Concurrent AudioTaskQueue Pipeline (Milestone M5)
+1. **Task Enqueueing:** Audio tracks or stems are enqueued via `audioQueue.enqueue(url, title)`.
+2. **Strict FIFO Execution:** Tasks are queued in an array and processed one by one via `processNext()`.
+3. **Cancellable Fetch & Decode:** Each task carries an `AbortController`. If cancelled by the user (`cancelActive()` or `clearQueue()`), the in-flight fetch stream is immediately severed with `AbortError`.
+4. **Buffer Caching:** Successfully decoded `AudioBuffer` objects are stored in an in-memory `Map<string, AudioBuffer>` to avoid duplicate network transfers.
+
+### 5.5 Audio Visualization Pipeline (Milestone M6)
+1. **Hardware Routing:** `PolyphonicEngine` and `AudioEngine` connect their master gain nodes into a shared `AnalyserNode`.
+2. **Decoupled Render Loop:** `AudioVisualizer.tsx` runs an independent `requestAnimationFrame` loop.
+3. **Zero State Thrashing:** Frame metrics and frequency arrays (`Uint8Array`) are read in-place using React `useRef`. **No `useState` setter is ever invoked inside the 60 FPS animation loop.**
+
+---
+
+## 6. Dependency & Integration Architecture
+
+The following dependency map illustrates the architectural hierarchy across UI components, audio services, and hardware layers:
+
+```mermaid
+classDiagram
+    class App {
+        +render()
+        -handleNoteOn(midi)
+        -handleNoteOff(midi)
+        -handleEnqueueTrack(url)
     }
-}
-```
 
-#### Telemetry Metrics:
-The engine exposes live telemetry counters (`nodesCreated`, `nodesCleaned`, `activeSourceNode`, `contextState`, `sampleRate`) allowing the developer and graders to verify that `nodesCreated === nodesCleaned` upon playback termination.
+    class Piano {
+        -keys: PianoKeyData[]
+        -activeMidiNotes: Set~number~
+        +render()
+    }
 
----
+    class PianoKey {
+        +keyData: PianoKeyData
+        +isPressed: boolean
+        +render()
+    }
 
-### 3.3 60fps Canvas Visualizer Engine with Zero State Thrashing (`src/AudioVisualizer.tsx`)
+    class PolyphonicEngine {
+        -ctx: AudioContext
+        -voiceRegistry: Voice[]
+        -maxVoices: number = 8
+        +noteOn(midi, freq)
+        +noteOff(midi)
+        +stealOldestVoice()
+    }
 
-To render audio frequency data smoothly at 60 FPS without overloading the browser's main thread, the visualizer completely decouples the rendering loop from React's reconciliation cycle.
+    class AudioEngine {
+        -ctx: AudioContext
+        -analyser: AnalyserNode
+        -masterGain: GainNode
+        +playBuffer(buffer)
+        +cleanupCurrentSource()
+        +getAnalyserNode()
+    }
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Browser as Browser Display (V-Sync)
-    participant RAF as requestAnimationFrame Loop
-    participant Canvas as HTML5 Canvas 2D Context
-    participant Analyser as Web Audio AnalyserNode
-    participant React as React Component Tree
+    class AudioTaskQueue {
+        -queue: AudioTask[]
+        -bufferCache: Map
+        +enqueue(url, title)
+        +cancelActive()
+        +clearQueue()
+    }
 
-    Note over React,Canvas: Initialization: canvasRef & refs wired up. ZERO setState in RAF!
-    Browser->>RAF: V-Sync trigger (~16.6ms)
-    RAF->>Analyser: getByteFrequencyData(freqData) & getByteTimeDomainData(timeData)
-    Analyser-->>RAF: Byte arrays updated in-place (no heap reallocation)
-    RAF->>Canvas: Clear frame with trail opacity
-    RAF->>Canvas: Draw Mode (Bars with gravity peak caps / Waveform / Radial / Particles)
-    RAF->>Canvas: Render embedded FPS HUD directly via ctx.fillText()
-    RAF->>Browser: Paint complete (60fps, 0 React re-renders)
-    Browser->>RAF: Request next frame
-```
+    class AudioVisualizer {
+        -canvasRef: Ref
+        -analyserRef: Ref
+        +renderFrame()
+    }
 
-#### Zero State Thrashing Principles:
-1. **No `setState` in RAF:** The animation frame callback (`renderFrame`) accesses dynamic properties (`mode`, `analyserNode`, `isPlaying`, `showFps`) through React mutable refs (`modeRef`, `analyserRef`, `isPlayingRef`, `showFpsRef`).
-2. **In-Place Buffer Reuse:** Frequency arrays (`Uint8Array`) and peak holders (`Float32Array`) are pre-allocated and updated in-place, eliminating Garbage Collection (GC) pauses during animation.
-3. **Canvas-Rendered HUD:** The FPS and frame-time counter are drawn directly using `ctx.fillText()`, eliminating DOM mutations during 60fps execution.
-
----
-
-### 3.4 End-to-End System Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User / Studio Operator
-    participant App as App Component
-    participant Queue as AudioTaskQueue (FIFO)
-    participant Network as HTTP Stream / Synthetic Audio
-    participant Engine as AudioEngine (Web Audio)
-    participant Visualizer as AudioVisualizer (60fps Canvas)
-
-    User->>App: Click "Enqueue Track"
-    App->>Queue: enqueue(trackUrl, title)
-    Queue-->>App: Task enqueued (status: 'queued')
-    Queue->>Queue: processNext() [FIFO execution]
-    Queue->>Network: fetch(trackUrl, { signal: task.controller.signal })
-    Network-->>Queue: Streaming chunks received (progress 0% -> 90%)
-    Queue->>Engine: ctx.decodeAudioData(arrayBuffer)
-    Engine-->>Queue: AudioBuffer ready (progress: 100%)
-    Queue-->>App: Promise resolved with AudioBuffer
-    App->>Engine: playBuffer(decodedBuffer)
-    Engine->>Engine: cleanupCurrentSource() [Dispose old node]
-    Engine->>Engine: createBufferSource() -> connect(analyser) -> start()
-    loop Every ~16.6ms (60 FPS)
-        Visualizer->>Engine: analyser.getByteFrequencyData()
-        Visualizer->>Visualizer: Render to Canvas (Zero React state thrashing)
-    end
-    opt User clicks "Abort Active"
-        User->>App: Cancel Active Task
-        App->>Queue: cancelActive()
-        Queue->>Network: task.controller.abort() [TCP connection severed]
-        Queue->>Queue: Status -> 'cancelled', reject Promise
-        Queue->>Queue: processNext() [Advance to next queued track]
-    end
+    App --> Piano
+    App --> AudioVisualizer
+    App --> AudioTaskQueue
+    Piano --> PianoKey : renders 88 instances
+    Piano --> PolyphonicEngine : dispatches noteOn / noteOff
+    PolyphonicEngine --> AudioEngine : routes audio into AnalyserNode
+    AudioVisualizer ..> AudioEngine : reads frequency data
+    AudioTaskQueue ..> AudioEngine : delivers decoded AudioBuffer
 ```
 
 ---
 
-## 4. Quality Gates & Verification Matrix
+## 7. Build, Test, and Execution Commands
 
-| Requirement Criteria | Target Specification | Implementation Artifact | Verification Result |
-|---|---|---|---|
-| **Web Audio API Engine** | AnalyserNode with FFT 256 & 512 bins | `src/audio-engine.ts` | **PASS** — Toggleable FFT 256 (128 bins) and 512 (256 bins); reactive spectrum analysis. |
-| **Concurrency Controller** | Strict FIFO Queue with simultaneous track handling | `src/audio-queue-controller.ts` | **PASS** — Enqueues concurrent tasks; downloads and decodes sequentially in FIFO order. |
-| **Cancellation Tokens** | `AbortController` cancellation for in-flight tasks | `src/audio-queue-controller.ts` | **PASS** — Immediately aborts active network fetch and stream reader via `controller.abort()`. |
-| **Memory Safety** | Zero memory leaks; explicit AudioBufferSourceNode cleanup | `src/audio-engine.ts` | **PASS** — Verified via `cleanupCurrentSource()`, telemetry monitor (`nodesCreated === nodesCleaned`), and zero retained nodes in Heap Snapshot. |
-| **Visualizer Performance** | 60 FPS Canvas visualizer without state thrashing | `src/AudioVisualizer.tsx` | **PASS** — RAF loop reads from `useRef`; zero `setState` calls per frame; consistent 60 FPS verified by embedded HUD. |
-| **Offline Evaluation** | Synthetic offline WAV generation | `src/audio-synth.ts` | **PASS** — 4 synthetic stems synthesized via client PCM WAV encoder; 100% offline grading reliability. |
-| **AI Failure Audit** | Audit of 3 classic UI failure modes | `AI_FAILURE_AUDIT.md` | **PASS** — In-depth analysis of XSS, memory leaks, and phantom keys/state thrashing with verified refactors. |
-| **TypeScript Build** | Zero type errors in strict mode | `tsconfig.json`, `vite.config.ts` | **PASS** — Clean `npm run build` (`tsc && vite build`) with zero diagnostic errors. |
+Based strictly on the scripts configured in `package.json`:
+
+```bash
+# 1. Install project dependencies
+npm install
+
+# 2. Run local development server (http://localhost:3000)
+npm run dev
+
+# 3. Compile TypeScript and build production bundle
+npm run build
+
+# 4. Preview production build locally
+npm run preview
+```
