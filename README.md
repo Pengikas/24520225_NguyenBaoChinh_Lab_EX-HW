@@ -1,4 +1,4 @@
-# Lab 02 - Homework
+# Lab 03 - Homework
 **Student ID:** 24520225  
 **Full Name:** Nguyen Bao Chinh  
-**Subject:** Web Application Development (IE104)  
+**Subject:** Web Application Development 
