@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { Profiler, useCallback, useEffect, useRef, useState } from 'react';
 
-import PianoKey from './PianoKey';
+import PianoKey, { consumePendingMemoStats, type PianoProfilerCommit } from './PianoKey';
 import { PIANO_KEYS } from './piano-generator';
 import './piano.css';
 
@@ -49,26 +49,79 @@ const Piano: React.FC<PianoProps> = ({
     onNoteOn,
     onNoteOff
 }) => {
-    const handleNoteOn = useCallback(
-        (midi: number) => {
-            onNoteOn(midi);
+    const [pressedMidis, setPressedMidis] = useState<Set<number>>(() => new Set());
+    const commitsRef = useRef<PianoProfilerCommit[]>([]);
+
+    // Keep latest parent callbacks in refs so handleNoteOn/handleNoteOff stay referentially stable
+    const onNoteOnRef = useRef(onNoteOn);
+    const onNoteOffRef = useRef(onNoteOff);
+    onNoteOnRef.current = onNoteOn;
+    onNoteOffRef.current = onNoteOff;
+
+    const handleNoteOn = useCallback((midi: number) => {
+        setPressedMidis((prev) => {
+            if (prev.has(midi)) return prev;
+            const next = new Set(prev);
+            next.add(midi);
+            return next;
+        });
+        onNoteOnRef.current(midi);
+    }, []);
+
+    const handleNoteOff = useCallback((midi: number) => {
+        setPressedMidis((prev) => {
+            if (!prev.has(midi)) return prev;
+            const next = new Set(prev);
+            next.delete(midi);
+            return next;
+        });
+        onNoteOffRef.current(midi);
+    }, []);
+
+    const handleProfilerRender: React.ProfilerOnRenderCallback = useCallback(
+        (_id, phase, actualDuration, baseDuration, _startTime, commitTime) => {
+            const memoStats = consumePendingMemoStats();
+            const isMount = phase === 'mount';
+            const commitEntry: PianoProfilerCommit = {
+                commitIndex: commitsRef.current.length + 1,
+                phase,
+                actualDuration: Number(actualDuration.toFixed(3)),
+                baseDuration: Number(baseDuration.toFixed(3)),
+                reRenderedMidis: isMount
+                    ? PIANO_KEYS.map((k) => k.midi)
+                    : memoStats.reRenderedMidis,
+                reRenderedCount: isMount ? 88 : memoStats.reRenderedMidis.length,
+                skippedCount: isMount ? 0 : memoStats.skippedCount,
+                timestamp: Number(commitTime.toFixed(2)),
+            };
+            commitsRef.current.push(commitEntry);
         },
-        [onNoteOn]
+        []
     );
 
-    const handleNoteOff = useCallback(
-        (midi: number) => {
-            onNoteOff(midi);
-        },
-        [onNoteOff]
-    );
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const win = window as unknown as Record<string, unknown>;
+            win.__PIANO_KEYS = PIANO_KEYS;
+            win.__pianoProfiler = {
+                getCommits: () => [...commitsRef.current],
+                getLatestCommit: () =>
+                    commitsRef.current[commitsRef.current.length - 1] ?? null,
+                clearCommits: () => {
+                    consumePendingMemoStats();
+                    commitsRef.current = [];
+                },
+                pressKey: (midi: number) => handleNoteOn(midi),
+                releaseKey: (midi: number) => handleNoteOff(midi),
+            };
+        }
+    }, [handleNoteOn, handleNoteOff]);
 
     // Track keys currently held down on physical keyboard to prevent auto-repeat
     const activeKeysRef = useRef(new Map<string, number>());
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore when typing inside input or textarea
             if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
                 return;
             }
@@ -99,7 +152,6 @@ const Piano: React.FC<PianoProps> = ({
         };
 
         const handleBlur = () => {
-            // Safely release all active keys when window loses focus
             activeKeysRef.current.forEach((midi) => {
                 handleNoteOff(midi);
             });
@@ -139,16 +191,21 @@ const Piano: React.FC<PianoProps> = ({
                 <span>Bấm cùng lúc nhiều phím (ví dụ: <strong style={{ color: '#4ade80' }}>A + D + G</strong> để chơi hợp âm 3 nốt)</span>
             </div>
 
-            <div className="piano-keyboard">
-                {PIANO_KEYS.map((note) => (
-                    <PianoKey
-                        key={note.midi}
-                        note={note}
-                        onNoteOn={handleNoteOn}
-                        onNoteOff={handleNoteOff}
-                    />
-                ))}
-            </div>
+            <Profiler id="PianoKeyboard" onRender={handleProfilerRender}>
+                <div className="piano-keyboard">
+                    {PIANO_KEYS.map((note) => (
+                        <PianoKey
+                            key={note.midi}
+                            midi={note.midi}
+                            noteName={note.noteName}
+                            isBlack={note.isBlack}
+                            isPressed={pressedMidis.has(note.midi)}
+                            onNoteOn={handleNoteOn}
+                            onNoteOff={handleNoteOff}
+                        />
+                    ))}
+                </div>
+            </Profiler>
         </section>
     );
 };

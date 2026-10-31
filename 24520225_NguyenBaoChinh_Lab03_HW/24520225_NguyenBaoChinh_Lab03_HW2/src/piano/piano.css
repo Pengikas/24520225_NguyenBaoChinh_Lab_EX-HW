@@ -15,6 +15,7 @@
     position: relative;
 }
 
+.key,
 .piano-key {
     border: 1px solid #334155;
     cursor: pointer;
@@ -29,6 +30,7 @@
     box-sizing: border-box;
 }
 
+.key--white,
 .piano-key--white {
     position: relative;
     width: 36px;
@@ -41,6 +43,7 @@
     z-index: 1;
 }
 
+.key--black,
 .piano-key--black {
     position: relative;
     width: 24px;
@@ -56,14 +59,17 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
 }
 
+.key--white[aria-pressed="true"],
 .piano-key--white.is-pressed {
     background: #93c5fd;
 }
 
+.key--black[aria-pressed="true"],
 .piano-key--black.is-pressed {
     background: #2563eb;
 }
 
+.key:focus-visible,
 .piano-key:focus-visible {
     outline: 3px solid #38bdf8;
     outline-offset: 2px;
