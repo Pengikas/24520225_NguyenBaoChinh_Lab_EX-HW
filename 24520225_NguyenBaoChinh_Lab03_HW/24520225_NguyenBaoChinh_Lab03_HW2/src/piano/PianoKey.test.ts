@@ -1,27 +1,79 @@
 import { describe, it, expect, vi } from 'vitest';
-import PianoKey, { shallowEqual, PianoKeyProps } from './PianoKey';
+import PianoKey, {
+    shallowEqual,
+    consumePendingMemoStats,
+    type PianoKeyProps
+} from './PianoKey';
 import { PIANO_KEYS } from './piano-generator';
 
-describe('E04: React.memo & shallowEqual Render Isolation', () => {
+describe('Requirement A & D: PianoKey Contract & React.memo Render Isolation', () => {
     const mockOnNoteOn = vi.fn();
     const mockOnNoteOff = vi.fn();
 
-    const baseNote = PIANO_KEYS[0]; // A0 (MIDI 21)
-
-    it('E04.1: PianoKey is wrapped in React.memo with shallowEqual comparison', () => {
+    it('E04.1: PianoKey is wrapped in React.memo with shallowEqual comparator', () => {
         expect((PianoKey as any).$$typeof).toBe(Symbol.for('react.memo'));
         expect((PianoKey as any).compare).toBe(shallowEqual);
+        expect((PianoKey as any).type.name).toContain('PianoKey');
     });
 
-    it('E04.2: shallowEqual returns true when note and callbacks have identical values', () => {
+    it('E04.2: PianoKey renders semantic <button type="button"> with required contract props and pointer handlers', () => {
+        const onNoteOn = vi.fn();
+        const onNoteOff = vi.fn();
+
+        // Render white key C4 (MIDI 60, isBlack: false, isPressed: false)
+        const whiteElement = (PianoKey as any).type({
+            midi: 60,
+            noteName: 'C4',
+            isBlack: false,
+            isPressed: false,
+            onNoteOn,
+            onNoteOff
+        });
+
+        expect(whiteElement.type).toBe('button');
+        expect(whiteElement.props.type).toBe('button');
+        expect(whiteElement.props.className).toBe('key key--white');
+        expect(whiteElement.props['aria-pressed']).toBe(false);
+        expect(whiteElement.props.children.type).toBe('span');
+        expect(whiteElement.props.children.props.children).toBe('C4');
+
+        // Trigger pointer down & up
+        whiteElement.props.onPointerDown();
+        expect(onNoteOn).toHaveBeenCalledWith(60);
+
+        whiteElement.props.onPointerUp();
+        expect(onNoteOff).toHaveBeenCalledWith(60);
+
+        // Render black key C#4 (MIDI 61, isBlack: true, isPressed: true)
+        const blackElement = (PianoKey as any).type({
+            midi: 61,
+            noteName: 'C#4',
+            isBlack: true,
+            isPressed: true,
+            onNoteOn,
+            onNoteOff
+        });
+
+        expect(blackElement.props.className).toBe('key key--black');
+        expect(blackElement.props['aria-pressed']).toBe(true);
+        expect(blackElement.props.children.props.children).toBe('C#4');
+    });
+
+    it('E04.3: shallowEqual returns true when all 6 required props are identical', () => {
         const prevProps: PianoKeyProps = {
-            note: baseNote,
+            midi: 60,
+            noteName: 'C4',
+            isBlack: false,
+            isPressed: false,
             onNoteOn: mockOnNoteOn,
             onNoteOff: mockOnNoteOff,
         };
 
         const nextProps: PianoKeyProps = {
-            note: { ...baseNote }, // clone with identical values
+            midi: 60,
+            noteName: 'C4',
+            isBlack: false,
+            isPressed: false,
             onNoteOn: mockOnNoteOn,
             onNoteOff: mockOnNoteOff,
         };
@@ -29,83 +81,98 @@ describe('E04: React.memo & shallowEqual Render Isolation', () => {
         expect(shallowEqual(prevProps, nextProps)).toBe(true);
     });
 
-    it('E04.3: shallowEqual returns false when note properties change', () => {
-        const prevProps: PianoKeyProps = {
-            note: baseNote,
+    it('E04.4: shallowEqual returns false when isPressed, midi, isBlack, or callback reference changes', () => {
+        const baseProps: PianoKeyProps = {
+            midi: 60,
+            noteName: 'C4',
+            isBlack: false,
+            isPressed: false,
             onNoteOn: mockOnNoteOn,
             onNoteOff: mockOnNoteOff,
         };
 
-        const nextPropsDifferentMidi: PianoKeyProps = {
-            note: { ...baseNote, midi: 22 },
-            onNoteOn: mockOnNoteOn,
-            onNoteOff: mockOnNoteOff,
-        };
+        // Pressing key flips isPressed -> false (must re-render that key)
+        expect(shallowEqual(baseProps, { ...baseProps, isPressed: true })).toBe(false);
 
-        expect(shallowEqual(prevProps, nextPropsDifferentMidi)).toBe(false);
+        // Different MIDI -> false
+        expect(shallowEqual(baseProps, { ...baseProps, midi: 61 })).toBe(false);
 
-        const nextPropsDifferentType: PianoKeyProps = {
-            note: { ...baseNote, keyType: 'black' },
-            onNoteOn: mockOnNoteOn,
-            onNoteOff: mockOnNoteOff,
-        };
+        // Different isBlack -> false
+        expect(shallowEqual(baseProps, { ...baseProps, isBlack: true })).toBe(false);
 
-        expect(shallowEqual(prevProps, nextPropsDifferentType)).toBe(false);
+        // Unstable callback reference -> false
+        expect(shallowEqual(baseProps, { ...baseProps, onNoteOn: vi.fn() })).toBe(false);
     });
 
-    it('E04.4: shallowEqual returns false when callback references change', () => {
-        const prevProps: PianoKeyProps = {
-            note: baseNote,
-            onNoteOn: mockOnNoteOn,
-            onNoteOff: mockOnNoteOff,
-        };
-
-        const nextPropsNewCallback: PianoKeyProps = {
-            note: baseNote,
-            onNoteOn: vi.fn(), // unstable new function reference
-            onNoteOff: mockOnNoteOff,
-        };
-
-        expect(shallowEqual(prevProps, nextPropsNewCallback)).toBe(false);
-    });
-
-    it('E04.5: verifies exactly 88 keys receive stable note references from PIANO_KEYS', () => {
-        expect(PIANO_KEYS).toHaveLength(88);
-
-        // Every note object in PIANO_KEYS must be reference-identical between renders
-        PIANO_KEYS.forEach((note, idx) => {
-            expect(note.midi).toBe(21 + idx);
-            expect(typeof note.frequency).toBe('number');
-            expect(note.frequency).toBeGreaterThan(0);
-            expect(['white', 'black']).toContain(note.keyType);
-        });
-    });
-
-    it('E04.6: ensures pressing one key isolates other 87 keys from re-rendering via memoization', () => {
-        // Simulate a parent re-render cycle where callbacks are memoized (stable references)
+    it('E04.5: pressing 1 white key (MIDI 60 C4) re-renders ONLY that 1 key and skips the other 87 keys', () => {
         const stableOnNoteOn = vi.fn();
         const stableOnNoteOff = vi.fn();
 
-        // 88 key props before
-        const prevKeyProps = PIANO_KEYS.map((note) => ({
-            note,
+        // Initial state: no keys pressed
+        const prevPropsList: PianoKeyProps[] = PIANO_KEYS.map((note) => ({
+            midi: note.midi,
+            noteName: note.noteName,
+            isBlack: note.isBlack,
+            isPressed: false,
             onNoteOn: stableOnNoteOn,
             onNoteOff: stableOnNoteOff,
         }));
 
-        // Parent re-renders (e.g. voice counter update), re-creating the props array with same stable callbacks
-        const nextKeyProps = PIANO_KEYS.map((note) => ({
-            note,
+        // User presses MIDI 60 (C4 white key)
+        const nextPropsList: PianoKeyProps[] = PIANO_KEYS.map((note) => ({
+            midi: note.midi,
+            noteName: note.noteName,
+            isBlack: note.isBlack,
+            isPressed: note.midi === 60,
             onNoteOn: stableOnNoteOn,
             onNoteOff: stableOnNoteOff,
         }));
 
-        // For all 88 keys, shallowEqual returns true -> 0 unnecessary re-renders!
-        const reRenderDecisions = prevKeyProps.map((prev, i) =>
-            shallowEqual(prev, nextKeyProps[i])
+        consumePendingMemoStats();
+        const decisions = prevPropsList.map((prev, idx) =>
+            shallowEqual(prev, nextPropsList[idx])
         );
+        const stats = consumePendingMemoStats();
 
-        expect(reRenderDecisions.every(decision => decision === true)).toBe(true);
-        expect(reRenderDecisions).toHaveLength(88);
+        const skippedKeys = decisions.filter((isEqual) => isEqual === true);
+        const reRenderedKeys = decisions.filter((isEqual) => isEqual === false);
+
+        expect(reRenderedKeys).toHaveLength(1);
+        expect(skippedKeys).toHaveLength(87);
+        expect(stats.reRenderedMidis).toEqual([60]);
+        expect(stats.skippedCount).toBe(87);
+    });
+
+    it('E04.6: pressing 1 black key (MIDI 61 C#4) re-renders ONLY that 1 key and skips the other 87 keys', () => {
+        const stableOnNoteOn = vi.fn();
+        const stableOnNoteOff = vi.fn();
+
+        const prevPropsList: PianoKeyProps[] = PIANO_KEYS.map((note) => ({
+            midi: note.midi,
+            noteName: note.noteName,
+            isBlack: note.isBlack,
+            isPressed: false,
+            onNoteOn: stableOnNoteOn,
+            onNoteOff: stableOnNoteOff,
+        }));
+
+        // User presses MIDI 61 (C#4 black key)
+        const nextPropsList: PianoKeyProps[] = PIANO_KEYS.map((note) => ({
+            midi: note.midi,
+            noteName: note.noteName,
+            isBlack: note.isBlack,
+            isPressed: note.midi === 61,
+            onNoteOn: stableOnNoteOn,
+            onNoteOff: stableOnNoteOff,
+        }));
+
+        consumePendingMemoStats();
+        prevPropsList.forEach((prev, idx) => {
+            shallowEqual(prev, nextPropsList[idx]);
+        });
+        const stats = consumePendingMemoStats();
+
+        expect(stats.reRenderedMidis).toEqual([61]);
+        expect(stats.skippedCount).toBe(87);
     });
 });
