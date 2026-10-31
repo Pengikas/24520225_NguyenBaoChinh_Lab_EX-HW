@@ -11,7 +11,8 @@ const BLACK_KEY_PITCHES = new Set([
 ]);
 
 export function midiToFrequency(midi: number): number {
-    return 440 * Math.pow(2, (midi - 69) / 12);
+    const frequency = 440 * Math.pow(2, (midi - 69) / 12);
+    return frequency;
 }
 
 export function midiToNoteName(midi: number): string {
@@ -28,16 +29,15 @@ export function generate88Keys(): PianoKeyData[] {
     // MIDI 108 = C8
     for (let midi = 21; midi <= 108; midi++) {
         const pitch = midi % 12;
-
-        const keyType: KeyType =
-            BLACK_KEY_PITCHES.has(pitch)
-                ? 'black'
-                : 'white';
+        const isBlack = BLACK_KEY_PITCHES.has(pitch);
+        const keyType: KeyType = isBlack ? 'black' : 'white';
+        const frequency = 440 * Math.pow(2, (midi - 69) / 12);
 
         keys.push({
             midi,
             noteName: midiToNoteName(midi),
-            frequency: midiToFrequency(midi),
+            isBlack,
+            frequency,
             keyType,
             octave: Math.floor(midi / 12) - 1
         });
