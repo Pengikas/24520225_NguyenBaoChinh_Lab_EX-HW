@@ -1,0 +1,96 @@
+.drum-pad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 154px;
+    padding: 24px 16px 20px;
+    border: 2px solid var(--color-border);
+    border-radius: 16px;
+    background-color: var(--color-pad);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition:
+        background-color 140ms ease,
+        border-color 140ms ease,
+        transform 140ms ease,
+        box-shadow 140ms ease;
+    user-select: none;
+}
+
+.drum-pad:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+.pad-key {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.pad-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.pad-description {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.pad-indicator {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: var(--color-text-muted);
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.drum-pad.is-active {
+    background-color: #164e63;
+    border-color: var(--color-accent-strong);
+    transform: scale(0.97);
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.4);
+}
+
+.drum-pad.is-active .pad-key {
+    color: var(--color-accent);
+}
+
+.drum-pad.is-active .pad-name {
+    color: var(--color-text-primary);
+}
+
+.drum-pad.is-active .pad-description {
+    color: var(--color-text-secondary);
+}
+
+.drum-pad.is-active .pad-indicator {
+    background-color: var(--color-accent-strong);
+    box-shadow: 0 0 10px var(--color-accent-strong);
+}
+
+.drum-pad:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drum-pad,
+    .drum-pad:hover {
+        transition: none;
+        transform: none;
+    }
+}
