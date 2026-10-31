@@ -1,0 +1,64 @@
+.drum-pad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    min-height: 150px;
+    padding: 20px;
+    border: 2px solid #64748b;
+    border-radius: 16px;
+    background: #1e293b;
+    color: #f8fafc;
+    cursor: pointer;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        transform 120ms ease;
+}
+
+.pad-key {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.pad-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.pad-description {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+}
+
+.pad-indicator {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #64748b;
+}
+
+.drum-pad.is-active {
+    background: #164e63;
+    border-color: #22d3ee;
+    transform: scale(0.97);
+}
+
+.drum-pad.is-active .pad-indicator {
+    background: #67e8f9;
+    box-shadow: 0 0 12px #22d3ee;
+}
+
+.drum-pad:focus-visible {
+    outline: 4px solid #facc15;
+    outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drum-pad {
+        transition: none;
+    }
+}
