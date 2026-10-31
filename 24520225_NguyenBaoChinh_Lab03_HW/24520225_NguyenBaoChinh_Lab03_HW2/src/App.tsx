@@ -10,6 +10,7 @@ import { AudioEngine, FFTSize, AudioEngineMetrics, PlaybackState } from './audio
 import { AudioTaskQueue, AudioTask } from './audio-queue-controller';
 import { AudioVisualizer } from './AudioVisualizer';
 import { PRESET_TRACKS, PresetTrack } from './audio-synth';
+import Piano from './piano/Piano';
 
 // Singleton instances for persistent audio graph across renders
 const audioEngine = new AudioEngine(256);
@@ -37,6 +38,16 @@ export const App: React.FC = () => {
     // Custom URL input
     const [customUrl, setCustomUrl] = useState<string>('');
     const [customTitle, setCustomTitle] = useState<string>('');
+
+    // Piano key trigger handlers
+    const handlePianoNoteOn = useCallback((midi: number) => {
+        console.log('[Piano] Note ON:', midi);
+        audioEngine.ensureContext();
+    }, []);
+
+    const handlePianoNoteOff = useCallback((midi: number) => {
+        console.log('[Piano] Note OFF:', midi);
+    }, []);
 
     // Seek interval reference (polled at modest 4Hz for UI seek bar, decoupled from 60fps canvas)
     const progressTimerRef = useRef<number | null>(null);
@@ -246,6 +257,12 @@ export const App: React.FC = () => {
                 fftSize={fftSize}
                 isPlaying={playbackState === 'playing'}
                 onFFTSizeChange={handleFFTChange}
+            />
+
+            {/* 88-Key Polyphonic Piano Keyboard */}
+            <Piano
+                onNoteOn={handlePianoNoteOn}
+                onNoteOff={handlePianoNoteOff}
             />
 
             {/* Playback Transport & Track Control Card */}
@@ -514,11 +531,11 @@ export const App: React.FC = () => {
                                             </tr>
                                         ))}
                                     </tbody>
-                                 </table>
-                             </div>
-                         </div>
-                     )}
-                 </section>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </section>
 
                 {/* Right Column: Track Ingestion & Diagnostics */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
