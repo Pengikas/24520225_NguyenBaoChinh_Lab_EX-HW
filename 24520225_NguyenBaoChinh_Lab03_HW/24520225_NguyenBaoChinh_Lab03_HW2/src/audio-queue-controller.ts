@@ -1,8 +1,17 @@
 // src/audio-queue-controller.ts
 /**
  * HW 2: Concurrent FIFO Audio Visualizer Queue Engine
- * Advanced async concurrency controller with AbortSignal cancellation tokens.
+ * Advanced async concurrency controller with AbortSignal cancellation tokens,
+ * granular stream progress calculation, and AudioBuffer caching.
  */
+
+export type AudioTaskStatus =
+    | 'queued'
+    | 'downloading'
+    | 'decoding'
+    | 'completed'
+    | 'cancelled'
+    | 'error';
 
 export interface AudioTask {
     id: string;
@@ -11,34 +20,58 @@ export interface AudioTask {
     controller: AbortController;
     resolve: (buffer: AudioBuffer) => void;
     reject: (reason: unknown) => void;
-    status: 'queued' | 'downloading' | 'decoding' | 'completed' | 'cancelled' | 'error';
+    status: AudioTaskStatus;
     progress: number; // 0 - 100
     errorMessage?: string;
     enqueuedAt: number;
+    startedAt?: number;
     completedAt?: number;
     decodedBuffer?: AudioBuffer;
+}
+
+export interface QueueTaskCounts {
+    pending: number;
+    active: number;
+    completed: number;
+    failed: number;
+    cancelled: number;
+    total: number;
 }
 
 export type QueueSubscriber = () => void;
 
 export class AudioTaskQueue {
     private queue: AudioTask[] = [];
-    private isProcessing = false;
-    private activeController: AbortController | null = null;
-    private activeTask: AudioTask | null = null;
+    private runningTasks = new Set<AudioTask>();
+    private maxConcurrency = 1;
     private history: AudioTask[] = [];
     private audioContext: AudioContext | null = null;
     private bufferCache = new Map<string, AudioBuffer>();
     private subscribers = new Set<QueueSubscriber>();
 
-    constructor(audioContext?: AudioContext) {
+    // Atomic telemetry counters
+    private completedCount = 0;
+    private failedCount = 0;
+    private cancelledCount = 0;
+
+    constructor(audioContext?: AudioContext, maxConcurrency = 1) {
         if (audioContext) {
             this.audioContext = audioContext;
         }
+        this.maxConcurrency = Math.max(1, maxConcurrency);
     }
 
     public setAudioContext(ctx: AudioContext): void {
         this.audioContext = ctx;
+    }
+
+    public setMaxConcurrency(limit: number): void {
+        this.maxConcurrency = Math.max(1, limit);
+        this.scheduleNext();
+    }
+
+    public getMaxConcurrency(): number {
+        return this.maxConcurrency;
     }
 
     /**
@@ -46,7 +79,6 @@ export class AudioTaskQueue {
      * Complies with the HW 2 specification contract.
      */
     async enqueue(trackUrl: string, title?: string): Promise<AudioBuffer> {
-        // Concurrency control with AbortSignal cancellation
         const controller = new AbortController();
         const taskId = `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         const inferredTitle = title || trackUrl.split('/').pop()?.split('?')[0] || 'Audio Track';
@@ -66,50 +98,57 @@ export class AudioTaskQueue {
 
             this.queue.push(task);
             this.notify();
-            this.processNext();
+            this.scheduleNext();
         });
     }
 
     /**
-     * Process next audio task in strict FIFO order.
+     * Schedules pending tasks according to strict FIFO order and concurrency limit.
      */
-    private async processNext(): Promise<void> {
-        if (this.isProcessing || this.queue.length === 0) {
-            return;
-        }
+    private scheduleNext(): void {
+        while (this.runningTasks.size < this.maxConcurrency && this.queue.length > 0) {
+            const task = this.queue.shift();
+            if (!task) break;
 
-        const task = this.queue.shift();
-        if (!task) return;
+            // Check if task was aborted while waiting in pending queue
+            if (task.controller.signal.aborted) {
+                task.status = 'cancelled';
+                task.errorMessage = 'Audio task was aborted before processing.';
+                this.cancelledCount++;
+                this.recordHistory(task);
+                task.reject(new DOMException('Audio task was aborted before processing.', 'AbortError'));
+                this.notify();
+                continue;
+            }
 
-        // Check if task was aborted while waiting in queue
-        if (task.controller.signal.aborted) {
-            task.status = 'cancelled';
-            this.recordHistory(task);
-            task.reject(new DOMException('Audio task was aborted before processing.', 'AbortError'));
+            this.runningTasks.add(task);
             this.notify();
-            this.processNext();
-            return;
+            this.executeTask(task);
         }
+    }
 
-        this.isProcessing = true;
-        this.activeTask = task;
-        this.activeController = task.controller;
+    /**
+     * Executes an individual audio task asynchronously.
+     */
+    private async executeTask(task: AudioTask): Promise<void> {
+        task.startedAt = Date.now();
 
         try {
-            // Check cache first
+            // Check cache first for instant zero-latency replay
             if (this.bufferCache.has(task.trackUrl)) {
                 task.status = 'completed';
                 task.progress = 100;
                 task.completedAt = Date.now();
                 const cachedBuffer = this.bufferCache.get(task.trackUrl)!;
                 task.decodedBuffer = cachedBuffer;
+                this.completedCount++;
                 this.recordHistory(task);
                 this.notify();
                 task.resolve(cachedBuffer);
                 return;
             }
 
-            // Step 1: Download track with AbortSignal
+            // Step 1: Download track with AbortSignal cancellation token
             task.status = 'downloading';
             this.notify();
 
@@ -117,8 +156,10 @@ export class AudioTaskQueue {
                 signal: task.controller.signal,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+            if (!response || !response.ok) {
+                const status = response ? response.status : 0;
+                const statusText = response ? response.statusText : 'No response';
+                throw new Error(`HTTP Error ${status}: ${statusText}`);
             }
 
             const contentLengthHeader = response.headers.get('content-length');
@@ -162,7 +203,7 @@ export class AudioTaskQueue {
                 this.notify();
             }
 
-            // Check cancellation before decoding
+            // Check cancellation before decoding boundary
             if (task.controller.signal.aborted) {
                 throw new DOMException('Task aborted prior to decoding', 'AbortError');
             }
@@ -173,9 +214,14 @@ export class AudioTaskQueue {
             this.notify();
 
             const ctx = this.getOrCreateAudioContext();
-            // Note: decodeAudioData may detach the ArrayBuffer, so clone if re-use is needed
+            // decodeAudioData may detach the ArrayBuffer, so clone if reuse is needed
             const bufferCopy = arrayBuffer.slice(0);
             const decodedBuffer = await ctx.decodeAudioData(bufferCopy);
+
+            // Check cancellation after decoding boundary
+            if (task.controller.signal.aborted) {
+                throw new DOMException('Task aborted during or after decoding', 'AbortError');
+            }
 
             // Cache for instant reuse
             this.bufferCache.set(task.trackUrl, decodedBuffer);
@@ -184,6 +230,7 @@ export class AudioTaskQueue {
             task.progress = 100;
             task.completedAt = Date.now();
             task.decodedBuffer = decodedBuffer;
+            this.completedCount++;
             this.recordHistory(task);
             this.notify();
 
@@ -195,6 +242,7 @@ export class AudioTaskQueue {
             if (isAbort) {
                 task.status = 'cancelled';
                 task.errorMessage = 'Operation aborted via AbortController.';
+                this.cancelledCount++;
                 console.info(
                     '%c[AbortController Evidence]%c Task cancelled successfully via AbortSignal token!%c\n' +
                     `• Task ID: ${task.id}\n` +
@@ -208,45 +256,50 @@ export class AudioTaskQueue {
             } else {
                 task.status = 'error';
                 task.errorMessage = err instanceof Error ? err.message : String(err);
+                this.failedCount++;
             }
             this.recordHistory(task);
             this.notify();
             task.reject(err);
         } finally {
-            this.isProcessing = false;
-            this.activeController = null;
-            this.activeTask = null;
+            this.runningTasks.delete(task);
             this.notify();
-            // Continue processing remaining queue in FIFO order
-            this.processNext();
+            this.scheduleNext();
         }
     }
 
     /**
-     * Cancel the active task currently downloading or decoding.
+     * Cancel all active tasks currently downloading or decoding.
      */
     public cancelActive(): boolean {
-        if (this.activeController) {
-            this.activeController.abort();
-            return true;
+        let anyCancelled = false;
+        for (const task of this.runningTasks) {
+            task.controller.abort();
+            anyCancelled = true;
         }
-        return false;
+        return anyCancelled;
     }
 
     /**
      * Cancel a specific task by ID (either active or pending in queue).
      */
     public cancelTask(taskId: string): boolean {
-        if (this.activeTask && this.activeTask.id === taskId) {
-            return this.cancelActive();
+        // Check running tasks
+        for (const task of this.runningTasks) {
+            if (task.id === taskId) {
+                task.controller.abort();
+                return true;
+            }
         }
 
+        // Check pending queue
         const index = this.queue.findIndex(t => t.id === taskId);
         if (index !== -1) {
             const [task] = this.queue.splice(index, 1);
             task.controller.abort();
             task.status = 'cancelled';
             task.errorMessage = 'Cancelled before starting.';
+            this.cancelledCount++;
             this.recordHistory(task);
             task.reject(new DOMException('Cancelled by user.', 'AbortError'));
             this.notify();
@@ -267,6 +320,7 @@ export class AudioTaskQueue {
                 task.controller.abort();
                 task.status = 'cancelled';
                 task.errorMessage = 'Queue cleared.';
+                this.cancelledCount++;
                 this.recordHistory(task);
                 task.reject(new DOMException('Queue cleared by user.', 'AbortError'));
             }
@@ -293,8 +347,16 @@ export class AudioTaskQueue {
         return [...this.queue];
     }
 
+    public getActiveTasks(): readonly AudioTask[] {
+        return Array.from(this.runningTasks).map(t => ({ ...t }));
+    }
+
+    /**
+     * Backward-compatible helper returning the primary active task.
+     */
     public getActiveTask(): AudioTask | null {
-        return this.activeTask ? { ...this.activeTask } : null;
+        const first = this.runningTasks.values().next().value;
+        return first ? { ...first } : null;
     }
 
     public getHistory(): readonly AudioTask[] {
@@ -302,7 +364,18 @@ export class AudioTaskQueue {
     }
 
     public getIsProcessing(): boolean {
-        return this.isProcessing;
+        return this.runningTasks.size > 0;
+    }
+
+    public getTaskCounts(): QueueTaskCounts {
+        return {
+            pending: this.queue.length,
+            active: this.runningTasks.size,
+            completed: this.completedCount,
+            failed: this.failedCount,
+            cancelled: this.cancelledCount,
+            total: this.queue.length + this.runningTasks.size + this.completedCount + this.failedCount + this.cancelledCount,
+        };
     }
 
     public subscribe(subscriber: QueueSubscriber): () => void {
