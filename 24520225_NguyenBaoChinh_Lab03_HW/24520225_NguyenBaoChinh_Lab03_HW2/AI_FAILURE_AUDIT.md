@@ -997,3 +997,27 @@ As part of the academic integrity requirements for **Lab 03 HW2**, all code gene
 2. **Mandatory Profiler Auditing:** Component render counts must be verified via React Developer Tools Profiler to ensure `React.memo` isolation.
 3. **Hardware Lifecycle Verification:** Audio graphs must be explicitly verified to ensure nodes are stopped, disconnected, and de-referenced when released.
 4. **No Synthetic Misrepresentation:** Any minimal reproduction used for testing is labeled explicitly as a reproduction and not misrepresented as a preexisting production defect.
+
+---
+
+## 6. HW 2 Engine Specification Compliance & Evidence Reference
+
+All requirements of the **HW 2 Engine: Polyphonic Voice Pool & Async FIFO Replay** architecture are implemented and verified against the reference specification:
+
+1. **Exact `PolyphonicSynth` Implementation (`src/audio/PolyphonicSynth.js`):**
+   - Class: `export class PolyphonicSynth`
+   - Constructor: `constructor(maxVoices = 8)` initializing `this.ctx = null; this.maxVoices = maxVoices; this.voices = new Map();`.
+   - Methods: `noteOn(midi, freqHz)` and `noteOff(midi)`.
+2. **Requirement A – O(1) Active Voice Tracking via ES6 Map:**
+   - Uses `if (this.voices.size >= this.maxVoices) { const oldestMidi = this.voices.keys().next().value; this.noteOff(oldestMidi); }` and registers active voices via `this.voices.set(midi, { osc, gain })`.
+   - Evidence: `evidence/HW2_Concurrency_Memory_Hygiene/E01_Map_FIFO/E01_01_map_constructor.png` through `E01_05_repeated_fifo_test.png`.
+3. **Requirement B – Click-Free ADSR Envelope Ramp:**
+   - Uses `gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04)` followed by `osc.stop(ctx.currentTime + 0.04)`.
+   - Evidence: `evidence/HW2_Concurrency_Memory_Hygiene/E02_ADSR/E02_01_release_ramp_source.png` through `E02_04_adsr_test.png`.
+4. **Requirement C – FIFO Recording & Variable-Speed Replay (`src/audio-queue-controller.ts`):**
+   - Records `{ midi, freqHz, durationMs, deltaMs }` into the unified `AudioTaskQueue` and replays asynchronously at `0.5x`, `1.0x`, and `2.0x` speeds (`scheduledDelay = deltaMs / activeSpeed`, `scheduledDuration = durationMs / activeSpeed`).
+   - Evidence: `evidence/HW2_Concurrency_Memory_Hygiene/E03_Recording_Replay/E03_01_event_structure.png` through `E03_07_replay_tests.png`.
+5. **Requirement D – `AbortController` Cancellation on Stop Sequence & Unmount (`src/audio-queue-controller.ts` & `src/App.tsx`):**
+   - Instantiates `new AbortController()` per replay session, passes `controller.signal` to async waits, and calls `this.abortController.abort()` plus `this.synth.dispose()` on `stopSequence()` and component unmount.
+   - Evidence: `evidence/HW2_Concurrency_Memory_Hygiene/E04_AbortController/E04_01_controller_creation.png` through `E04_05_abort_tests.png`.
+

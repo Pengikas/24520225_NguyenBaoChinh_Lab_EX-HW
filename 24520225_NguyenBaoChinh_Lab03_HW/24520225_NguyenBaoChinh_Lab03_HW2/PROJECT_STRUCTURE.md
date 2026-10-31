@@ -320,4 +320,75 @@ npm run build
 
 # 4. Preview production build locally
 npm run preview
+
+# 5. Execute all 52 automated unit & integration tests (Vitest)
+npm test
 ```
+
+---
+
+## 8. HW 2 Engine Specification Compliance: Polyphonic Voice Pool & Async FIFO Replay
+
+### 8.1 Canonical Polyphonic Voice Pool (`src/audio/PolyphonicSynth.js`)
+- **File Location:** `src/audio/PolyphonicSynth.js` (with TypeScript declarations in `src/audio/PolyphonicSynth.d.ts` and unified re-export in `src/audio/polyphonic-engine.ts`).
+- **Class Declaration:** `export class PolyphonicSynth`
+- **Constructor Signature & Required Properties:**
+  ```javascript
+  constructor(maxVoices = 8) {
+      this.ctx = null;
+      this.maxVoices = maxVoices;
+      this.voices = new Map();
+  }
+  ```
+- **Method Signatures:**
+  - `noteOn(midi, freqHz)`
+  - `noteOff(midi)`
+- **O(1) Active Voice Tracking via ES6 Map (Requirement A):**
+  ```javascript
+  if (this.voices.size >= this.maxVoices) {
+      const oldestMidi = this.voices.keys().next().value;
+      this.noteOff(oldestMidi);
+  }
+  ```
+  - Registers each active voice with `this.voices.set(midi, { osc, gain })`.
+- **Click-Free 40ms ADSR Envelope Ramp (Requirement B):**
+  ```javascript
+  gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      ctx.currentTime + 0.04
+  );
+  osc.stop(ctx.currentTime + 0.04);
+  ```
+  - Includes `osc.onended` identity guard (`currentVoice.osc === osc`) to prevent a releasing oscillator from deleting a newly re-triggered voice of the same MIDI note.
+
+### 8.2 Unified `AudioTaskQueue` FIFO Recording, Variable-Speed Replay & `AbortController` (`src/audio-queue-controller.ts`)
+- **File Location:** `src/audio-queue-controller.ts` (re-exported in `src/audio/fifo-sequencer.ts` so no competing queue exists).
+- **Recorded Event Structure (Requirement C):**
+  ```typescript
+  export interface RecordedNoteEvent {
+      midi: number;
+      freqHz: number;
+      durationMs: number;
+      deltaMs: number;
+  }
+  ```
+- **Supported Playback Speeds:** `0.5x`, `1.0x`, `2.0x` (`scheduledDelay = deltaMs / playbackSpeed`, `scheduledDuration = durationMs / playbackSpeed`).
+- **`AbortController` Cancellation on Stop Sequence & Unmount (Requirement D):**
+  - Each `replay(speed)` session instantiates `const controller = new AbortController()` and passes `controller.signal` to `waitAsync(scheduledDelay, signal)` and `scheduleAsyncNoteOff(..., signal)`.
+  - `stopSequence()` calls `this.abortController.abort()`, clears all active timers, and calls `this.synth.dispose()` to immediately silence active oscillators.
+  - Component unmount in `src/App.tsx` invokes `audioQueue.stopSequence()` and `polyphonicEngine.dispose()`.
+
+### 8.3 Automated Test Suites & Evidence Directory
+- **Automated Tests (6 suites, 52 passing tests):**
+  - `src/audio/PolyphonicSynth.test.ts` (13 tests)
+  - `src/audio/polyphonic-engine.test.ts` (10 tests)
+  - `src/audio/fifo-sequencer.test.ts` (10 tests)
+  - `src/audio-queue-controller.test.ts` (8 tests)
+  - `src/piano/PianoKey.test.ts` (6 tests)
+  - `src/piano/piano-generator.test.ts` (5 tests)
+- **Verification Evidence (`evidence/HW2_Concurrency_Memory_Hygiene/`):**
+  - `E01_Map_FIFO/E01_01_map_constructor.png` .. `E01_05_repeated_fifo_test.png`
+  - `E02_ADSR/E02_01_release_ramp_source.png` .. `E02_04_adsr_test.png`
+  - `E03_Recording_Replay/E03_01_event_structure.png` .. `E03_07_replay_tests.png`
+  - `E04_AbortController/E04_01_controller_creation.png` .. `E04_05_abort_tests.png`
+
