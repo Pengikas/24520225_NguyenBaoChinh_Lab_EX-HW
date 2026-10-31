@@ -28,3 +28,4 @@ export declare class PolyphonicSynth {
 }
 
 export default PolyphonicSynth;
+

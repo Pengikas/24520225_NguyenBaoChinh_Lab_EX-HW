@@ -265,3 +265,4 @@ export class PolyphonicSynth {
 }
 
 export default PolyphonicSynth;
+
