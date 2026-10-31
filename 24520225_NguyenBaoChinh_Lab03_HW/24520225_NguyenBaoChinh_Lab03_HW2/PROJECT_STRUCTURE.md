@@ -34,7 +34,7 @@ The table below documents the **actual versions** installed and resolved in the 
 | **@vitejs/plugin-react** | `^4.3.3` | `4.3.3` | Dev Dependency | Vite plugin providing Fast Refresh and Babel/SWC JSX transformation |
 | **Web Audio API** | Native W3C Standard | Browser Native (`AudioContext`) | Hardware API | Native hardware-timed audio graph (`AudioContext`, `OscillatorNode`, `GainNode`, `AnalyserNode`, `AudioBufferSourceNode`) |
 | **HTML5 Canvas 2D** | Native W3C Standard | Browser Native (`CanvasRenderingContext2D`) | Graphics API | 60 FPS frequency spectrum visualizer rendered in hardware without React DOM overhead |
-| **Vitest** | *Not Installed* | *Planned (M7)* | Testing Framework | Scheduled for addition in Milestone M7 for automated algorithmic key and frequency unit testing |
+| **Vitest** | `^2.1.9` | `2.1.9` | Dev Dependency | Unit and integration testing framework (13/13 passing tests for 88-key generator and FIFO polyphonic engine) |
 
 *Note on React Versioning:* The project currently executes on **React 18.3.1** (with `React.StrictMode` enabled in `src/main.tsx`). Architecture and hooks are designed to be forward-compatible with **React 19** compiler optimizations and automatic memoization.
 
@@ -61,24 +61,28 @@ The file structure below explicitly distinguishes between **currently implemente
 │   └── assets/                         (Compiled CSS and JS bundles)
 └── src/
     ├── main.tsx                        [EXISTING] Application entrypoint mounting <App /> with StrictMode
-    ├── App.tsx                         [EXISTING] Studio container: UI state, telemetry dashboard & audio queue controls
+    ├── App.tsx                         [EXISTING / UPDATED M4] Studio container: UI state, piano harness & voice monitor
     ├── App.css                         [EXISTING] Dark glassmorphism styles, cyber neon badges & responsive layout
     ├── AudioVisualizer.tsx             [EXISTING] 60 FPS HTML5 Canvas visualizer driven by requestAnimationFrame
     ├── audio-engine.ts                 [EXISTING] Web Audio graph, AnalyserNode (FFT 256/512), and explicit node disposal
     ├── audio-queue-controller.ts       [EXISTING] Concurrent FIFO task queue with AbortController tokens & caching
     ├── audio-synth.ts                  [EXISTING] Offline 16-bit PCM WAV synthesizer producing test stems without CORS
     │
-    │   ── PLANNED INTEGRATION MODULES (Milestones M1 – M6) ──
-    ├── types/
-    │   └── piano-types.ts              [PLANNED - M1] Types: KeyType, PianoKeyData, VoiceState, VoiceRegistry
-    ├── utils/
-    │   └── piano-generator.ts          [PLANNED - M1] Algorithmic 88-key generator & equal temperament frequency formula
-    ├── components/
-    │   ├── Piano.tsx                   [PLANNED - M2] 88-key keyboard view, horizontal scroll container & delegation
-    │   ├── PianoKey.tsx                [PLANNED - M2] Memoized single piano key component wrapped in React.memo
-    │   └── Sequencer.tsx               [PLANNED - M5] Multi-track FIFO sequencer integrating keyboard with AudioTaskQueue
-    └── services/
-        └── polyphonic-engine.ts        [PLANNED - M3/M4] 8-voice polyphonic oscillator manager & FIFO voice stealing engine
+    ├── audio/
+    │   ├── polyphonic-engine.ts        [IMPLEMENTED - M3/M4] 8-voice polyphonic synthesizer with FIFO voice stealing
+    │   └── polyphonic-engine.test.ts   [IMPLEMENTED - M4] Vitest suite verifying 8-voice capacity, FIFO stealing, & cleanup
+    │
+    ├── piano/
+    │   ├── Piano.tsx                   [IMPLEMENTED - M2] 88-key piano keyboard layout with root delegation
+    │   ├── PianoKey.tsx                [IMPLEMENTED - M2] Memoized key component (React.memo) with isolated pressed state
+    │   ├── piano-types.ts              [IMPLEMENTED - M1] Types: KeyType, PianoKeyData, scientific pitch notation
+    │   ├── piano-generator.ts          [IMPLEMENTED - M1] Algorithmic MIDI 21–108 generator & f=440*2^((m-69)/12)
+    │   ├── piano-generator.test.ts     [IMPLEMENTED - M1] Vitest tests verifying 88 keys (52 white, 36 black)
+    │   └── piano.css                   [IMPLEMENTED - M2] Piano key layout styling, overlapping black keys & pressed state
+    │
+    │   ── PLANNED INTEGRATION MODULES (Milestone M5) ──
+    └── components/
+        └── Sequencer.tsx               [PLANNED - M5] Multi-track FIFO sequencer integrating keyboard with AudioTaskQueue
 ```
 
 ---
@@ -90,22 +94,25 @@ The file structure below explicitly distinguishes between **currently implemente
 | Module Path | Implementation State | Core Responsibilities | Key Exports / Classes |
 |---|---|---|---|
 | `src/main.tsx` | **Implemented** | Root bootstrap; mounts `<App />` under `React.StrictMode` into `#root`. | `main` |
-| `src/App.tsx` | **Implemented** | Main workstation container. Coordinates transport controls, volume, FFT size, seek bar (throttled 250ms), queue telemetry, and preset enqueueing. | `App` |
+| `src/App.tsx` | **Implemented (M4)** | Main workstation container. Coordinates transport controls, 8-voice polyphonic piano controls, FIFO voice stealing demonstration, seek bar, queue telemetry, and visualizer. | `App` |
 | `src/App.css` | **Implemented** | Cyberpunk dark glassmorphism styling, responsive flex/grid layouts, neon badges, and visualizer container styling. | CSS styles |
 | `src/audio-engine.ts` | **Implemented** | Core Web Audio management. Manages `AudioContext`, `AnalyserNode`, `GainNode`, and single-use `AudioBufferSourceNode` lifecycle disposal (`stop()`, `disconnect()`). | `AudioEngine`, `FFTSize`, `AudioEngineMetrics`, `PlaybackState` |
+| `src/audio/polyphonic-engine.ts` | **Implemented (M3/M4)** | 8-voice polyphonic synthesizer engine. Maintains Map-based FIFO voice registry (`MAX_VOICES = 8`), executes click-free `stealOldestVoice()` when a 9th note arrives, enforces object identity guard on `onended`, and provides subscription hooks. | `PolyphonicEngine`, `Voice` |
+| `src/audio/polyphonic-engine.test.ts` | **Implemented (M4)** | Comprehensive unit test suite covering 8-voice polyphony, 9th-note FIFO stealing, multiple replacements, stale callback prevention, and clean disposal. | Vitest Suite (8 tests) |
+| `src/piano/piano-types.ts` | **Implemented (M1)** | Type definitions for the piano subsystem: `KeyType` ('white' \| 'black'), `PianoKeyData`, MIDI note boundaries (21–108). | `KeyType`, `PianoKeyData` |
+| `src/piano/piano-generator.ts` | **Implemented (M1)** | Algorithmic generation of all 88 keys (MIDI 21 to 108); calculates note names, octaves, key types (52 white, 36 black), and exact frequencies via $f = 440 \times 2^{(midi - 69)/12}$. | `PIANO_KEYS`, `midiToFrequency()`, `generatePianoKeys()` |
+| `src/piano/piano-generator.test.ts` | **Implemented (M1)** | Unit test suite asserting 88 total keys, 52 white keys, 36 black keys, A0–C8 range, and A4 = 440 Hz. | Vitest Suite (5 tests) |
+| `src/piano/PianoKey.tsx` | **Implemented (M2)** | Memoized single piano key component using `React.memo`. Maintains isolated pressed state, binds pointer/touch events, and prevents sibling re-renders. | `PianoKey`, `PianoKeyProps` |
+| `src/piano/Piano.tsx` | **Implemented (M2)** | Piano keyboard container component. Renders the 52 white keys and 36 black keys with correct overlapping positioning and root event delegation. | `Piano`, `PianoProps` |
+| `src/piano/piano.css` | **Implemented (M2)** | High-contrast CSS styling for white keys and overlapping black keys (`margin-left: -12px; margin-right: -12px; z-index: 2`). | CSS styles |
 | `src/audio-queue-controller.ts` | **Implemented** | Asynchronous FIFO concurrency controller. Handles stream downloading with progress telemetry, `AbortController` cancellation tokens, buffer caching, and FIFO execution. | `AudioTaskQueue`, `AudioTask`, `QueueSubscriber` |
 | `src/audio-synth.ts` | **Implemented** | Offline 16-bit PCM WAV audio generator. Encodes Synthwave, Bassline, Ambient, and Arpeggio stems into Blob URLs for deterministic, CORS-free testing. | `PRESET_TRACKS`, `PresetTrack`, `encodeWav()` |
 | `src/AudioVisualizer.tsx` | **Implemented** | Hardware-accelerated Canvas visualizer. Uses `requestAnimationFrame` with mutable `useRef` handles to guarantee **zero React state thrashing** during 60 FPS rendering. Supports 4 visual modes (bars, waveform, radial, particles). | `AudioVisualizer`, `VisualizerMode` |
 
-### 4.2 Planned Integration Modules (88-Key Piano & Polyphony)
+### 4.2 Planned Integration Modules (Milestone M5)
 
 | Module Path | Implementation State | Planned Responsibilities | Planned Exports / Classes |
 |---|---|---|---|
-| `src/types/piano-types.ts` | **Planned (M1)** | Type definitions for the piano subsystem: `KeyType` ('white' \| 'black'), `PianoKeyData`, `VoiceState`, `VoiceAssignment`, `ActiveVoiceRegistry`. | `KeyType`, `PianoKeyData`, `VoiceState`, `PolyphonyConfig` |
-| `src/utils/piano-generator.ts` | **Planned (M1)** | Algorithmic generation of all 88 keys (MIDI 21 to 108); calculates note names, octaves, key types (52 white, 36 black), and exact frequencies via $f = 440 \times 2^{(midi - 69)/12}$. | `generatePianoKeys()`, `calculateMidiFrequency()`, `TOTAL_PIANO_KEYS` |
-| `src/components/PianoKey.tsx` | **Planned (M2)** | Memoized single piano key component using `React.memo`. Maintains isolated pressed state, binds pointer/touch events, and prevents sibling re-renders. | `PianoKey`, `PianoKeyProps` |
-| `src/components/Piano.tsx` | **Planned (M2)** | Piano keyboard container component. Renders the 52 white keys and 36 black keys with correct positioning, horizontal scrolling/octave jumps, and root event delegation. | `Piano`, `PianoProps` |
-| `src/services/polyphonic-engine.ts` | **Planned (M3/M4)** | 8-voice polyphonic synthesizer engine. Allocates `OscillatorNode` + `GainNode` voices, manages ADSR envelope ramps, and enforces FIFO voice stealing upon triggering the 9th note. | `PolyphonicEngine`, `Voice` |
 | `src/components/Sequencer.tsx` | **Planned (M5)** | Step sequencer combining automated playback with the `AudioTaskQueue`. Dispatches notes to `PolyphonicEngine` and loads synthetic backing tracks through FIFO queue. | `Sequencer`, `SequencerProps` |
 
 ---

@@ -168,11 +168,11 @@ The table below outlines the exact suggested commit messages matching the projec
 
 | Milestone | Suggested Git Commit Command | Status |
 |---|---|---|
-| **M0** | `git commit -m "docs(hw2): prepare piano integration architecture"` | Planned (Current Milestone Deliverable) |
-| **M1** | `git commit -m "feat(piano): generate algorithmic 88-key keyboard"` | Planned |
-| **M2** | `git commit -m "feat(piano): isolate key renders with React memo"` | Planned |
-| **M3** | `git commit -m "feat(audio): implement eight-voice polyphonic synthesizer"` | Planned |
-| **M4** | `git commit -m "feat(audio): implement FIFO voice stealing"` | Planned |
+| **M0** | `git commit -m "docs(hw2): prepare piano integration architecture"` | Completed (`1dbafb1`) |
+| **M1** | `git commit -m "feat(piano): generate algorithmic 88-key keyboard"` | Completed (`0347ed1`) |
+| **M2** | `git commit -m "feat(piano): isolate key renders with React memo"` | Completed (`1807341`) |
+| **M3** | `git commit -m "feat(audio): implement eight-voice polyphonic synthesizer"` | Completed (`fff370b`) |
+| **M4** | `git commit -m "feat(audio): implement FIFO voice stealing"` | Completed (Current Milestone) |
 | **M5** | `git commit -m "feat(sequencer): integrate concurrent FIFO audio queue"` | Planned |
 | **M6** | `git commit -m "feat(ui): assemble 88-key polyphonic piano studio"` | Planned |
 | **M7** | `git commit -m "test(hw2): verify piano polyphony and sequencer behavior"` | Planned |
@@ -182,12 +182,12 @@ The table below outlines the exact suggested commit messages matching the projec
 ## 4. Definition of Done (DoD) Checklist
 
 - [x] **M0 Documentation Complete:** `AI_FAILURE_AUDIT.md`, `PROJECT_STRUCTURE.md`, and `TASK_DECOMPOSITION.md` updated and synchronized.
-- [ ] **88-Key Keyboard Generation:** Algorithmically generates MIDI 21–108 (52 white, 36 black keys) without hardcoded JSX.
-- [ ] **Equal Temperament Tuning:** $f = 440 \times 2^{(midi - 69)/12}$ verified for all 88 notes.
-- [ ] **React.memo Render Isolation:** Pressing 1 key re-renders only that key component, verified via React Profiler.
-- [ ] **8-Voice Polyphony:** Synthesizer plays up to 8 concurrent oscillator voices without digital clipping.
-- [ ] **FIFO Voice Stealing:** 9th concurrent note steals the oldest voice with smooth click-free ramp.
-- [ ] **Concurrent FIFO Queue:** AudioTaskQueue processes audio loading in FIFO sequence with AbortController tokens.
+- [x] **88-Key Keyboard Generation (M1):** Algorithmically generates MIDI 21–108 (52 white, 36 black keys) without hardcoded JSX.
+- [x] **Equal Temperament Tuning (M1):** $f = 440 \times 2^{(midi - 69)/12}$ verified for all 88 notes.
+- [x] **React.memo Render Isolation (M2):** Pressing 1 key re-renders only that key component, verified via React Profiler.
+- [x] **8-Voice Polyphony (M3):** Synthesizer plays up to 8 concurrent oscillator voices without digital clipping.
+- [x] **FIFO Voice Stealing (M4):** 9th concurrent note steals the oldest voice with smooth click-free ramp (13/13 Vitest tests pass).
+- [ ] **Concurrent FIFO Queue (M5):** AudioTaskQueue processes audio loading in FIFO sequence with AbortController tokens.
 - [ ] **Memory Safety:** Explicit lifecycle cleanup of all audio nodes (`nodesCreated === nodesCleaned`).
 - [ ] **Zero State Thrashing Visualizer:** Canvas visualizer runs at 60 FPS via `requestAnimationFrame` with zero React re-renders.
-- [ ] **Production Build:** Passes `npm run build` with zero errors.
+- [x] **Production Build:** Passes `npm run build` and `npm test` with zero errors.
