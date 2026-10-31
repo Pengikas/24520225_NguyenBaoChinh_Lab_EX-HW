@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+import { PolyphonicEngine } from './audio/polyphonic-engine';
 import { AudioEngine, FFTSize, AudioEngineMetrics, PlaybackState } from './audio-engine';
 import { AudioTaskQueue, AudioTask } from './audio-queue-controller';
 import { AudioVisualizer } from './AudioVisualizer';
@@ -14,7 +15,11 @@ import Piano from './piano/Piano';
 
 // Singleton instances for persistent audio graph across renders
 const audioEngine = new AudioEngine(256);
+const polyphonicEngine = new PolyphonicEngine(audioEngine);
 const audioQueue = new AudioTaskQueue(audioEngine.getAudioContext());
+
+// 8-Voice test chord (MIDI numbers: C4, E4, G4, B4, C5, E5, G5, B5)
+const TEST_CHORD = [60, 64, 67, 71, 72, 76, 79, 83];
 
 export const App: React.FC = () => {
     // UI reactive state
@@ -22,6 +27,9 @@ export const App: React.FC = () => {
     const [activeTask, setActiveTask] = useState<AudioTask | null>(null);
     const [historyItems, setHistoryItems] = useState<readonly AudioTask[]>([]);
     const [isQueueProcessing, setIsQueueProcessing] = useState<boolean>(false);
+
+    // 88-Key Polyphonic Piano voice counter
+    const [activeVoiceCount, setActiveVoiceCount] = useState<number>(0);
 
     // Audio Playback state
     const [currentTrackTitle, setCurrentTrackTitle] = useState<string>('No track loaded');
@@ -41,16 +49,32 @@ export const App: React.FC = () => {
 
     // Piano key trigger handlers
     const handlePianoNoteOn = useCallback((midi: number) => {
-        console.log('[Piano] Note ON:', midi);
-        audioEngine.ensureContext();
+        polyphonicEngine.noteOn(midi);
     }, []);
 
     const handlePianoNoteOff = useCallback((midi: number) => {
-        console.log('[Piano] Note OFF:', midi);
+        polyphonicEngine.noteOff(midi);
+    }, []);
+
+    const handleTestEightVoices = useCallback(() => {
+        TEST_CHORD.forEach((midi) => {
+            polyphonicEngine.noteOn(midi);
+        });
+    }, []);
+
+    const handleStopTestChord = useCallback(() => {
+        TEST_CHORD.forEach((midi) => {
+            polyphonicEngine.noteOff(midi);
+        });
     }, []);
 
     // Seek interval reference (polled at modest 4Hz for UI seek bar, decoupled from 60fps canvas)
     const progressTimerRef = useRef<number | null>(null);
+
+    // Subscribe to polyphonic voice count updates
+    useEffect(() => {
+        return polyphonicEngine.subscribeVoiceCount(setActiveVoiceCount);
+    }, []);
 
     // Synchronize queue updates
     useEffect(() => {
@@ -259,11 +283,49 @@ export const App: React.FC = () => {
                 onFFTSizeChange={handleFFTChange}
             />
 
-            {/* 88-Key Polyphonic Piano Keyboard */}
-            <Piano
-                onNoteOn={handlePianoNoteOn}
-                onNoteOff={handlePianoNoteOff}
-            />
+            {/* 88-Key Polyphonic Piano Card */}
+            <section className="card" aria-label="88-Key Polyphonic Piano">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div>
+                        <h2 className="card-title" style={{ margin: 0 }}>
+                            88-Key Polyphonic Piano
+                        </h2>
+                        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                            MIDI A0 (21) – C8 (108) • 8-Voice Web Audio Synthesizer
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <span className={`badge ${activeVoiceCount >= 8 ? 'badge-amber' : 'badge-cyan'}`}>
+                            Active Voices: {activeVoiceCount} / 8
+                        </span>
+
+                        <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleTestEightVoices}
+                            title="Play 8 simultaneous notes (C Major 9 chord)"
+                        >
+                            Test 8-Voice Chord
+                        </button>
+
+                        <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleStopTestChord}
+                            disabled={activeVoiceCount === 0}
+                            title="Release test chord voices"
+                        >
+                            Stop Chord
+                        </button>
+                    </div>
+                </div>
+
+                <Piano
+                    onNoteOn={handlePianoNoteOn}
+                    onNoteOff={handlePianoNoteOff}
+                />
+            </section>
 
             {/* Playback Transport & Track Control Card */}
             <section className="card" aria-label="Audio Playback Controls">
