@@ -211,3 +211,4 @@ describe('M4: FIFO Voice Stealing Polyphonic Synthesizer', () => {
         expect(polyEngine.getActiveVoiceCount()).toBe(0);
     });
 });
+
