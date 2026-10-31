@@ -62,10 +62,13 @@ export const App: React.FC = () => {
         });
     }, []);
 
-    const handleStopTestChord = useCallback(() => {
-        TEST_CHORD.forEach((midi) => {
-            polyphonicEngine.noteOff(midi);
-        });
+    const handleTriggerNinthNote = useCallback(() => {
+        // Trigger 9th note (MIDI 90) to demonstrate FIFO voice stealing
+        polyphonicEngine.noteOn(90);
+    }, []);
+
+    const handleStopAllVoices = useCallback(() => {
+        polyphonicEngine.dispose();
     }, []);
 
     // Seek interval reference (polled at modest 4Hz for UI seek bar, decoupled from 60fps canvas)
@@ -306,17 +309,26 @@ export const App: React.FC = () => {
                             onClick={handleTestEightVoices}
                             title="Play 8 simultaneous notes (C Major 9 chord)"
                         >
-                            Test 8-Voice Chord
+                            Play 8-Voice Chord
+                        </button>
+
+                        <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={handleTriggerNinthNote}
+                            title="Trigger 9th note (MIDI 90) to steal oldest voice via FIFO"
+                        >
+                            Trigger 9th Note (FIFO Steal)
                         </button>
 
                         <button
                             type="button"
                             className="btn btn-secondary btn-sm"
-                            onClick={handleStopTestChord}
+                            onClick={handleStopAllVoices}
                             disabled={activeVoiceCount === 0}
-                            title="Release test chord voices"
+                            title="Release all active voices and reset monitor"
                         >
-                            Stop Chord
+                            Stop All Voices
                         </button>
                     </div>
                 </div>
