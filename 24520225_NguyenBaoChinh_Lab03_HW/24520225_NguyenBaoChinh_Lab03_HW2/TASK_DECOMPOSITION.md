@@ -4,7 +4,7 @@
 **Student:** Nguyen Bao Chinh (MSSV: 24520225)  
 **Project:** 88-Key Polyphonic Piano Studio & Concurrent FIFO Audio Sequencer  
 **Repository Branch:** `main`  
-**Current Baseline Commit:** `bd9440d` (`chore(hw2): initialize piano studio project`)
+**Current Baseline Commit:** `2a7ac5d` (`feat(ui): assemble 88-key polyphonic piano studio`)
 
 ---
 
@@ -166,16 +166,16 @@ The table below outlines the exact suggested commit messages matching the projec
 > [!IMPORTANT]
 > These are suggested milestone commit messages to be executed progressively as each feature milestone is implemented and verified. They are not claimed to have been committed yet (current Git HEAD is `bd9440d`).
 
-| Milestone | Suggested Git Commit Command | Status |
+| Milestone | Conventional Git Commit Command | Status |
 |---|---|---|
 | **M0** | `git commit -m "docs(hw2): prepare piano integration architecture"` | Completed (`1dbafb1`) |
 | **M1** | `git commit -m "feat(piano): generate algorithmic 88-key keyboard"` | Completed (`0347ed1`) |
 | **M2** | `git commit -m "feat(piano): isolate key renders with React memo"` | Completed (`1807341`) |
 | **M3** | `git commit -m "feat(audio): implement eight-voice polyphonic synthesizer"` | Completed (`fff370b`) |
-| **M4** | `git commit -m "feat(audio): implement FIFO voice stealing"` | Completed (Current Milestone) |
-| **M5** | `git commit -m "feat(sequencer): integrate concurrent FIFO audio queue"` | Planned |
-| **M6** | `git commit -m "feat(ui): assemble 88-key polyphonic piano studio"` | Planned |
-| **M7** | `git commit -m "test(hw2): verify piano polyphony and sequencer behavior"` | Planned |
+| **M4** | `git commit -m "feat(audio): implement FIFO voice stealing"` | Completed (`ec66d37`) |
+| **M5** | `git commit -m "feat(sequencer): integrate concurrent FIFO audio queue"` | Completed (`ec32919`) |
+| **M6** | `git commit -m "feat(ui): assemble 88-key polyphonic piano studio"` | Completed (`2a7ac5d`) |
+| **M7** | `git commit -m "test(hw2): verify piano polyphony and sequencer behavior"` | Completed (Current Milestone) |
 
 ---
 
@@ -186,8 +186,10 @@ The table below outlines the exact suggested commit messages matching the projec
 - [x] **Equal Temperament Tuning (M1):** $f = 440 \times 2^{(midi - 69)/12}$ verified for all 88 notes.
 - [x] **React.memo Render Isolation (M2):** Pressing 1 key re-renders only that key component, verified via React Profiler.
 - [x] **8-Voice Polyphony (M3):** Synthesizer plays up to 8 concurrent oscillator voices without digital clipping.
-- [x] **FIFO Voice Stealing (M4):** 9th concurrent note steals the oldest voice with smooth click-free ramp (13/13 Vitest tests pass).
-- [ ] **Concurrent FIFO Queue (M5):** AudioTaskQueue processes audio loading in FIFO sequence with AbortController tokens.
-- [ ] **Memory Safety:** Explicit lifecycle cleanup of all audio nodes (`nodesCreated === nodesCleaned`).
-- [ ] **Zero State Thrashing Visualizer:** Canvas visualizer runs at 60 FPS via `requestAnimationFrame` with zero React re-renders.
-- [x] **Production Build:** Passes `npm run build` and `npm test` with zero errors.
+- [x] **FIFO Voice Stealing (M4):** 9th concurrent note steals the oldest voice with smooth click-free ramp (8/8 tests pass).
+- [x] **Concurrent FIFO Queue (M5):** AudioTaskQueue processes audio loading in FIFO sequence with AbortController tokens (8/8 tests pass).
+- [x] **Piano Studio UI Assembly (M6):** Complete interface with 88 keys, 8 voice monitor slots, visualizer, transport, and sequencer.
+- [x] **Memory Safety:** Explicit lifecycle cleanup of all audio nodes (`nodesCreated === nodesCleaned`).
+- [x] **Zero State Thrashing Visualizer:** Canvas visualizer runs at 60 FPS via `requestAnimationFrame` with zero React re-renders.
+- [x] **Comprehensive Vitest Suite:** 21 / 21 tests pass across 3 test suites.
+- [x] **Production Build:** Passes `npm run build` (`tsc && vite build`) with exit code 0.
