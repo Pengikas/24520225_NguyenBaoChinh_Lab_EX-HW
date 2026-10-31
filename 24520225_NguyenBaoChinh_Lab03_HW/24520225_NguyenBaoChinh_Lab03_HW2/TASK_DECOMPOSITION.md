@@ -191,19 +191,19 @@ The table below outlines the exact suggested commit messages matching the projec
 - [x] **Piano Studio UI Assembly (M6):** Complete interface with 88 keys, 8 voice monitor slots, visualizer, transport, and sequencer.
 - [x] **Memory Safety:** Explicit lifecycle cleanup of all audio nodes (`nodesCreated === nodesCleaned`).
 - [x] **Zero State Thrashing Visualizer:** Canvas visualizer runs at 60 FPS via `requestAnimationFrame` with zero React re-renders.
-- [x] **Comprehensive Vitest Suite:** 52 / 52 tests pass across 6 test suites.
+- [x] **Comprehensive Vitest Suite:** 53 / 53 tests pass across 6 test suites.
 - [x] **Production Build:** Passes `npm run build` (`tsc && vite build`) with exit code 0.
 
 ---
 
-## 5. HW 2 Engine Specification Compliance Breakdown (PolyphonicSynth & Async FIFO Replay)
+## 5. HW 2 Engine & 88-Key Polyphonic Piano Specification Compliance Breakdown
 
 | Requirement | Exact Required Identifier / Expression | Source File & Lines | Automated Test Suite | Evidence Directory | Status |
 |---|---|---|---|---|---|
-| **Required File & Class** | `export class PolyphonicSynth` | `src/audio/PolyphonicSynth.js` (L8–L266) | `src/audio/PolyphonicSynth.test.ts` | `evidence/HW2_Concurrency_Memory_Hygiene/E01_Map_FIFO/` | **PASS** |
-| **Constructor & Properties** | `constructor(maxVoices = 8)`<br>`this.ctx = null;`<br>`this.maxVoices = maxVoices;`<br>`this.voices = new Map();` | `src/audio/PolyphonicSynth.js` (L9–L12) | `PolyphonicSynth.test.ts` (Tests 1, 2, 3) | `E01_Map_FIFO/E01_01_map_constructor.png` | **PASS** |
-| **Requirement A: ES6 Map FIFO Stealing** | `if (this.voices.size >= this.maxVoices) { const oldestMidi = this.voices.keys().next().value; this.noteOff(oldestMidi); }`<br>`this.voices.set(midi, { osc, gain });` | `src/audio/PolyphonicSynth.js` (L74–L163) | `PolyphonicSynth.test.ts` (Tests 4, 5, 6, 7, 8) | `E01_Map_FIFO/E01_02_fifo_oldest_lookup.png` .. `E01_05_repeated_fifo_test.png` | **PASS** |
-| **Requirement B: Click-Free ADSR Ramp** | `gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04);`<br>`osc.stop(ctx.currentTime + 0.04);` | `src/audio/PolyphonicSynth.js` (L169–L211) | `PolyphonicSynth.test.ts` (Tests 9, 10, 11, 12, 13) | `E02_ADSR/E02_01_release_ramp_source.png` .. `E02_04_adsr_test.png` | **PASS** |
-| **Requirement C: FIFO Note Recording & Variable-Speed Replay** | `{ midi, freqHz, durationMs, deltaMs }`<br>Speeds: `0.5`, `1.0`, `2.0`<br>`scheduledDelay = deltaMs / activeSpeed`<br>`scheduledDuration = durationMs / activeSpeed` | `src/audio-queue-controller.ts` (L45–L50, L136–L321) | `src/audio/fifo-sequencer.test.ts` (Tests C.1–C.4, Replay 1–3) | `E03_Recording_Replay/E03_01_event_structure.png` .. `E03_07_replay_tests.png` | **PASS** |
-| **Requirement D: AbortController Cancellation on Stop / Unmount** | `new AbortController()`<br>`controller.signal`<br>`this.abortController.abort()`<br>`this.synth.dispose()` | `src/audio-queue-controller.ts` (L258–L418)<br>`src/App.tsx` (L112–L138, L514–L521) | `src/audio/fifo-sequencer.test.ts` (Tests D.1–D.3)<br>`src/audio-queue-controller.test.ts` (M5.3–M5.5, M5.8) | `E04_AbortController/E04_01_controller_creation.png` .. `E04_05_abort_tests.png` | **PASS** |
+| **Requirement A: PianoKey Contract & Lab 2 Integration** | `export const PianoKey = memo(function PianoKey({ midi, noteName, isBlack, isPressed, onNoteOn, onNoteOff }) { ... }, shallowEqual)` | `src/piano/hw2-polyphonic-piano-contract.js` (L1–L36)<br>`src/piano/PianoKey.tsx` (L1–L89)<br>`src/piano/Piano.tsx` (L180–L198) | `src/piano/PianoKey.test.ts` (6 tests) | `evidence/HW2_88_Key_Piano/E01_Integration/` | **PASS** |
+| **Requirement B: Algorithmic 88-Key Generation** | MIDI `21` (`A0`) to `108` (`C8`), 88 total, 52 white, 36 black<br>`const frequency = 440 * Math.pow(2, (midi - 69) / 12);` | `src/piano/piano-generator.ts` (L13–L48) | `src/piano/piano-generator.test.ts` (6 tests) | `evidence/HW2_88_Key_Piano/E02_88_Key_Generation/` | **PASS** |
+| **Requirement C: 8-Voice Polyphony & FIFO Voice Stealing** | `this.voices = new Map();`<br>`this.maxVoices = maxVoices;`<br>`const oldestMidi = this.voices.keys().next().value;`<br>`this.noteOff(oldestMidi);` | `src/audio/PolyphonicSynth.js` (L8–L266) | `src/audio/PolyphonicSynth.test.ts` (13 tests)<br>`src/audio/polyphonic-engine.test.ts` (10 tests) | `evidence/HW2_88_Key_Piano/E03_Polyphony_FIFO/` | **PASS** |
+| **Requirement D: React.memo Render Isolation (88 Keys)** | `React.memo` + `shallowEqual`<br>1 key re-renders, 87 keys skipped per key press | `src/piano/PianoKey.tsx` (L38–L89)<br>`src/piano/Piano.tsx` (L55–L102, L180–L198) | `src/piano/PianoKey.test.ts` (`E04.1`–`E04.6`) | `evidence/HW2_88_Key_Piano/E04_React_Memo_Profiler/` | **PASS** |
+| **Lab 2 HW2 Concurrent AudioTaskQueue & Async Replay** | `AudioTaskQueue` FIFO execution, concurrency limit, `{ midi, freqHz, durationMs, deltaMs }`, `AbortController` | `src/audio-queue-controller.ts` (L45–L418) | `src/audio-queue-controller.test.ts` (8 tests)<br>`src/audio/fifo-sequencer.test.ts` (10 tests) | `evidence/HW2_88_Key_Piano/E05_AudioTaskQueue/`<br>`evidence/HW2_88_Key_Piano/E06_Automated_Tests/` | **PASS** |
+
 

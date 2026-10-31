@@ -1020,4 +1020,10 @@ All requirements of the **HW 2 Engine: Polyphonic Voice Pool & Async FIFO Replay
 5. **Requirement D – `AbortController` Cancellation on Stop Sequence & Unmount (`src/audio-queue-controller.ts` & `src/App.tsx`):**
    - Instantiates `new AbortController()` per replay session, passes `controller.signal` to async waits, and calls `this.abortController.abort()` plus `this.synth.dispose()` on `stopSequence()` and component unmount.
    - Evidence: `evidence/HW2_Concurrency_Memory_Hygiene/E04_AbortController/E04_01_controller_creation.png` through `E04_05_abort_tests.png`.
+6. **88-Key Polyphonic Piano & `React.memo` Contract (`src/piano/hw2-polyphonic-piano-contract.js`, `src/piano/PianoKey.tsx`, `src/piano/piano-generator.ts`, `src/piano/Piano.tsx`):**
+   - Algorithmic generation of 88 keys (`MIDI 21` A0 to `MIDI 108` C8, 52 white keys, 36 black keys) using `const frequency = 440 * Math.pow(2, (midi - 69) / 12);`.
+   - `PianoKey` wrapped in `React.memo(..., shallowEqual)` accepting `{ midi, noteName, isBlack, isPressed, onNoteOn, onNoteOff }` and rendering `<button type="button" className={\`key \${isBlack ? 'key--black' : 'key--white'}\`} aria-pressed={isPressed} onPointerDown={() => onNoteOn(midi)} onPointerUp={() => onNoteOff(midi)}><span>{noteName}</span></button>`.
+   - Verified via `<React.Profiler>` in live Chrome: pressing 1 white key (`C4`, MIDI 60) or 1 black key (`C#4`, MIDI 61) re-renders **1 `PianoKey` component** while skipping the remaining **87 `PianoKey` components**.
+   - Evidence: `evidence/HW2_88_Key_Piano/E01_Integration/` through `E06_Automated_Tests/` (26 PNG files).
+
 

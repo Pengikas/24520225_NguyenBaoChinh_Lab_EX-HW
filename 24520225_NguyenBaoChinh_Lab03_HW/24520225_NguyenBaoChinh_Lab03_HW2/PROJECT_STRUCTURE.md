@@ -379,16 +379,49 @@ npm test
   - Component unmount in `src/App.tsx` invokes `audioQueue.stopSequence()` and `polyphonicEngine.dispose()`.
 
 ### 8.3 Automated Test Suites & Evidence Directory
-- **Automated Tests (6 suites, 52 passing tests):**
+- **Automated Tests (6 suites, 53 passing tests):**
   - `src/audio/PolyphonicSynth.test.ts` (13 tests)
   - `src/audio/polyphonic-engine.test.ts` (10 tests)
   - `src/audio/fifo-sequencer.test.ts` (10 tests)
   - `src/audio-queue-controller.test.ts` (8 tests)
   - `src/piano/PianoKey.test.ts` (6 tests)
-  - `src/piano/piano-generator.test.ts` (5 tests)
-- **Verification Evidence (`evidence/HW2_Concurrency_Memory_Hygiene/`):**
-  - `E01_Map_FIFO/E01_01_map_constructor.png` .. `E01_05_repeated_fifo_test.png`
-  - `E02_ADSR/E02_01_release_ramp_source.png` .. `E02_04_adsr_test.png`
-  - `E03_Recording_Replay/E03_01_event_structure.png` .. `E03_07_replay_tests.png`
-  - `E04_AbortController/E04_01_controller_creation.png` .. `E04_05_abort_tests.png`
+  - `src/piano/piano-generator.test.ts` (6 tests)
+- **Verification Evidence (`evidence/HW2_Concurrency_Memory_Hygiene/` & `evidence/HW2_88_Key_Piano/`):**
+  - `evidence/HW2_Concurrency_Memory_Hygiene/` (21 PNGs covering Map FIFO, ADSR, Recording/Replay, AbortController)
+  - `evidence/HW2_88_Key_Piano/E01_Integration/` (`E01_01_project_file_mapping.png` .. `E01_03_lab2_queue_integration.png`)
+  - `evidence/HW2_88_Key_Piano/E02_88_Key_Generation/` (`E02_01_generation_source.png` .. `E02_05_full_piano_runtime.png`)
+  - `evidence/HW2_88_Key_Piano/E03_Polyphony_FIFO/` (`E03_01_eight_active_voices.png` .. `E03_04_voice_cleanup.png`)
+  - `evidence/HW2_88_Key_Piano/E04_React_Memo_Profiler/` (`E04_01_piano_key_memo_source.png` .. `E04_05_other_87_keys_skipped.png`)
+  - `evidence/HW2_88_Key_Piano/E05_AudioTaskQueue/` (`E05_01_original_queue_source.png` .. `E05_04_concurrency_limit.png`)
+  - `evidence/HW2_88_Key_Piano/E06_Automated_Tests/` (`E06_01_generation_tests.png` .. `E06_05_build_result.png`)
+
+### 8.4 HW 2 PianoKey Contract & 88-Key Integration (`src/piano/hw2-polyphonic-piano-contract.js` & `src/piano/PianoKey.tsx`)
+- **Contract File:** `src/piano/hw2-polyphonic-piano-contract.js` (also re-exported at root `hw2-polyphonic-piano-contract.js` and typed in `src/piano/PianoKey.tsx`).
+- **Component Signature & Required Identifiers:**
+  ```jsx
+  import { memo } from 'react';
+
+  export const PianoKey = memo(function PianoKey({
+    midi,
+    noteName,
+    isBlack,
+    isPressed,
+    onNoteOn,
+    onNoteOff
+  }) {
+    return (
+      <button
+        type="button"
+        className={`key ${isBlack ? 'key--black' : 'key--white'}`}
+        aria-pressed={isPressed}
+        onPointerDown={() => onNoteOn(midi)}
+        onPointerUp={() => onNoteOff(midi)}
+      >
+        <span>{noteName}</span>
+      </button>
+    );
+  }, shallowEqual);
+  ```
+- **Render Isolation:** Paired with `shallowEqual(prevProps, nextProps)` and stable `useCallback` handlers (`handleNoteOn`, `handleNoteOff`) plus `key={note.midi}` in `src/piano/Piano.tsx`, pressing 1 key re-renders only 1 `PianoKey` component while skipping the other 87 keys.
+
 
