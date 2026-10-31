@@ -12,6 +12,7 @@ import { AudioTaskQueue, AudioTask } from './audio-queue-controller';
 import { AudioVisualizer } from './AudioVisualizer';
 import { PRESET_TRACKS, PresetTrack } from './audio-synth';
 import Piano from './piano/Piano';
+import { midiToNoteName, midiToFrequency } from './piano/piano-generator';
 
 // Singleton instances for persistent audio graph across renders
 const audioEngine = new AudioEngine(256);
@@ -28,8 +29,10 @@ export const App: React.FC = () => {
     const [historyItems, setHistoryItems] = useState<readonly AudioTask[]>([]);
     const [isQueueProcessing, setIsQueueProcessing] = useState<boolean>(false);
 
-    // 88-Key Polyphonic Piano voice counter
+    // 88-Key Polyphonic Piano voice counter & allocation
     const [activeVoiceCount, setActiveVoiceCount] = useState<number>(0);
+    const [activeMidis, setActiveMidis] = useState<number[]>([]);
+    const [lastStolenMidi, setLastStolenMidi] = useState<number | null>(null);
 
     // Audio Playback state
     const [currentTrackTitle, setCurrentTrackTitle] = useState<string>('No track loaded');
@@ -74,9 +77,18 @@ export const App: React.FC = () => {
     // Seek interval reference (polled at modest 4Hz for UI seek bar, decoupled from 60fps canvas)
     const progressTimerRef = useRef<number | null>(null);
 
-    // Subscribe to polyphonic voice count updates
+    // Subscribe to polyphonic voice count and allocation updates
     useEffect(() => {
-        return polyphonicEngine.subscribeVoiceCount(setActiveVoiceCount);
+        const unsubCount = polyphonicEngine.subscribeVoiceCount(setActiveVoiceCount);
+        const unsubVoices = polyphonicEngine.subscribeVoices((midis, stolen) => {
+            setActiveMidis(midis);
+            setLastStolenMidi(stolen);
+        });
+
+        return () => {
+            unsubCount();
+            unsubVoices();
+        };
     }, []);
 
     // Synchronize queue updates
@@ -260,20 +272,32 @@ export const App: React.FC = () => {
                 <div className="hero-title-row">
                     <div>
                         <h1 className="hero-title">
-                            HW 2: Concurrent FIFO Audio Visualizer Queue Engine
+                            HW2: 88-Key Polyphonic Piano &amp; Concurrent FIFO Sequencer
                         </h1>
                         <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.95rem' }}>
-                            Advanced async concurrency, audio frequency analysis, and zero memory leaks.
+                            Advanced async concurrency, 88-key React.memo keyboard, 8-voice FIFO synthesizer, and zero memory leaks.
                         </p>
                     </div>
 
                     <div className="hero-badge-group">
-                        <span className="badge badge-cyan">Web Audio API</span>
-                        <span className="badge badge-purple">AnalyserNode ({fftSize / 2} bins)</span>
-                        <span className="badge badge-green">FIFO Concurrency</span>
-                        <span className="badge badge-cyan">AbortController Tokens</span>
-                        <span className="badge badge-green">Zero Memory Leaks</span>
-                        <span className="badge badge-purple">60 FPS Canvas</span>
+                        <span className="student-badge">
+                            🎓 24520225 - Nguyễn Bảo Chính
+                        </span>
+                        <span className="badge badge-cyan">
+                            Context: {metrics.contextState}
+                        </span>
+                        <span className={`badge ${activeVoiceCount >= 8 ? 'badge-amber' : 'badge-green'}`}>
+                            Voices: {activeVoiceCount} / 8
+                        </span>
+                        <span className="badge badge-purple">
+                            Queue: {queueItems.length} Pending
+                        </span>
+                        <span className="badge badge-cyan">
+                            Cache: {audioQueue.getCachedBufferCount()} Buffers
+                        </span>
+                        <span className="badge badge-green">
+                            60 FPS Canvas
+                        </span>
                     </div>
                 </div>
             </header>
@@ -286,20 +310,20 @@ export const App: React.FC = () => {
                 onFFTSizeChange={handleFFTChange}
             />
 
-            {/* 88-Key Polyphonic Piano Card */}
+            {/* 88-Key Polyphonic Piano & Voice Monitor Card */}
             <section className="card" aria-label="88-Key Polyphonic Piano">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <div>
                         <h2 className="card-title" style={{ margin: 0 }}>
-                            88-Key Polyphonic Piano
+                            88-Key Polyphonic Piano &amp; FIFO Voice Monitor
                         </h2>
                         <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                            MIDI A0 (21) – C8 (108) • 8-Voice Web Audio Synthesizer
+                            MIDI A0 (21) – C8 (108) • 52 White Keys, 36 Black Keys • Strict 8-Voice FIFO Polyphony
                         </span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <span className={`badge ${activeVoiceCount >= 8 ? 'badge-amber' : 'badge-cyan'}`}>
+                        <span className={`badge ${activeVoiceCount >= 8 ? 'badge-amber' : 'badge-cyan'}`} style={{ fontSize: '0.85rem' }}>
                             Active Voices: {activeVoiceCount} / 8
                         </span>
 
@@ -331,6 +355,44 @@ export const App: React.FC = () => {
                             Stop All Voices
                         </button>
                     </div>
+                </div>
+
+                {/* FIFO Steal Eviction Notification */}
+                {lastStolenMidi !== null && (
+                    <div className="steal-alert-banner" role="alert">
+                        <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                        <span>
+                            <strong>FIFO Voice Steal Event:</strong> Oldest active voice <strong>MIDI {lastStolenMidi} ({midiToNoteName(lastStolenMidi)}, {midiToFrequency(lastStolenMidi).toFixed(1)} Hz)</strong> was evicted to accommodate new incoming voice under strict 8-voice polyphony limit.
+                        </span>
+                    </div>
+                )}
+
+                {/* 8 Visual Voice Allocation Slots */}
+                <div className="voice-slots-grid" aria-label="8-Voice Polyphony Allocation Slots">
+                    {Array.from({ length: 8 }, (_, idx) => {
+                        const midi = activeMidis[idx];
+                        const isActive = midi !== undefined;
+
+                        return (
+                            <div
+                                key={idx}
+                                className={`voice-slot ${isActive ? 'is-active' : ''}`}
+                            >
+                                <div className="voice-slot-header">
+                                    <span>Voice {idx + 1}</span>
+                                    <span style={{ color: isActive ? (idx === 0 ? '#fbbf24' : '#00f2ff') : '#64748b', fontWeight: 700 }}>
+                                        {isActive ? (idx === 0 ? 'Oldest (FIFO)' : 'Active') : 'Idle'}
+                                    </span>
+                                </div>
+                                <div className="voice-slot-note">
+                                    {isActive ? `${midiToNoteName(midi)} (M${midi})` : '—'}
+                                </div>
+                                <div className="voice-slot-freq">
+                                    {isActive ? `${midiToFrequency(midi).toFixed(1)} Hz` : 'Empty Slot'}
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 <Piano
@@ -734,6 +796,30 @@ export const App: React.FC = () => {
                             <div className="telemetry-item">
                                 <span className="telemetry-label">FFT Resolution</span>
                                 <span className="telemetry-val">{fftSize} ({fftSize / 2} Bins)</span>
+                            </div>
+                            <div className="telemetry-item">
+                                <span className="telemetry-label">Active Voices</span>
+                                <span className="telemetry-val" style={{ color: activeVoiceCount >= 8 ? '#f59e0b' : '#38bdf8' }}>
+                                    {activeVoiceCount} / 8
+                                </span>
+                            </div>
+                            <div className="telemetry-item">
+                                <span className="telemetry-label">Cached Buffers</span>
+                                <span className="telemetry-val" style={{ color: '#22c55e' }}>
+                                    {audioQueue.getCachedBufferCount()}
+                                </span>
+                            </div>
+                            <div className="telemetry-item">
+                                <span className="telemetry-label">Queue Pending</span>
+                                <span className="telemetry-val" style={{ color: queueItems.length > 0 ? '#c084fc' : '#94a3b8' }}>
+                                    {queueItems.length}
+                                </span>
+                            </div>
+                            <div className="telemetry-item">
+                                <span className="telemetry-label">Total Handled</span>
+                                <span className="telemetry-val">
+                                    {audioQueue.getTaskCounts().total}
+                                </span>
                             </div>
                         </div>
 

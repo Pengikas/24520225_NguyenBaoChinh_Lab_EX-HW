@@ -20,6 +20,8 @@ export class PolyphonicEngine {
     private readonly STEAL_FADE_TIME = 0.005; // 5ms click-free fade for stolen voices
 
     private voiceCountListener: ((count: number) => void) | null = null;
+    private voiceChangeListener: ((activeMidis: number[], stolenMidi: number | null) => void) | null = null;
+    private lastStolenMidi: number | null = null;
 
     constructor(
         private readonly audioEngine: AudioEngine
@@ -38,8 +40,26 @@ export class PolyphonicEngine {
         };
     }
 
+    public subscribeVoices(
+        listener: (activeMidis: number[], stolenMidi: number | null) => void
+    ): () => void {
+        this.voiceChangeListener = listener;
+        listener(this.getActiveMidiNotes(), this.lastStolenMidi);
+
+        return () => {
+            if (this.voiceChangeListener === listener) {
+                this.voiceChangeListener = null;
+            }
+        };
+    }
+
+    public getLastStolenMidi(): number | null {
+        return this.lastStolenMidi;
+    }
+
     private notifyVoiceCount(): void {
         this.voiceCountListener?.(this.voices.size);
+        this.voiceChangeListener?.(this.getActiveMidiNotes(), this.lastStolenMidi);
     }
 
     /**
@@ -58,6 +78,7 @@ export class PolyphonicEngine {
         const [oldestMidi, oldestVoice] = oldestEntry.value;
 
         console.log(`[FIFO] Stealing oldest voice: MIDI ${oldestMidi}`);
+        this.lastStolenMidi = oldestMidi;
 
         // Mark as releasing to prevent any subsequent noteOff interference
         oldestVoice.isReleasing = true;
@@ -263,6 +284,7 @@ export class PolyphonicEngine {
         }
 
         this.voices.clear();
+        this.lastStolenMidi = null;
         this.notifyVoiceCount();
 
         console.log('[Polyphony] All voices cleaned up.');

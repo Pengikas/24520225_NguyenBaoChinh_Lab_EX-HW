@@ -367,6 +367,10 @@ export class AudioTaskQueue {
         return this.runningTasks.size > 0;
     }
 
+    public getCachedBufferCount(): number {
+        return this.bufferCache.size;
+    }
+
     public getTaskCounts(): QueueTaskCounts {
         return {
             pending: this.queue.length,
