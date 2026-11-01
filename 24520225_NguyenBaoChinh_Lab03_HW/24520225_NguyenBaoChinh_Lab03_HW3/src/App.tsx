@@ -10,7 +10,11 @@ import {
   blockMainThreadSync,
 } from './anti-drift-timer';
 import { usePubgAirdropTimer } from './hooks/usePubgAirdropTimer';
-import { runConcurrencyInvariantTest, benchmarkTimerDrift } from './telemetry-verifier';
+import {
+  runConcurrencyInvariantTest,
+  benchmarkTimerDrift,
+  runPubgArenaVerificationSuite,
+} from './telemetry-verifier';
 import {
   INITIAL_PRODUCTS,
   INITIAL_CRATE_DROPS,
@@ -356,6 +360,7 @@ export default function App() {
   useEffect(() => {
     runConcurrencyInvariantTest(5, 50);
     benchmarkTimerDrift(1500, 50);
+    runPubgArenaVerificationSuite();
   }, []);
 
   // Retain Lab 02 Zero-Drift rAF Timer & Drift-Prone setInterval Benchmark
