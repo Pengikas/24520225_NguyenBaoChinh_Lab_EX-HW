@@ -1,96 +1,72 @@
-# HW 3: High-Concurrency Flash-Sale E-Commerce Engine
+# HW 3: KRAFTON x PUBG Vietnam Championship & Airdrop Arena
 
 **Student Name:** Nguyen Bao Chinh  
 **Student ID (MSSV):** 24520225  
-**Course:** Web Application Development (Lab 02 - HW 3)  
-**Evaluation Scope:** Vietnam Mega-Sale 11.11 Simulation, Zero-Drift Countdown Timer, Optimistic Inventory Lock FSM, Concurrency Bot Flood, AI Failure Audit.
+**Course:** Web Application Development (Lab 03 - Homework 3)  
+**Foundation:** Upgraded from Lab 02 HW3 (`High-Concurrency Flash-Sale E-Commerce Engine`)  
+**Tech Stack:** React 19, TypeScript 5 (Strict), Vite 5, `usePubgAirdropTimer` Zero-Drift Hook, `InventoryLockFSM`, `ConcurrencyEngine`.
 
 ---
 
-## 🎯 Project Overview & Architectural Specifications
+## 🎯 Project Overview & Domain Architecture
 
-This application implements **HW 3: High-Concurrency Flash-Sale E-Commerce Engine**, engineered specifically for high-traffic Vietnam e-commerce mega-sales (Shopee / Lazada 11.11 Midnight Flash Sale simulation).
+This project upgrades the Lab 02 Vietnam Flash-Sale application into the **KRAFTON x PUBG Vietnam Championship & Airdrop Arena** while preserving and reusing all core Lab 02 concurrency, state machine, and zero-drift timer foundations.
 
-### 1. Zero-Drift Countdown Timer (`src/anti-drift-timer.ts`)
-- Implements the exact precision anti-drift countdown specification using `requestAnimationFrame` and `Date.now()` delta:
-  ```typescript
-  export function createAntiDriftTimer(durationMs: number, onTick: (remaining: number) => void) {
-    const targetTime = Date.now() + durationMs;
-    let rafId: number;
+### 1. Strict Domain Contracts (`src/types.ts`)
+Implements the exact Homework 3 PUBG domain contracts alongside the retained Lab 02 `InventoryLockFSM` contracts:
 
-    function tick() {
-      const remaining = Math.max(0, targetTime - Date.now());
-      onTick(remaining);
-      if (remaining > 0) {
-        rafId = requestAnimationFrame(tick); // Zero drift compared to setInterval
-      }
-    }
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }
-  ```
-- **Zero-Drift Invariant:** Recalculates `Math.max(0, targetTime - Date.now())` on every frame. Even if background tab throttling occurs or long tasks block the main thread, the timer instantly synchronizes with the true wall clock with **0 ms cumulative drift**.
-- **Side-by-Side Empirical Telemetry Benchmark:** Features a live comparison with standard `setInterval(100ms)` displaying real-time accumulated drift (ms).
-- **CPU Throttling Simulator Button:** Includes an interactive tool that executes a 300ms synchronous CPU workload (`blockMainThreadSync(300)`), visibly proving that `setInterval` falls behind by ~300ms while the Zero-Drift Timer stays 100% accurate.
+```typescript
+export type DropPhase = 'WARMUP' | 'AIRDROP_LIVE' | 'LOOTED_OUT' | 'EXPIRED';
 
-### 2. Optimistic Inventory Lock Finite State Machine (`src/inventory-state-machine.ts`)
-- Models optimistic inventory leasing as a deterministic Finite State Machine (FSM):
-  - **`AVAILABLE`**: Product units in stock ready for customer reservation.
-  - **`RESERVED`**: Optimistically locked by customer with a 30-second lease token (`lockId`). Stock is deducted from available and held in reserved pool.
-  - **`CHECKING_OUT`**: Customer has initiated checkout modal.
-  - **`PURCHASED`**: Payment confirmed, lock converted to finalized order, stock permanently decremented.
-  - **`LOCK_EXPIRED`**: 30-second lease timeout elapsed without payment. Held stock is automatically returned to available pool.
-  - **`CANCELLED`**: User voluntarily released the lock.
-  - **`OUT_OF_STOCK`**: Available stock reaches 0 and no reservations remain.
-- **Stock Conservation Invariant:**
-  $$\text{totalStock} = \text{availableStock} + \text{reservedStock} + \text{soldStock}$$
-  $$\text{availableStock} \ge 0 \quad (\text{Strict Zero Overselling Guarantee})$$
+export interface PubgCrateDrop {
+  readonly id: string;
+  readonly title: string;
+  readonly priceVnd: number;
+  readonly remainingStock: number;
+  readonly dropEpochMs: number;
+}
 
-### 3. Concurrency Engine & Bot Flood Simulator (`src/concurrency-engine.ts`)
-- Simulates sudden traffic spikes (10, 25, 50, 100 concurrent bot workers) attacking limited inventory (e.g. 5 iPhone 16 Pro Max units).
-- **Optimistic Concurrency Control (OCC):** Uses version vectors to detect conflicts and return `409 Conflict` on race conditions, or `410 Gone` when items are sold out.
-- **Live Concurrency Terminal Log:** Displays millisecond-level timestamps, thread identifiers (`bot-worker-012`), status codes (200, 409, 410, 408), and state machine versions.
+export interface PubgVnSquadStanding {
+  readonly squadId: string;
+  readonly squadName: string;
+  readonly wwcdCount: number;
+  readonly placementPts: number;
+  readonly killPts: number;
+}
+```
+All currency amounts are formatted using `new Intl.NumberFormat('vi-VN')`.
 
-### 4. Vietnam 11.11 Flash-Sale Experience (`src/App.tsx`, `src/products-data.ts`)
-- Realistic catalog: Apple iPhone 16 Pro Max, Sony WH-1000XM5 ANC, NuPhy Air75 V2, Lock&Lock 5.2L Air Fryer, Biti's Hunter Street x VietMax, Dyson V12 Detect Slim.
-- Prices in VND (`₫`), flash sale discount badges (-50% to -70%), live stock meter bars, and interactive claimable vouchers (`SHOPEE1111`, `FREESHIPEXTRA`, `MIDNIGHTVIP`).
-- Checkout modal with interactive payment method selection (MoMo, VNPay, ShopeePay, COD).
+### 2. Zero-Drift Airdrop & Ticket Countdown (`src/hooks/usePubgAirdropTimer.js` & `src/anti-drift-timer.ts`)
+- Implements `usePubgAirdropTimer(targetEpochMs, serverOffsetMs = 0)` using absolute epoch delta `Math.max(0, targetEpochMs - (Date.now() + serverOffsetMs))` synchronized every `200ms` and immediately upon `document.addEventListener('visibilitychange', onWake)` when a background browser tab becomes `'visible'`.
+- Retains Lab 02's `createAntiDriftTimer`, `createDriftProneIntervalTimer`, `formatCountdown`, and `blockMainThreadSync` for side-by-side empirical drift benchmarking.
 
-### 5. Mandatory AI Failure Mode Audit (`AI_FAILURE_AUDIT.md`)
-- Covers the Top 3 Classic AI Failure Modes in UI Development:
-  1. **Security:** Raw `innerHTML` ingestion (XSS) -> refactored to React JSX virtual DOM escaping and `replaceChildren()`.
-  2. **Memory Leaks:** Zombie timers and event listeners without unmounting cleanup -> refactored with explicit teardown functions and `cancelAnimationFrame()`.
-  3. **Phantom Keys:** Volatile `key={Math.random()}` triggering full DOM destruction on 60fps renders -> refactored to stable deterministic domain keys (`key={product.id}`).
+### 3. Optimistic Crate/Ticket Claim & HTTP 409 Rollback (`src/concurrency-engine.ts` & `src/inventory-state-machine.ts`)
+- Reuses Lab 02's `InventoryLockFSM` and `ConcurrencyEngine` to manage **PVS Grand Finals VIP Tickets** and **G-Coin Crates**.
+- Decrements displayed inventory optimistically upon claim while locking the drop with an in-flight `claimId` to block duplicate clicks.
+- Handles **HTTP 409 Conflict (`409 Looted Out`)** by automatically executing `RELEASE_LOCK` on the FSM to roll back the optimistic inventory decrement and restore exact stock conservation:
+  $$\text{totalStock} = \text{availableStock} + \text{reservedStock} + \text{soldStock}, \quad \text{availableStock} \ge 0$$
+
+### 4. PUBG Vietnam Leaderboard & Live Kill-Feed (`src/App.tsx` & `src/products-data.ts`)
+- Tracks the 4 official squads using `PubgVnSquadStanding`:
+  - **The Expendables** (`te`)
+  - **Cerberus Esports** (`ces`)
+  - **Roy Esports** (`ge`)
+  - **AGG** (`agg`)
+- Derives Total Points (`placementPts + killPts`), Kill Share %, and Rank during render (`useMemo`) without mutating the `PubgVnSquadStanding` contract or using redundant `useEffect` synchronization.
+- Supports squad filtering (`ALL`, `te`, `ces`, `ge`, `agg`), search filtering, minimum WWCD filtering, and multi-column sorting (`TOTAL_PTS`, `KILL_PTS`, `PLACEMENT_PTS`, `WWCD`).
+- Streams live tournament kill-feed events with `AbortController` teardown and stale-closure-free functional updates.
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Install Dependencies
 ```bash
+# Install dependencies
 npm install
-```
 
-### 2. Run Development Server
-```bash
+# Start development server (http://localhost:3001)
 npm run dev
-```
-Open [http://localhost:3001](http://localhost:3001) in your browser.
 
-### 3. Build for Production
-```bash
+# Run TypeScript typecheck & production build
 npm run build
 ```
-
-### 4. Preview Production Build
-```bash
-npm run preview
-```
-
----
-
-## 🧪 Automated Telemetry & Test Suite
-
-The application includes an automated verification suite in [`src/telemetry-verifier.ts`](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW3/src/telemetry-verifier.ts) that runs on application mount and logs empirical proof to the Chrome DevTools Console:
-- **`runConcurrencyInvariantTest(5, 50)`**: Dispatches 50 concurrent workers against 5 stock units, proving that exactly 5 succeed, 45 receive conflict rejections, and oversell violations remain strictly 0.
-- **`benchmarkTimerDrift(1500, 50)`**: Calculates cumulative drift over 1500ms, proving `setInterval` drifts by tens of milliseconds while the Anti-Drift Timer maintains 0 ms drift.

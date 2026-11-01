@@ -794,7 +794,567 @@ body {
   color: #ffedd5;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE & PUBG VIETNAM ARENA EXTENSION STYLES */
+.krafton-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #fbbf24;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.react-version-pill {
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.reserved-header-badge {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.timer-controls-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 auto 22px auto;
+}
+
+.btn-timer-action {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f8fafc;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-timer-action:hover {
+  border-color: #fbbf24;
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.btn-timer-action.polling-on {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.cpu-block-banner {
+  margin: 12px auto 0 auto;
+  font-size: 13px;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 8px 16px;
+  border-radius: 8px;
+  max-width: 760px;
+}
+
+/* OPTIMISTIC CONTROL BAR */
+.optimistic-control-bar {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.optimistic-control-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.optimistic-control-info p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 720px;
+}
+
+.optimistic-toggles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0d1322;
+  border: 1px solid var(--border-subtle);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-pill.active-danger {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.toggle-pill.active-warn {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fde68a;
+}
+
+/* NOTIFICATIONS STACK */
+.notifications-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.claim-toast {
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-subtle);
+  background: #131c31;
+}
+
+.claim-toast.toast-success {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.claim-toast.toast-rollback_409 {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.claim-toast.toast-duplicate_blocked,
+.claim-toast.toast-expired {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.toast-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.claim-toast p {
+  margin: 0;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+/* DROP PHASE BADGES */
+.phase-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.phase-tag-airdrop_live {
+  background: rgba(16, 185, 129, 0.22);
+  border: 1px solid #10b981;
+  color: #34d399;
+}
+
+.phase-tag-warmup {
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+}
+
+.phase-tag-looted_out {
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid #ef4444;
+  color: #f87171;
+}
+
+.phase-tag-expired {
+  background: rgba(100, 116, 139, 0.25);
+  border: 1px solid #64748b;
+  color: #cbd5e1;
+}
+
+.drop-id-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.mono-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.inflight-claim-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.discount-inline-pill {
+  background: rgba(238, 77, 45, 0.2);
+  color: #ff8a65;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.drop-countdown-bar {
+  margin-bottom: 12px;
+}
+
+.drop-timer-Readout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.drop-timer-Readout.warmup {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.drop-timer-Readout.live {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.drop-timer-Readout.looted {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.drop-timer-Readout.expired {
+  background: rgba(100, 116, 139, 0.12);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  color: #94a3b8;
+}
+
+.other-players-locking {
+  font-size: 12px;
+  color: #fbbf24;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* PUBG VIETNAM LEADERBOARD & KILL-FEED SECTION */
+.leaderboard-arena-section {
+  background: var(--bg-surface);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 40px;
+}
+
+.leaderboard-live-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.leaderboard-filters-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.squad-pill-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.squad-filter-pill {
+  background: #0d1322;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.squad-filter-pill.active {
+  background: var(--gold-gradient);
+  color: #0f172a;
+  border-color: #fbbf24;
+}
+
+.leaderboard-Controls-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.leaderboard-search-input {
+  width: 240px;
+}
+
+.leaderboard-split-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 20px;
+}
+
+.standings-table-card,
+.kill-feed-card {
+  background: #0b101d;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.pubg-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.pubg-standings-table th {
+  background: #131c31;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.pubg-standings-table td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.standing-row.top-rank-row {
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.rank-badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #cbd5e1;
+}
+
+.rank-badge.rank-1 {
+  background: var(--gold-gradient);
+  color: #0f172a;
+}
+
+.rank-badge.rank-2 {
+  background: rgba(226, 232, 240, 0.2);
+  color: #f8fafc;
+}
+
+.rank-badge.rank-3 {
+  background: rgba(217, 119, 6, 0.25);
+  color: #fbbf24;
+}
+
+.squad-id-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.squad-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.squad-roster-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.mono-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+.wwcd-cell {
+  color: #fbbf24;
+  font-size: 15px;
+}
+
+.kill-cell {
+  color: #f87171;
+}
+
+.kill-share-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.total-pts-cell {
+  color: #34d399;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* KILL-FEED PANEL */
+.kill-feed-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kill-feed-item {
+  background: #121a2d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.kill-feed-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.kill-map-tag {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.wwcd-finisher-tag {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.kill-feed-combat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.squad-tag-mini {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.squad-tag-mini.victim {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.weapon-badge {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.weapon-badge.hs {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+
+@media (max-width: 1024px) {
+  .leaderboard-split-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .products-grid {
     grid-template-columns: 1fr;
@@ -802,5 +1362,9 @@ body {
 
   .payment-methods-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .leaderboard-search-input {
+    width: 100%;
   }
 }
