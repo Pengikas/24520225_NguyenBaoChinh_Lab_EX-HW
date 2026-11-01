@@ -1,7 +1,7 @@
 // products-data.ts
 // KRAFTON x PUBG Vietnam Championship & Airdrop Arena Catalog (PVS Finals Tickets & G-Coin Crates)
 
-import { ProductInventory, PubgCrateDrop } from './types';
+import { ProductInventory, PubgCrateDrop, PubgVnSquadStanding } from './types';
 
 // Base epoch reference so drops have deterministic warm-up and live windows
 const BASE_NOW_MS = Date.now();
@@ -181,3 +181,160 @@ export const FLASH_VOUCHERS: FlashSaleVoucher[] = [
     badge: '1M VND OFF',
   },
 ];
+
+// Exact PUBG Vietnam Squad Standings Contract (Feature 3)
+export const INITIAL_SQUAD_STANDINGS: readonly PubgVnSquadStanding[] = [
+  {
+    squadId: 'te',
+    squadName: 'The Expendables',
+    wwcdCount: 4,
+    placementPts: 68,
+    killPts: 114,
+  },
+  {
+    squadId: 'ces',
+    squadName: 'Cerberus Esports',
+    wwcdCount: 3,
+    placementPts: 62,
+    killPts: 118,
+  },
+  {
+    squadId: 'ge',
+    squadName: 'Roy Esports',
+    wwcdCount: 2,
+    placementPts: 51,
+    killPts: 89,
+  },
+  {
+    squadId: 'agg',
+    squadName: 'AGG',
+    wwcdCount: 1,
+    placementPts: 44,
+    killPts: 82,
+  },
+];
+
+export const INITIAL_KILL_FEED = [
+  {
+    id: 'kf-01',
+    timestampMs: BASE_NOW_MS - 42000,
+    formattedTime: 'Match 18 • Phase 7',
+    attackerSquadId: 'te',
+    attackerSquadName: 'The Expendables',
+    attackerPlayer: 'TE_Clories',
+    weapon: 'AWM (Headshot)',
+    victimPlayer: 'CES_Sololzy',
+    victimSquadId: 'ces',
+    mapName: 'Erangel',
+    isHeadshot: true,
+    isWwcdFinisher: true,
+  },
+  {
+    id: 'kf-02',
+    timestampMs: BASE_NOW_MS - 31000,
+    formattedTime: 'Match 18 • Phase 6',
+    attackerSquadId: 'ces',
+    attackerSquadName: 'Cerberus Esports',
+    attackerPlayer: 'CES_Himass',
+    weapon: 'Beryl M762',
+    victimPlayer: 'GE_2Tap',
+    victimSquadId: 'ge',
+    mapName: 'Erangel',
+    isHeadshot: true,
+    isWwcdFinisher: false,
+  },
+  {
+    id: 'kf-03',
+    timestampMs: BASE_NOW_MS - 24000,
+    formattedTime: 'Match 18 • Phase 6',
+    attackerSquadId: 'ge',
+    attackerSquadName: 'Roy Esports',
+    attackerPlayer: 'GE_Boz',
+    weapon: 'AUG A3',
+    victimPlayer: 'AGG_Rip113',
+    victimSquadId: 'agg',
+    mapName: 'Miramar',
+    isHeadshot: false,
+    isWwcdFinisher: false,
+  },
+  {
+    id: 'kf-04',
+    timestampMs: BASE_NOW_MS - 16000,
+    formattedTime: 'Match 18 • Phase 5',
+    attackerSquadId: 'agg',
+    attackerSquadName: 'AGG',
+    attackerPlayer: 'AGG_SsuBang',
+    weapon: 'Mk14 EBR',
+    victimPlayer: 'TE_Delwyn',
+    victimSquadId: 'te',
+    mapName: 'Rondo',
+    isHeadshot: true,
+    isWwcdFinisher: false,
+  },
+  {
+    id: 'kf-05',
+    timestampMs: BASE_NOW_MS - 9000,
+    formattedTime: 'Match 18 • Phase 5',
+    attackerSquadId: 'te',
+    attackerSquadName: 'The Expendables',
+    attackerPlayer: 'TE_TanVuu',
+    weapon: 'Frag Grenade',
+    victimPlayer: 'AGG_Leo',
+    victimSquadId: 'agg',
+    mapName: 'Taego',
+    isHeadshot: false,
+    isWwcdFinisher: false,
+  },
+  {
+    id: 'kf-06',
+    timestampMs: BASE_NOW_MS - 3000,
+    formattedTime: 'Match 18 • Phase 8',
+    attackerSquadId: 'ces',
+    attackerSquadName: 'Cerberus Esports',
+    attackerPlayer: 'CES_Taikonn',
+    weapon: 'M416',
+    victimPlayer: 'GE_untamed',
+    victimSquadId: 'ge',
+    mapName: 'Erangel',
+    isHeadshot: true,
+    isWwcdFinisher: false,
+  },
+];
+
+export const SQUAD_ROSTERS: Record<string, { players: string[]; tag: string; region: string }> = {
+  te: {
+    tag: 'TE',
+    region: 'APAC / PGC Champions',
+    players: ['TE_Clories', 'TE_Delwyn', 'TE_TanVuu', 'TE_DuCkHjeUz'],
+  },
+  ces: {
+    tag: 'CES',
+    region: 'VN / PGS Champions',
+    players: ['CES_Himass', 'CES_Taikonn', 'CES_HaiSaki', 'CES_Sololzy'],
+  },
+  ge: {
+    tag: 'GE',
+    region: 'VN / PVS Contender',
+    players: ['GE_2Tap', 'GE_Boz', 'GE_untamed', 'GE_Kiều'],
+  },
+  agg: {
+    tag: 'AGG',
+    region: 'VN / PVS Finalist',
+    players: ['AGG_SsuBang', 'AGG_Rip113', 'AGG_Leo', 'AGG_Hưng'],
+  },
+};
+
+export const PUBG_WEAPONS = [
+  'Beryl M762',
+  'AUG A3',
+  'AWM (Headshot)',
+  'M416',
+  'Mk14 EBR',
+  'Kar98k (Headshot)',
+  'Mini14',
+  'Frag Grenade',
+  'Pan (Melee)',
+];
+
+export const PUBG_MAPS = ['Erangel', 'Miramar', 'Rondo', 'Taego'];
+
