@@ -18,8 +18,8 @@ This document serves as the single source of truth for the project lifecycle, ar
 | **M1** | Deterministic Relationship FSM | `feat(fsm): implement deterministic relationship states` | `5103371` | **IMPLEMENTED** |
 | **M2** | Asymmetric Effort Reducer | `feat(fsm): implement asymmetric effort reducer` | `0369d23` | **IMPLEMENTED** |
 | **M3** | Ghosting Timer & AbortController | `feat(fsm): implement abortable ghosting timer` | `0d20a68` | **IMPLEMENTED** |
-| **M4** | Red-Flag Alert & Accessibility | `feat(a11y): implement accessible red-flag alerts` | *Pending commit* | **DONE (Code) / PARTIAL (Screenshots)** |
-| **M5** | Responsive UI & Layout | `style(fsm): implement responsive relationship analyzer` | *Pending* | **PENDING** |
+| **M4** | Red-Flag Alert & Accessibility | `feat(a11y): implement accessible red-flag alerts` | `b367cec` | **IMPLEMENTED** |
+| **M5** | Responsive UI & Layout | `style(fsm): implement responsive relationship analyzer` | *Pending commit* | **DONE (Code) / PARTIAL (Screenshots)** |
 | **M6** | Testing, Evidence & Audit | `test(fsm): verify state machine and timer behavior` | *Pending* | **PENDING** |
 
 ---
@@ -208,34 +208,49 @@ This document serves as the single source of truth for the project lifecycle, ar
 | Reduced Motion Preference | `@media (prefers-reduced-motion: reduce)` duration override | `src/App.css` | CSS inspection | **DONE** |
 | Viewport Responsiveness | 375px mobile viewport support without horizontal scrolling | `src/App.css`, `index.html` | Computed layout audit | **DONE** |
 | Evidence & Screenshots | Save visual captures under `docs/evidence/M4/` | `docs/evidence/M4/M4_EVIDENCE.md` | Verification log created | **PARTIAL** (Browser captures pending) |
-| Git Commit Target | `feat(a11y): implement accessible red-flag alerts` | Git history | `git log` | **PENDING** |
+| Git Commit Target | `feat(a11y): implement accessible red-flag alerts` | Git commit `b367cec` | `git log` | **IMPLEMENTED** |
 
 ---
 
 ## M5 – Responsive UI
 
 ### 1. Objectives & Scope
-- Design an intuitive, aesthetically refined user interface reflecting the V-Pop song theme.
-- Support Desktop (1200px+), Tablet (768px - 1024px), and Mobile viewports (down to 375px width, e.g., iPhone SE).
-- Guarantee zero horizontal scrolling or layout clipping at 375px.
-- Maintain minimum touch target size (44px $\times$ 44px) for all mobile buttons and interactive items.
-- Ensure readable typography scaling (`clamp()` fluid font sizing).
+- Design an intuitive, cohesive, aesthetically refined user interface reflecting the V-Pop song theme.
+- Support Desktop (1440px+), Compact Desktop/Tablet (1024px), Tablet (768px), Mobile (600px), and Compact Mobile (375px width, e.g., iPhone SE).
+- Guarantee zero horizontal scrolling (`document.documentElement.scrollWidth <= window.innerWidth`).
+- Maintain touch target size ($\ge 44\text{px} \times 44\text{px}$) across all interactive controls.
+- Integrate centralized CSS custom properties (`--color-bg-primary`, `--color-accent`, etc.).
+- Provide relationship phase visual progression sequence with active state badges.
+- Ensure strict preservation of all M4 accessibility attributes (`useId`, `aria-live`, `:focus-visible`, `prefers-reduced-motion`).
 
-### 2. Mandatory Requirements & Planned Tasks
-- [x] Basic responsive grid layout and `clamp()` typography defined in `src/App.css`.
-- [ ] Responsive grid/flex layout accommodating the complete analyzer (FSM controls, Effort Logger, Ghosting Timer, Red-Flag Banner).
-- [ ] Test layout at viewport widths: 1440px, 1024px, 768px, 480px, and 375px.
-- [ ] Verify touch target heights ($\ge 44\text{px}$) and padding.
-- [ ] Commit with message: `style(fsm): implement responsive relationship analyzer`.
+### 2. Mandatory Requirements & Audit Checklist
+- [x] **DONE** — Root layout integrating `SituationShipAnalyzer`, `EffortAnalyzer`, and `GhostingTimer` exactly once.
+- [x] **DONE** — Relationship state progression visualizer (`.phase-pipeline`) with step numbers, name, and active pill badge.
+- [x] **DONE** — Desktop multi-column grid layout (`.analyzer-grid`) for 1440px and 1200px viewports.
+- [x] **DONE** — Tablet responsive adaptation at 1024px and 768px breakpoints without overlapping content.
+- [x] **DONE** — Mobile 375px single-column layout, compact container padding, zero horizontal scrollbar.
+- [x] **DONE** — Enhanced Red-Flag alert visual indicator with bold non-color text and high contrast.
+- [x] **DONE** — Touch targets $\ge 44$px for all interactive buttons and inputs.
+- [x] **DONE** — Semantic footer with assignment metadata.
+- [x] **DONE** — Preservation of all M4 accessibility rules (`useId`, `role="status"`, `aria-live="polite"`, `:focus-visible`, `prefers-reduced-motion`).
+- [x] **DONE** — TypeScript (`npx tsc --noEmit`) and production build (`npm run build`) passing with zero diagnostics.
+- [ ] **PARTIAL** — Capture full set of browser screenshots under `docs/evidence/M5/`.
+- [ ] **PENDING** — Commit with message: `style(fsm): implement responsive relationship analyzer`.
 
 ### 3. Traceability Table
 
 | Requirement | Required Identifier / Behavior | Actual File | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| 375px Mobile Viewport | No horizontal overflow (`overflow-x: hidden`) | `src/App.css`, `index.html` | Browser devtools (375px) | **PENDING** |
-| Fluid Typography | `font-size: clamp(...)` scaling | `src/App.css` | Responsive inspection | **IMPLEMENTED** (Partially) |
-| Touch Target Minimums | Height $\ge 44\text{px}$ on all buttons | `src/App.css` | Computed style audit | **IMPLEMENTED** (Partially) |
-| Complete Interface Styling | Full styled panels for M2–M4 components | `src/App.css` | Visual review | **PENDING** |
+| Root Component Integration | `SituationShipAnalyzer`, `EffortAnalyzer`, `GhostingTimer` | `src/components/SituationShipAnalyzer.tsx` | Component inspection | **DONE** |
+| State Progression Tracker | Visual pipeline `.phase-pipeline` with active badges | `src/components/SituationShipAnalyzer.tsx` | Visual review | **DONE** |
+| Desktop Multi-Column Grid | `.analyzer-grid` 2-column layout (minmax(480px, 1fr)) | `src/App.css` | Layout inspection | **DONE** |
+| Tablet Breakpoints | `@media (max-width: 1024px)` & `@media (max-width: 768px)` | `src/App.css` | DevTools simulation | **DONE** |
+| 375px Mobile Viewport | Single column, `overflow-x: hidden`, no overflow | `src/App.css` (`@media (max-width: 375px)`) | JS scrollWidth test | **DONE** |
+| Touch Target Minimums | Height $\ge 44\text{px}$ on all interactive buttons | `src/App.css` | Computed style audit | **DONE** |
+| Accessible Red-Flag UI | High-contrast banner with bold non-color status text | `src/components/EffortAnalyzer.tsx`, `src/App.css` | Visual & ARIA check | **DONE** |
+| Semantic Footer | `<footer className="analyzer-footer">` with metadata | `src/components/SituationShipAnalyzer.tsx` | DOM inspection | **DONE** |
+| M4 Accessibility Preservation | Retain all `useId`, `aria-live`, `:focus-visible`, reduced motion | `src/components/*.tsx`, `src/App.css` | grep verification | **DONE** |
+| Evidence & Verification Log | Save visual captures under `docs/evidence/M5/` | `docs/evidence/M5/M5_EVIDENCE.md` | Verification log created | **PARTIAL** (Browser captures pending) |
 | Git Commit Target | `style(fsm): implement responsive relationship analyzer` | Git history | `git log` | **PENDING** |
 
 ---

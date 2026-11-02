@@ -1,8 +1,54 @@
+/* =========================================
+   V-POP FSM RELATIONSHIP ANALYZER
+   CSS VARIABLES & DESIGN TOKENS
+========================================= */
+
+:root {
+  --color-bg-primary: #090d16;
+  --color-bg-surface: #151d2d;
+  --color-bg-card: #202b40;
+  --color-border: #34445c;
+  --color-border-subtle: #1e293b;
+  --color-accent: #ff647f;
+  --color-accent-hover: #ff8296;
+  --color-accent-focus: #fbbf24;
+  --color-accent-dim: rgba(255, 100, 127, 0.15);
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-success: #16a34a;
+  --color-success-bg: rgba(22, 163, 74, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.14);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+}
+
+/* =========================================
+   GLOBAL RESET & CONTAINER
+========================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 .analyzer {
   width: min(1200px, 100%);
   margin: 0 auto;
   padding: 40px 24px;
 }
+
+/* =========================================
+   HERO HEADER
+========================================= */
 
 .hero {
   margin-bottom: 36px;
@@ -10,10 +56,10 @@
 
 .eyebrow {
   display: inline-block;
-  padding: 10px 20px;
-  border: 1px solid #ff647f;
-  border-radius: 10px;
-  color: #ff647f;
+  padding: 8px 16px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -21,130 +67,219 @@
 
 .hero h1 {
   margin: 20px 0 10px;
-  font-size: clamp(28px, 5vw, 44px);
+  font-size: clamp(26px, 5vw, 44px);
   line-height: 1.2;
+  word-break: break-word;
 }
 
 .hero p {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
+  font-size: clamp(15px, 2.5vw, 18px);
+  line-height: 1.5;
 }
+
+/* =========================================
+   M1 - RELATIONSHIP STATE PANEL
+========================================= */
 
 .state-panel {
   padding: 28px;
-  border: 1px solid #34445c;
-  border-radius: 20px;
-  background: #151d2d;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
 }
 
 .state-panel h2 {
   margin-top: 0;
-  color: #ff647f;
+  color: var(--color-accent);
+  font-size: 24px;
 }
 
 .current-state {
-  margin: 28px 0;
+  margin: 24px 0 20px;
 }
 
 .current-state span {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
   font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .phase-value {
   display: block;
-  margin-top: 12px;
-  color: #ff647f;
+  margin-top: 10px;
+  color: var(--color-accent);
   font-size: clamp(24px, 5vw, 36px);
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
+/* =========================================
+   M5 - VISUAL STATE PROGRESSION PIPELINE
+========================================= */
+
+.phase-pipeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 20px 0 24px;
+}
+
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.pipeline-step.available {
+  border-color: rgba(255, 100, 127, 0.4);
+  color: var(--color-text-secondary);
+}
+
+.pipeline-step.current {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-bg-card);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pipeline-step.current .step-number {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+.step-name {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* Phase action buttons */
 .phase-list {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 24px 0;
+  margin: 24px 0 16px;
 }
 
 .phase-list button,
 .reset-button {
   min-height: 44px;
-  padding: 12px 16px;
-  border: 1px solid #34445c;
-  border-radius: 10px;
-  background: #202b40;
-  color: #f1f5f9;
+  padding: 12px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .phase-list button:hover:not(:disabled),
 .reset-button:hover {
-  border-color: #ff647f;
-}
-
-.phase-list button:focus-visible,
-.reset-button:focus-visible {
-  outline: 3px solid #ff647f;
-  outline-offset: 3px;
+  border-color: var(--color-accent);
+  background: rgba(255, 100, 127, 0.12);
 }
 
 .phase-list button:disabled {
-  border-color: #ff647f;
-  color: #ff647f;
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.phase-list button[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
   opacity: 1;
   cursor: default;
 }
 
 .transition-info {
-  margin-top: 24px;
-  padding: 18px;
-  border-radius: 12px;
-  background: #090d16;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
 }
 
 .transition-info h3 {
   margin-top: 0;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.transition-info ul {
+  padding-left: 20px;
+  margin-bottom: 0;
 }
 
 .transition-info li {
-  margin: 8px 0;
-  color: #94a3b8;
+  margin: 6px 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
 }
 
 .reset-button {
   margin-top: 20px;
+  background: var(--color-bg-card);
 }
 
-@media (max-width: 600px) {
-  .analyzer {
-    padding: 24px 14px;
-  }
+/* =========================================
+   M5 - DESKTOP TWO-COLUMN GRID LAYOUT
+========================================= */
 
-  .state-panel {
-    padding: 18px;
-  }
-
-  .phase-list {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .phase-list button {
-    width: 100%;
-  }
+.analyzer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  gap: 28px;
+  margin-top: 32px;
+  align-items: start;
 }
-
 
 /* =========================================
    M2 - ASYMMETRIC EFFORT ANALYZER
 ========================================= */
 
 .effort-panel {
-  margin-top: 32px;
   padding: 28px;
-  border: 1px solid #34445c;
-  border-radius: 20px;
-  background: #151d2d;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
 }
 
 .effort-panel header {
@@ -152,64 +287,60 @@
 }
 
 .effort-panel h2 {
-  color: #ff647f;
-  font-size: 26px;
+  color: var(--color-accent);
+  font-size: 24px;
+  margin-top: 6px;
 }
 
 .section-label {
-  color: #ff647f;
+  color: var(--color-accent);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.5px;
+  margin: 0;
 }
 
 .effort-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .effort-form label {
   align-self: end;
-  color: #cbd5e1;
+  color: var(--color-text-secondary);
   font-size: 14px;
+  font-weight: 600;
 }
 
 .effort-form input,
 .effort-form select {
   width: 100%;
   min-height: 44px;
-  padding: 10px;
-  border: 1px solid #34445c;
-  border-radius: 8px;
-  background: #090d16;
-  color: #f1f5f9;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 15px;
 }
 
 .effort-form button {
   grid-column: 1 / -1;
-}
-
-.effort-form button,
-.effort-actions button,
-.effort-log button {
   min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid #ff647f;
-  border-radius: 8px;
-  background: #ff647f;
-  color: #090d16;
+  padding: 12px 16px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
   font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.effort-form button:focus-visible,
-.effort-actions button:focus-visible,
-.effort-log button:focus-visible,
-.effort-form input:focus-visible,
-.effort-form select:focus-visible {
-  outline: 3px solid #fbbf24;
-  outline-offset: 3px;
+.effort-form button:hover {
+  background: var(--color-accent-hover);
 }
 
 .effort-actions {
@@ -219,10 +350,21 @@
   margin: 20px 0;
 }
 
+.effort-actions button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .effort-actions button:last-child {
-  border-color: #64748b;
-  background: #202b40;
-  color: #f1f5f9;
+  border-color: var(--color-text-muted);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
 }
 
 .effort-results {
@@ -233,66 +375,103 @@
 }
 
 .effort-card {
-  padding: 20px;
-  border: 1px solid #34445c;
-  border-radius: 14px;
-  background: #090d16;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
 }
 
 .effort-card h3 {
-  color: #ff647f;
+  margin: 0 0 8px;
+  color: var(--color-accent);
+  font-size: 16px;
 }
 
 .effort-card strong {
   display: block;
-  margin: 12px 0;
-  font-size: 32px;
+  margin: 10px 0 6px;
+  font-size: clamp(24px, 4vw, 32px);
+  color: var(--color-text-primary);
 }
 
 .effort-card span,
 .effort-card p {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  margin: 0;
 }
 
 .effort-total {
   margin-top: 18px;
-  padding: 20px;
-  border-radius: 12px;
-  background: #202b40;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+}
+
+.effort-total p {
+  margin: 4px 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
 }
 
 .effort-total strong {
-  font-size: 30px;
+  display: block;
+  font-size: clamp(24px, 4vw, 30px);
+  color: var(--color-text-primary);
+  margin: 6px 0;
 }
 
+/* =========================================
+   M4 & M5 - RED-FLAG ACCESSIBLE ALERT PANEL
+========================================= */
+
 .red-flag {
-  margin-top: 18px;
-  padding: 18px;
-  border: 1px solid #16a34a;
-  border-radius: 12px;
-  background: rgba(22, 163, 74, 0.08);
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-md);
+  background: var(--color-success-bg);
+  transition: all 0.3s ease;
 }
 
 .red-flag h3 {
+  margin: 0 0 8px;
   color: #4ade80;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.red-flag output {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .red-flag.active {
-  border-color: #fb647f;
-  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-accent);
+  background: var(--color-danger-bg);
 }
 
 .red-flag.active h3 {
-  color: #ff647f;
+  color: var(--color-accent);
 }
 
 .effort-log {
   margin-top: 24px;
 }
 
+.effort-log h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
 .effort-log ul {
   padding-left: 0;
   list-style: none;
+  margin: 0;
 }
 
 .effort-log li {
@@ -300,25 +479,202 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   padding: 12px;
-  border-bottom: 1px solid #34445c;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
 }
 
 .effort-log button {
   min-height: 36px;
-  padding: 6px 12px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: #ff647f;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
 }
 
-@media (max-width: 600px) {
-  .effort-panel {
-    padding: 18px;
+.effort-log button:hover {
+  background: var(--color-accent-dim);
+}
+
+/* =========================================
+   M3 - GHOSTING TIMER PANEL
+========================================= */
+
+.ghosting-panel {
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.ghosting-panel header {
+  margin-bottom: 24px;
+}
+
+.ghosting-panel h2 {
+  color: var(--color-accent);
+  font-size: 24px;
+  margin-top: 6px;
+}
+
+.ghosting-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.ghosting-controls label {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ghosting-controls select,
+.ghosting-controls button {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 15px;
+}
+
+.ghosting-controls button {
+  background: var(--color-bg-card);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.ghosting-controls button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+}
+
+.ghosting-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ghosting-status {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-primary);
+}
+
+.ghosting-status p {
+  color: var(--color-text-secondary);
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.ghosting-status strong {
+  color: var(--color-text-primary);
+}
+
+.ghosting-announcement {
+  display: block;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   SEMANTIC FOOTER
+========================================= */
+
+.analyzer-footer {
+  margin-top: 48px;
+  padding: 24px 0 12px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.analyzer-footer p {
+  margin: 4px 0;
+}
+
+/* =========================================
+   M5 - RESPONSIVE BREAKPOINTS
+   (1024px Tablet / 768px Small Tablet / 600px Mobile / 375px Compact)
+========================================= */
+
+/* Desktop & Compact Desktop (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .analyzer {
+    padding: 32px 20px;
+  }
+
+  .analyzer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .phase-pipeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablet (max-width: 768px) */
+@media (max-width: 768px) {
+  .analyzer {
+    padding: 28px 16px;
+  }
+
+  .state-panel,
+  .effort-panel,
+  .ghosting-panel {
+    padding: 22px;
   }
 
   .effort-results {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .phase-pipeline {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile (max-width: 600px) */
+@media (max-width: 600px) {
+  .analyzer {
+    padding: 20px 14px;
+  }
+
+  .state-panel,
+  .effort-panel,
+  .ghosting-panel {
+    padding: 18px 14px;
+  }
+
+  .phase-list {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .phase-list button,
+  .reset-button {
+    width: 100%;
   }
 
   .effort-form {
@@ -338,106 +694,58 @@
   }
 }
 
-
-/* =========================================
-   M3 - GHOSTING TIMER
-========================================= */
-
-.ghosting-panel {
-  margin-top: 32px;
-  padding: 28px;
-  border: 1px solid #34445c;
-  border-radius: 20px;
-  background: #151d2d;
-}
-
-.ghosting-panel header {
-  margin-bottom: 24px;
-}
-
-.ghosting-panel h2 {
-  color: #ff647f;
-  font-size: 26px;
-}
-
-.ghosting-controls {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  max-width: 520px;
-}
-
-.ghosting-controls label {
-  color: #cbd5e1;
-  font-size: 14px;
-}
-
-.ghosting-controls select,
-.ghosting-controls button {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid #34445c;
-  border-radius: 8px;
-  background: #090d16;
-  color: #f1f5f9;
-  font: inherit;
-}
-
-.ghosting-controls button {
-  background: #202b40;
-  cursor: pointer;
-}
-
-.ghosting-controls button:hover:not(:disabled) {
-  border-color: #ff647f;
-}
-
-.ghosting-controls button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.ghosting-controls button:focus-visible,
-.ghosting-controls select:focus-visible {
-  outline: 3px solid #ff647f;
-  outline-offset: 3px;
-}
-
-.ghosting-status {
-  margin-top: 24px;
-  padding: 20px;
-  border: 1px solid #34445c;
-  border-radius: 12px;
-  background: #090d16;
-}
-
-.ghosting-status p {
-  color: #94a3b8;
-}
-
-.ghosting-status strong {
-  color: #f1f5f9;
-}
-
-.ghosting-announcement {
-  display: block;
-  margin-top: 16px;
-  padding: 14px;
-  border: 1px solid #ff647f;
-  border-radius: 8px;
-  color: #ff8296;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 600px) {
-  .ghosting-panel {
-    padding: 18px;
+/* Compact Mobile (max-width: 375px) */
+@media (max-width: 375px) {
+  .analyzer {
+    padding: 16px 10px;
+    width: 100%;
   }
 
-  .ghosting-controls {
-    max-width: 100%;
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .state-panel,
+  .effort-panel,
+  .ghosting-panel {
+    padding: 14px 10px;
+    border-radius: var(--radius-md);
+  }
+
+  .phase-value {
+    font-size: 22px;
+  }
+
+  .effort-form input,
+  .effort-form select,
+  .ghosting-controls select {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+
+  .effort-card strong,
+  .effort-total strong {
+    font-size: 22px;
+  }
+
+  .effort-log li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .effort-log button {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .analyzer-footer {
+    font-size: 12px;
+    padding: 18px 0;
   }
 }
 
@@ -446,7 +754,7 @@
 ========================================= */
 
 :focus-visible {
-  outline: 3px solid #ff647f;
+  outline: 3px solid var(--color-accent);
   outline-offset: 3px;
 }
 

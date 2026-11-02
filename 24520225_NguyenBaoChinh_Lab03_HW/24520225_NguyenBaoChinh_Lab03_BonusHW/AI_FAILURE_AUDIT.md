@@ -85,3 +85,41 @@ This document audits regressions, edge cases, AI-generated code errors, and acce
 ### D. Remaining Limitations & Manual Audit Needs
 - Screen reader verbal announcements (VoiceOver / NVDA) require real-time physical verification in the browser to confirm that announcement verbosity does not flood the user when rapid effort updates occur.
 - Lighthouse Accessibility audit requires running Chrome DevTools on a running dev server instance to certify a 100% WCAG score.
+
+---
+
+## 3. Milestone 5 – Responsive Relationship Analyzer UI Audit
+
+### A. Initial UI & Responsive Problems Found
+1. **Vertical Monolithic Stacking on Desktop Viewports**:
+   - Prior to M5, `.state-panel`, `.effort-panel`, and `.ghosting-panel` were stacked in a single vertical column regardless of screen width. On a 1440px desktop display, this left excessive negative margins and stretched form inputs unnecessarily wide.
+2. **Missing Phase Progression Pipeline**:
+   - The 4 relationship states were only displayed as transition buttons. The UI lacked an intuitive visual indicator showing the directed sequence (`FRIENDS` $\rightarrow$ `DATING_NO_LOVE` $\rightarrow$ `OFFICIAL_LOVE` $\rightarrow$ `GHOSTED_EXIT`) and the user's current position within that lifecycle.
+3. **Absence of Standard Breakpoints (1024px, 768px, 375px)**:
+   - Only a rudimentary `@media (max-width: 600px)` existed in `App.css`. Explicit adaptations for 1024px tablet landscape, 768px tablet portrait, and compact mobile 375px (e.g., iPhone SE) were missing.
+4. **Duplicate CSS Rules**:
+   - A redundant block of `:focus-visible` and `@media (prefers-reduced-motion: reduce)` was duplicated at the end of `src/App.css`.
+
+### B. Architectural Overrides & Responsive Fixes Applied
+1. **Desktop Multi-Column Grid (`.analyzer-grid`)**:
+   - Encapsulated `<EffortAnalyzer />` and `<GhostingTimer />` within an auto-fitting CSS grid container (`grid-template-columns: repeat(auto-fit, minmax(480px, 1fr))`). On 1440px+ displays, these panels align side-by-side with 28px gutters, creating a cohesive dashboard.
+2. **Relationship Phase Progression Pipeline (`.phase-pipeline`)**:
+   - Implemented a semantic status region showcasing steps 1 through 4. Active phase receives a prominent `.current` highlight and `ACTIVE` pill badge; valid transitions receive `.available` borders; locked states are muted.
+3. **Multi-tier Responsive Media Queries**:
+   - `@media (max-width: 1024px)`: Collapses the multi-column grid to 1fr, pipeline to 2 columns.
+   - `@media (max-width: 768px)`: Switches effort cards to single-column, scales padding to 22px.
+   - `@media (max-width: 600px)`: Transitions buttons to full width, stacks form controls.
+   - `@media (max-width: 375px)`: Reduces container padding to 10px, scales typography cleanly (`clamp(22px, ...)`), stacks log items vertically, ensuring `document.documentElement.scrollWidth <= window.innerWidth` (no horizontal overflow).
+4. **Centralized CSS Variables**:
+   - Established design tokens in `:root` (`--color-bg-primary`, `--color-accent`, etc.) to unify colors, border radii, and hover states across all components.
+5. **Zero M4 Accessibility Regressions**:
+   - Retained all `useId()`, `<output role="status" aria-live="polite">`, `:focus-visible`, and `prefers-reduced-motion` declarations.
+
+### C. Automated Verifications & Production Build
+- `npx tsc --noEmit`: Exited 0 with zero diagnostics.
+- `npm run build`: Bundled cleanly in 265ms (`dist/index.html` 0.48 kB, `dist/assets/index-*.js` 229 kB).
+- Media query inspection verified all target breakpoints (`1024px`, `768px`, `600px`, `375px`).
+- No non-semantic click handlers detected.
+
+### D. Remaining Manual Audit Items
+- Capturing high-resolution browser screenshots at 1440px, 1024px, 768px, and 375px viewports to populate `docs/evidence/M5/`.

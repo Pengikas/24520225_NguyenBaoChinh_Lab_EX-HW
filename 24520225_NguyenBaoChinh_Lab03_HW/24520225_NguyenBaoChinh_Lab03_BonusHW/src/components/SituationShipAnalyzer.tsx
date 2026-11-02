@@ -85,7 +85,32 @@ export function SituationShipAnalyzer() {
                     </output>
                 </div>
 
-                <div className="phase-list">
+                {/* M5 Relationship Phase Progression Visualizer */}
+                <div
+                    className="phase-pipeline"
+                    role="region"
+                    aria-label="Relationship state progression overview"
+                >
+                    {phases.map((item, index) => {
+                        const isCurrent = phase === item;
+                        const isAvailable = availableTransitions.includes(item);
+
+                        return (
+                            <div
+                                key={item}
+                                className={`pipeline-step ${isCurrent ? 'current' : ''} ${isAvailable ? 'available' : 'locked'}`}
+                            >
+                                <span className="step-number">{index + 1}</span>
+                                <span className="step-name">{item}</span>
+                                {isCurrent && (
+                                    <span className="step-badge">ACTIVE</span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="phase-list" role="group" aria-label="Available state transition buttons">
                     {phases.map((item) => (
                         <button
                             key={item}
@@ -120,11 +145,24 @@ export function SituationShipAnalyzer() {
                 </button>
             </section>
 
-            {/* M2 Asymmetric Effort Analyzer */}
-            <EffortAnalyzer />
+            {/* M5 Responsive Layout Container for M2 & M3 */}
+            <div className="analyzer-grid">
+                {/* M2 Asymmetric Effort Analyzer */}
+                <EffortAnalyzer />
 
-            {/* M3 Seen Không Rep - Ghosting Timer */}
-            <GhostingTimer phase={phase} />
+                {/* M3 Seen Không Rep - Ghosting Timer */}
+                <GhostingTimer phase={phase} />
+            </div>
+
+            {/* Semantic Footer */}
+            <footer className="analyzer-footer">
+                <p>
+                    <strong>V-Pop Relationship Analyzer</strong> &bull; Applied Creative Exercise (Lab 03 Bonus)
+                </p>
+                <p>
+                    Student: Nguyen Bao Chinh (24520225) &bull; University of Information Technology
+                </p>
+            </footer>
         </main>
     );
 }

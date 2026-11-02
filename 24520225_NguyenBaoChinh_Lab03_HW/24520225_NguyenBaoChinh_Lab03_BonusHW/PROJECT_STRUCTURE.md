@@ -62,8 +62,10 @@ The following tree represents the **real, verified filesystem state** as of Mile
 │
 └── docs/                               [EXISTING] Documentation & audit evidence directory
     └── evidence/                       [EXISTING] Milestone audit captures
-        └── M4/                         [EXISTING] Milestone 4 accessibility verification
-            └── M4_EVIDENCE.md          [EXISTING] M4 verification table and manual capture protocol
+        ├── M4/                         [EXISTING] Milestone 4 accessibility verification
+        │   └── M4_EVIDENCE.md          [EXISTING] M4 verification table and manual capture protocol
+        └── M5/                         [EXISTING] Milestone 5 responsive UI verification
+            └── M5_EVIDENCE.md          [EXISTING] M5 verification matrix and viewport audit log
 ```
 
 ---
