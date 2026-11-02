@@ -50,21 +50,6 @@ export function SituationShipAnalyzer() {
 
     return (
         <main className="analyzer">
-            {/* Existing M1 Relationship FSM */}
-            <header className="hero">
-                {/* Keep your existing M1 hero content */}
-            </header>
-
-            {/* Keep your existing M1 state panel */}
-
-            {/* M2 Asymmetric Effort Analyzer */}
-            <EffortAnalyzer />
-            <GhostingTimer phase={phase} />
-        </main>
-    );
-
-    return (
-        <main className="analyzer">
             <header className="hero">
                 <div className="eyebrow">
                     APPLIED CREATIVE EXERCISE (V-POP FSM)
@@ -90,7 +75,12 @@ export function SituationShipAnalyzer() {
                 <div className="current-state">
                     <span>Current Relationship Phase</span>
 
-                    <output className="phase-value">
+                    <output
+                        className="phase-value"
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                    >
                         {phase}
                     </output>
                 </div>
@@ -129,6 +119,12 @@ export function SituationShipAnalyzer() {
                     Reset Relationship
                 </button>
             </section>
+
+            {/* M2 Asymmetric Effort Analyzer */}
+            <EffortAnalyzer />
+
+            {/* M3 Seen Không Rep - Ghosting Timer */}
+            <GhostingTimer phase={phase} />
         </main>
     );
 }

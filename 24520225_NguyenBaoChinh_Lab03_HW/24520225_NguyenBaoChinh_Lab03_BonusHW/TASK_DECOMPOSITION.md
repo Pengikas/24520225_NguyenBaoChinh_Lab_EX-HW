@@ -16,9 +16,9 @@ This document serves as the single source of truth for the project lifecycle, ar
 | :--- | :--- | :--- | :--- | :--- |
 | **M0** | Project Initialization | `chore(fsm): initialize exercise audit` | `272b6c1` | **IMPLEMENTED** |
 | **M1** | Deterministic Relationship FSM | `feat(fsm): implement deterministic relationship states` | `5103371` | **IMPLEMENTED** |
-| **M2** | Asymmetric Effort Reducer | `feat(fsm): implement asymmetric effort reducer` | *Pending* | **PENDING** |
-| **M3** | Ghosting Timer & AbortController | `feat(fsm): implement abortable ghosting timer` | *Pending* | **PENDING** |
-| **M4** | Red-Flag Alert & Accessibility | `feat(a11y): implement accessible red-flag alerts` | *Pending* | **PENDING** |
+| **M2** | Asymmetric Effort Reducer | `feat(fsm): implement asymmetric effort reducer` | `0369d23` | **IMPLEMENTED** |
+| **M3** | Ghosting Timer & AbortController | `feat(fsm): implement abortable ghosting timer` | `0d20a68` | **IMPLEMENTED** |
+| **M4** | Red-Flag Alert & Accessibility | `feat(a11y): implement accessible red-flag alerts` | *Pending commit* | **DONE (Code) / PARTIAL (Screenshots)** |
 | **M5** | Responsive UI & Layout | `style(fsm): implement responsive relationship analyzer` | *Pending* | **PENDING** |
 | **M6** | Testing, Evidence & Audit | `test(fsm): verify state machine and timer behavior` | *Pending* | **PENDING** |
 
@@ -112,37 +112,27 @@ This document serves as the single source of truth for the project lifecycle, ar
 - Calculate derived analytical metrics purely on the fly without storing duplicate state in React:
   - Total weighted effort for `EM` vs `AI_DO`.
   - Reciprocity ratio ($\text{Effort}_{\text{EM}} / \text{Effort}_{\text{AI\_DO}}$).
-  - Red-Flag heuristic threshold: trigger red flag when effort imbalance surpasses acceptable threshold or when in `DATING_NO_LOVE` with extreme asymmetry.
+  - Red-Flag heuristic threshold: trigger red flag when effort imbalance surpasses acceptable threshold.
 - Enforce immutable update patterns (no `.push()`, `.splice()`, or in-place object mutation).
 
 ### 2. Mandatory Requirements & Planned Tasks
-- [x] Declare `EffortSignal` interface in `src/types/relationship.ts`:
-  ```ts
-  export interface EffortSignal {
-    readonly id: string;
-    readonly actor: 'EM' | 'AI_DO';
-    readonly steps: number;
-    readonly multiplier: number;
-  }
-  ```
-- [ ] Implement effort signal actions (`ADD_EFFORT_SIGNAL`, `CLEAR_SIGNALS`).
-- [ ] Implement effort calculation reducer or extend `relationshipReducer` to handle signal logging.
-- [ ] Implement pure derived-state selectors:
-  - `computeTotalEffort(signals: readonly EffortSignal[], actor: 'EM' | 'AI_DO'): number`
-  - `detectRedFlags(emEffort: number, aiDoEffort: number, phase: RelationshipPhase): boolean`
-- [ ] Build UI panel inside `SituationShipAnalyzer` for entering signal steps and multiplier for `EM` and `AI_DO`.
-- [ ] Commit with message: `feat(fsm): implement asymmetric effort reducer`.
+- [x] Declare `EffortSignal` interface in `src/types/relationship.ts`.
+- [x] Implement effort actions (`ADD_SIGNAL`, `REMOVE_SIGNAL`, `RESET_LOG`) in `src/utils/effortReducer.ts`.
+- [x] Implement pure reducer `effortReducer()` maintaining append-only signals.
+- [x] Implement pure derived selector `deriveEffortState()` computing weighted effort and `isRedFlag`.
+- [x] Build UI component `EffortAnalyzer.tsx` with example loader and action log view.
+- [x] Commit with message: `feat(fsm): implement asymmetric effort reducer` (commit `0369d23`).
 
 ### 3. Traceability Table
 
 | Requirement | Required Identifier / Behavior | Actual File | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | Signal Contract | `EffortSignal` (`id`, `actor`, `steps`, `multiplier`) | `src/types/relationship.ts` | Static inspection | **IMPLEMENTED** |
-| Effort Reducer Logic | Immutable signal dispatch & storage | `src/utils/relationshipReducer.ts` (or effortReducer) | Pending implementation | **PENDING** |
-| Pure Metric Selectors | Derived calculation of weighted effort | `src/utils/effortCalculations.ts` *(planned)* | Code review | **PENDING** |
-| Asymmetric Example | `EM` 100 $\times$ 0.1 vs `AI_DO` 1 $\times$ 50 | `SituationShipAnalyzer.tsx` *(planned)* | UI testing | **PENDING** |
-| Red-Flag Detection | Automated flag detection from ratio | `src/utils/effortCalculations.ts` *(planned)* | Boundary condition testing | **PENDING** |
-| Git Commit Target | `feat(fsm): implement asymmetric effort reducer` | Git history | `git log` | **PENDING** |
+| Effort Reducer Logic | Immutable signal dispatch & storage | `src/utils/effortReducer.ts` | Unit & reducer check | **IMPLEMENTED** |
+| Pure Metric Selectors | `deriveEffortState()` derived calculation | `src/utils/effortReducer.ts` | Pure function test | **IMPLEMENTED** |
+| Asymmetric Example | `EM` 100 $\times$ 0.1 vs `AI_DO` 1 $\times$ 50 | `src/components/EffortAnalyzer.tsx` | UI verification | **IMPLEMENTED** |
+| Red-Flag Detection | Automated flag detection from ratio | `src/utils/effortReducer.ts` | Threshold verification | **IMPLEMENTED** |
+| Git Commit Target | `feat(fsm): implement asymmetric effort reducer` | Git commit `0369d23` | `git log` | **IMPLEMENTED** |
 
 ---
 
@@ -158,24 +148,24 @@ This document serves as the single source of truth for the project lifecycle, ar
   - Catch and safely handle `AbortError` without throwing unhandled promise rejections or updating unmounted components.
 
 ### 2. Mandatory Requirements & Planned Tasks
-- [ ] Integrate 5-second asynchronous reply timer in `SituationShipAnalyzer` or dedicated hook.
-- [ ] Instantiate `new AbortController()` inside `useEffect()`.
-- [ ] Supply `abortController.signal` to asynchronous delay logic.
-- [ ] Return cleanup function from `useEffect()` invoking `abortController.abort()`.
-- [ ] Gracefully catch `error.name === 'AbortError'` and discard operation.
-- [ ] Transition phase automatically to `GHOSTED_EXIT` if timer expires without cancellation.
-- [ ] Commit with message: `feat(fsm): implement abortable ghosting timer`.
+- [x] Integrate 5-second asynchronous reply timer in `src/hooks/useGhostingTimer.ts`.
+- [x] Instantiate `new AbortController()` inside `useEffect()`.
+- [x] Supply `abortController.signal` to asynchronous delay logic with `addEventListener('abort')`.
+- [x] Return cleanup function from `useEffect()` invoking `controller.abort()`.
+- [x] Gracefully catch `err.name === 'AbortError'` and suppress error logging.
+- [x] Update status to `GHOSTED` if timer expires without cancellation.
+- [x] Commit with message: `feat(fsm): implement abortable ghosting timer` (commit `0d20a68`).
 
 ### 3. Traceability Table
 
 | Requirement | Required Identifier / Behavior | Actual File | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| 5-Second Reply Timer | Asynchronous delay of 5000ms | `src/components/SituationShipAnalyzer.tsx` *(planned)* | Stopwatch / Mock timer | **PENDING** |
-| React Side-Effect Hook | `useEffect()` with dependency management | `src/components/SituationShipAnalyzer.tsx` *(planned)* | React DevTools inspection | **PENDING** |
-| Signal Cancellation | `AbortController` instantiation & signal passing | `src/components/SituationShipAnalyzer.tsx` *(planned)* | Lifecycle cancellation check | **PENDING** |
-| Unmount & Phase Cleanup | Invocation of `abort()` on transition/unmount | `src/components/SituationShipAnalyzer.tsx` *(planned)* | Memory leak check | **PENDING** |
-| Safe Abort Handling | Explicit suppression of `AbortError` | `src/components/SituationShipAnalyzer.tsx` *(planned)* | Console error audit | **PENDING** |
-| Git Commit Target | `feat(fsm): implement abortable ghosting timer` | Git history | `git log` | **PENDING** |
+| 5-Second Reply Timer | Asynchronous delay of 5000ms | `src/hooks/useGhostingTimer.ts` | Timer verification | **IMPLEMENTED** |
+| React Side-Effect Hook | `useEffect()` with dependency management | `src/hooks/useGhostingTimer.ts` | Hook audit | **IMPLEMENTED** |
+| Signal Cancellation | `AbortController` instantiation & signal passing | `src/hooks/useGhostingTimer.ts` | Abort signal audit | **IMPLEMENTED** |
+| Unmount & Phase Cleanup | Invocation of `abort()` on transition/unmount | `src/hooks/useGhostingTimer.ts` | Cleanup function check | **IMPLEMENTED** |
+| Safe Abort Handling | Explicit suppression of `AbortError` | `src/hooks/useGhostingTimer.ts` | Error catch check | **IMPLEMENTED** |
+| Git Commit Target | `feat(fsm): implement abortable ghosting timer` | Git commit `0d20a68` | `git log` | **IMPLEMENTED** |
 
 ---
 
@@ -183,33 +173,41 @@ This document serves as the single source of truth for the project lifecycle, ar
 
 ### 1. Objectives & Scope
 - Guarantee full accessibility (WCAG 2.1 AA) across all interactive elements.
-- Generate unique, deterministic HTML IDs for effort inputs using React `useId()`.
-- Ensure strict programmatic association between `<label htmlFor={id}>` and `<input id={id}>`.
+- Generate unique, deterministic HTML IDs for effort and timer inputs using React `useId()`.
+- Ensure strict programmatic association between `<label htmlFor={id}>` and `<input id={id}>` / `<select id={id}>`.
 - Announce live dynamic state transitions and red-flag alerts to screen readers using:
   ```tsx
   <output role="status" aria-live="polite">
   ```
 - Support 100% keyboard navigation with visible focus rings (`:focus-visible` with high contrast).
+- Provide reduced motion support via `@media (prefers-reduced-motion: reduce)`.
 - Eliminate inaccessible interaction patterns (e.g., clickable `<div>` without keyboard handlers, missing ARIA attributes).
 
-### 2. Mandatory Requirements & Planned Tasks
-- [ ] Import and invoke React `useId()` for all form control pairs.
-- [ ] Implement live screen-reader announcer: `<output role="status" aria-live="polite">`.
-- [ ] Announce phase transitions (e.g., "Relationship changed to GHOSTED_EXIT").
-- [ ] Announce red-flag alerts when effort asymmetry triggers threshold.
-- [ ] Verify focus ring styles across all buttons, inputs, and interactive panels.
-- [ ] Test tab-index order and keyboard activation (Enter/Space).
-- [ ] Commit with message: `feat(a11y): implement accessible red-flag alerts`.
+### 2. Mandatory Requirements & Audit Checklist
+- [x] **DONE** — Import and invoke React `useId()` for all form control pairs in `EffortAnalyzer.tsx` and `GhostingTimer.tsx`.
+- [x] **DONE** — Associate every form control (`<input>`, `<select>`) with an explicit `<label htmlFor={id}>`.
+- [x] **DONE** — Implement live screen-reader announcer `<output role="status" aria-live="polite" aria-atomic="true">` for Red-Flag alerts.
+- [x] **DONE** — Implement live screen-reader status output `<output role="status" aria-live="polite" aria-atomic="true">` for FSM phase and ghosting timer status.
+- [x] **DONE** — Ensure non-color visual distinction (`RED FLAG` vs `BALANCED STATUS` headings).
+- [x] **DONE** — Configure high-contrast `:focus-visible` outline in `src/App.css`.
+- [x] **DONE** — Add `@media (prefers-reduced-motion: reduce)` block in `src/App.css`.
+- [x] **DONE** — Verify zero non-semantic click listeners (`grep` returned 0).
+- [ ] **PARTIAL** — Capture full set of manual browser screenshots under `docs/evidence/M4/`.
+- [ ] **PENDING** — Commit with message: `feat(a11y): implement accessible red-flag alerts`.
 
 ### 3. Traceability Table
 
 | Requirement | Required Identifier / Behavior | Actual File | Verification Method | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| Form Input ID Generation | React `useId()` | `src/components/SituationShipAnalyzer.tsx` *(planned)* | DOM inspection | **PENDING** |
-| Label-Input Association | `<label htmlFor={id}>` matches `<input id={id}>` | `src/components/SituationShipAnalyzer.tsx` *(planned)* | a11y audit | **PENDING** |
-| Live Screen Reader Output | `<output role="status" aria-live="polite">` | `src/components/SituationShipAnalyzer.tsx` *(planned)* | Screen reader verification | **PENDING** |
-| Keyboard Navigation | Sequential Tab navigation & visible focus | `src/App.css` | Keyboard traversal test | **PENDING** |
-| Focus Ring Styling | `:focus-visible { outline: 3px solid ... }` | `src/App.css` (partially present) | Visual verification | **PENDING** |
+| Form Input ID Generation | React `useId()` (`actorId`, `stepsId`, `multiplierId`, `recipientId`) | `src/components/EffortAnalyzer.tsx`, `src/components/GhostingTimer.tsx` | DOM & grep audit | **DONE** |
+| Label-Input Association | `<label htmlFor={id}>` strictly matches `<select id={id}>` & `<input id={id}>` | `src/components/EffortAnalyzer.tsx`, `src/components/GhostingTimer.tsx` | Form inspection | **DONE** |
+| Red-Flag Alert Output | `<output role="status" aria-live="polite" aria-atomic="true">` | `src/components/EffortAnalyzer.tsx` | DOM & live region check | **DONE** |
+| Phase & Timer Live Output | `<output role="status" aria-live="polite" aria-atomic="true">` | `src/components/SituationShipAnalyzer.tsx`, `src/components/GhostingTimer.tsx` | DOM check | **DONE** |
+| Keyboard Accessibility | 100% native buttons and controls, no clickable divs | `src/components/*.tsx` | grep check (0 non-semantic) | **DONE** |
+| Visible Focus Ring | `:focus-visible { outline: 3px solid #ff647f; outline-offset: 3px; }` | `src/App.css` | CSS inspection | **DONE** |
+| Reduced Motion Preference | `@media (prefers-reduced-motion: reduce)` duration override | `src/App.css` | CSS inspection | **DONE** |
+| Viewport Responsiveness | 375px mobile viewport support without horizontal scrolling | `src/App.css`, `index.html` | Computed layout audit | **DONE** |
+| Evidence & Screenshots | Save visual captures under `docs/evidence/M4/` | `docs/evidence/M4/M4_EVIDENCE.md` | Verification log created | **PARTIAL** (Browser captures pending) |
 | Git Commit Target | `feat(a11y): implement accessible red-flag alerts` | Git history | `git log` | **PENDING** |
 
 ---

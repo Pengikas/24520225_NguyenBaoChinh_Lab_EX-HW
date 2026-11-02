@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import type { RelationshipPhase } from '../types/relationship';
 
@@ -10,6 +10,8 @@ export function GhostingTimer({
 }: {
     readonly phase: RelationshipPhase;
 }) {
+    const recipientId = useId();
+
     const [messageId, setMessageId] = useState(0);
 
     const [isMessageSent, setIsMessageSent] = useState(false);
@@ -77,12 +79,12 @@ export function GhostingTimer({
             </header>
 
             <div className="ghosting-controls">
-                <label htmlFor="ghosting-recipient">
+                <label htmlFor={recipientId}>
                     Message recipient
                 </label>
 
                 <select
-                    id="ghosting-recipient"
+                    id={recipientId}
                     value={recipient}
                     onChange={(event) =>
                         handleSwitchRecipient(
@@ -133,6 +135,7 @@ export function GhostingTimer({
                     className="ghosting-announcement"
                     role="status"
                     aria-live="polite"
+                    aria-atomic="true"
                 >
                     {statusLabels[status]}
                 </output>

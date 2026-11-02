@@ -1,7 +1,6 @@
 
-import { useReducer, useState } from 'react';
+import { useReducer, useState, useId } from 'react';
 import type { FormEvent } from 'react';
-
 import type { EffortSignal } from '../types/relationship';
 
 import {
@@ -15,7 +14,9 @@ export function EffortAnalyzer() {
     const [actor, setActor] = useState<'EM' | 'AI_DO'>('EM');
     const [steps, setSteps] = useState('100');
     const [multiplier, setMultiplier] = useState('0.1');
-
+    const actorId = useId();
+    const stepsId = useId();
+    const multiplierId = useId();
     // Immutable effort action log.
     const [state, dispatch] = useReducer(
         effortReducer,
@@ -97,13 +98,14 @@ export function EffortAnalyzer() {
                 </p>
             </header>
 
+
             <form className="effort-form" onSubmit={handleSubmit}>
-                <label htmlFor="effort-actor">
+                <label htmlFor={actorId}>
                     Actor
                 </label>
 
                 <select
-                    id="effort-actor"
+                    id={actorId}
                     value={actor}
                     onChange={(event) =>
                         setActor(event.target.value as 'EM' | 'AI_DO')
@@ -113,12 +115,12 @@ export function EffortAnalyzer() {
                     <option value="AI_DO">AI_DO</option>
                 </select>
 
-                <label htmlFor="effort-steps">
+                <label htmlFor={stepsId}>
                     Steps
                 </label>
 
                 <input
-                    id="effort-steps"
+                    id={stepsId}
                     type="number"
                     min="0"
                     step="any"
@@ -127,12 +129,12 @@ export function EffortAnalyzer() {
                     required
                 />
 
-                <label htmlFor="effort-multiplier">
+                <label htmlFor={multiplierId}>
                     Multiplier
                 </label>
 
                 <input
-                    id="effort-multiplier"
+                    id={multiplierId}
                     type="number"
                     min="0"
                     step="any"
@@ -147,6 +149,7 @@ export function EffortAnalyzer() {
                     Add Effort Signal
                 </button>
             </form>
+
 
             <div className="effort-actions">
                 <button type="button" onClick={addExample}>
@@ -195,16 +198,25 @@ export function EffortAnalyzer() {
                 </p>
             </div>
 
-            <div
+
+            <section
                 className={`red-flag ${summary.isRedFlag ? 'active' : ''
                     }`}
+                aria-labelledby="red-flag-heading"
             >
-                <h3>
+                <h3 id="red-flag-heading">
                     {summary.isRedFlag ? 'RED FLAG' : 'BALANCED STATUS'}
                 </h3>
 
-                <p>{summary.redFlagMessage}</p>
-            </div>
+                <output
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                >
+                    {summary.redFlagMessage}
+                </output>
+            </section>
+
 
             <div className="effort-log">
                 <h3>Immutable Action Logs</h3>
