@@ -1,6 +1,7 @@
 
 import { useReducer } from 'react';
 import { EffortAnalyzer } from './EffortAnalyzer';
+import { GhostingTimer } from './GhostingTimer';
 
 import {
     initialRelationshipState,
@@ -58,6 +59,7 @@ export function SituationShipAnalyzer() {
 
             {/* M2 Asymmetric Effort Analyzer */}
             <EffortAnalyzer />
+            <GhostingTimer phase={phase} />
         </main>
     );
 

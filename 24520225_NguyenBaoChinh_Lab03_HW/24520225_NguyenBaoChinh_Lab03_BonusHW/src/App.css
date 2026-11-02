@@ -337,3 +337,106 @@
     width: 100%;
   }
 }
+
+
+/* =========================================
+   M3 - GHOSTING TIMER
+========================================= */
+
+.ghosting-panel {
+  margin-top: 32px;
+  padding: 28px;
+  border: 1px solid #34445c;
+  border-radius: 20px;
+  background: #151d2d;
+}
+
+.ghosting-panel header {
+  margin-bottom: 24px;
+}
+
+.ghosting-panel h2 {
+  color: #ff647f;
+  font-size: 26px;
+}
+
+.ghosting-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 520px;
+}
+
+.ghosting-controls label {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.ghosting-controls select,
+.ghosting-controls button {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #34445c;
+  border-radius: 8px;
+  background: #090d16;
+  color: #f1f5f9;
+  font: inherit;
+}
+
+.ghosting-controls button {
+  background: #202b40;
+  cursor: pointer;
+}
+
+.ghosting-controls button:hover:not(:disabled) {
+  border-color: #ff647f;
+}
+
+.ghosting-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ghosting-controls button:focus-visible,
+.ghosting-controls select:focus-visible {
+  outline: 3px solid #ff647f;
+  outline-offset: 3px;
+}
+
+.ghosting-status {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #34445c;
+  border-radius: 12px;
+  background: #090d16;
+}
+
+.ghosting-status p {
+  color: #94a3b8;
+}
+
+.ghosting-status strong {
+  color: #f1f5f9;
+}
+
+.ghosting-announcement {
+  display: block;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #ff647f;
+  border-radius: 8px;
+  color: #ff8296;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .ghosting-panel {
+    padding: 18px;
+  }
+
+  .ghosting-controls {
+    max-width: 100%;
+  }
+}
