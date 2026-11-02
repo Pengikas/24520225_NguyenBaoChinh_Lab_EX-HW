@@ -133,3 +133,207 @@
     width: 100%;
   }
 }
+
+
+/* =========================================
+   M2 - ASYMMETRIC EFFORT ANALYZER
+========================================= */
+
+.effort-panel {
+  margin-top: 32px;
+  padding: 28px;
+  border: 1px solid #34445c;
+  border-radius: 20px;
+  background: #151d2d;
+}
+
+.effort-panel header {
+  margin-bottom: 24px;
+}
+
+.effort-panel h2 {
+  color: #ff647f;
+  font-size: 26px;
+}
+
+.section-label {
+  color: #ff647f;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.effort-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.effort-form label {
+  align-self: end;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.effort-form input,
+.effort-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #34445c;
+  border-radius: 8px;
+  background: #090d16;
+  color: #f1f5f9;
+}
+
+.effort-form button {
+  grid-column: 1 / -1;
+}
+
+.effort-form button,
+.effort-actions button,
+.effort-log button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #ff647f;
+  border-radius: 8px;
+  background: #ff647f;
+  color: #090d16;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.effort-form button:focus-visible,
+.effort-actions button:focus-visible,
+.effort-log button:focus-visible,
+.effort-form input:focus-visible,
+.effort-form select:focus-visible {
+  outline: 3px solid #fbbf24;
+  outline-offset: 3px;
+}
+
+.effort-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.effort-actions button:last-child {
+  border-color: #64748b;
+  background: #202b40;
+  color: #f1f5f9;
+}
+
+.effort-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.effort-card {
+  padding: 20px;
+  border: 1px solid #34445c;
+  border-radius: 14px;
+  background: #090d16;
+}
+
+.effort-card h3 {
+  color: #ff647f;
+}
+
+.effort-card strong {
+  display: block;
+  margin: 12px 0;
+  font-size: 32px;
+}
+
+.effort-card span,
+.effort-card p {
+  color: #94a3b8;
+}
+
+.effort-total {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #202b40;
+}
+
+.effort-total strong {
+  font-size: 30px;
+}
+
+.red-flag {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #16a34a;
+  border-radius: 12px;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.red-flag h3 {
+  color: #4ade80;
+}
+
+.red-flag.active {
+  border-color: #fb647f;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.red-flag.active h3 {
+  color: #ff647f;
+}
+
+.effort-log {
+  margin-top: 24px;
+}
+
+.effort-log ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+.effort-log li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #34445c;
+}
+
+.effort-log button {
+  min-height: 36px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #ff647f;
+}
+
+@media (max-width: 600px) {
+  .effort-panel {
+    padding: 18px;
+  }
+
+  .effort-results {
+    grid-template-columns: 1fr;
+  }
+
+  .effort-form {
+    grid-template-columns: 1fr;
+  }
+
+  .effort-form button {
+    grid-column: auto;
+  }
+
+  .effort-actions {
+    flex-direction: column;
+  }
+
+  .effort-actions button {
+    width: 100%;
+  }
+}

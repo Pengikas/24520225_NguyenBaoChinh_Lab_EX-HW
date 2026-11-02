@@ -1,5 +1,6 @@
 
 import { useReducer } from 'react';
+import { EffortAnalyzer } from './EffortAnalyzer';
 
 import {
     initialRelationshipState,
@@ -45,6 +46,20 @@ export function SituationShipAnalyzer() {
             type: 'RESET',
         });
     }
+
+    return (
+        <main className="analyzer">
+            {/* Existing M1 Relationship FSM */}
+            <header className="hero">
+                {/* Keep your existing M1 hero content */}
+            </header>
+
+            {/* Keep your existing M1 state panel */}
+
+            {/* M2 Asymmetric Effort Analyzer */}
+            <EffortAnalyzer />
+        </main>
+    );
 
     return (
         <main className="analyzer">
