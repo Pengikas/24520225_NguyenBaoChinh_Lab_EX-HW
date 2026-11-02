@@ -1,24 +1,5 @@
 // types.ts
-// Domain Types for KRAFTON x PUBG Vietnam Championship & Airdrop Arena
-// Retains Lab 02 FSM & Concurrency Contracts + Adds Exact HW3 PUBG Domain Contracts
-
-export type DropPhase = 'WARMUP' | 'AIRDROP_LIVE' | 'LOOTED_OUT' | 'EXPIRED';
-
-export interface PubgCrateDrop {
-  readonly id: string;
-  readonly title: string;
-  readonly priceVnd: number;
-  readonly remainingStock: number;
-  readonly dropEpochMs: number;
-}
-
-export interface PubgVnSquadStanding {
-  readonly squadId: string;
-  readonly squadName: string;
-  readonly wwcdCount: number;
-  readonly placementPts: number;
-  readonly killPts: number;
-}
+// Domain Types for High-Concurrency Flash-Sale E-Commerce Engine
 
 export type LockState =
   | 'AVAILABLE'

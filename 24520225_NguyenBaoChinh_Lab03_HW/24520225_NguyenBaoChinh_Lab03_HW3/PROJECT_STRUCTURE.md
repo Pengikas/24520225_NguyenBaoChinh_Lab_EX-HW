@@ -1,172 +1,254 @@
 # PROJECT_STRUCTURE.md
 
-## Homework 3: KRAFTON x PUBG Vietnam Championship & Airdrop Arena
+## Homework 3: High-Concurrency Flash-Sale E-Commerce Engine
 
-**Course:** Web Application Development (Lab 03 — Homework 3)  
+**Course:** Web Application Development (Lab 02 — Homework 3)  
 **Student:** Nguyen Bao Chinh (MSSV: 24520225)  
-**Project:** KRAFTON x PUBG Vietnam Championship & Airdrop Arena  
-**Foundation:** Upgraded from Lab 02 HW3 (`High-Concurrency Flash-Sale E-Commerce Engine`)  
-**Core Technologies:** React 19 (`19.3.1`), TypeScript 5 (`strict: true`), Vite 5, Zero-Drift Airdrop Countdown (`usePubgAirdropTimer` + `requestAnimationFrame`), Finite State Machine (`InventoryLockFSM`), Optimistic Concurrency Control (`ConcurrencyEngine`), `Intl.NumberFormat('vi-VN')`.
+**Project:** High-Concurrency Flash-Sale E-Commerce Engine  
+**Deliverable:** High-precision Zero-Drift Countdown Timer using `requestAnimationFrame` and `Date.now()` delta, Optimistic Inventory Lock Finite State Machine (`InventoryLockFSM`), high-throughput Concurrency Engine & Bot Flood Simulator (`ConcurrencyEngine`), live empirical telemetry benchmark comparing RAF timer vs drift-prone `setInterval` with CPU throttling simulator, Vietnam 11.11 Mega-Sale storefront interface with checkout flow, automated invariant verification suite (`telemetry-verifier.ts`), and comprehensive AI Failure Mode Audit (`AI_FAILURE_AUDIT.md`).  
+**Core Technologies:** React 18, TypeScript 5, Vite, `requestAnimationFrame`, Finite State Machine (FSM), Optimistic Concurrency Control (OCC), CSS3 Glassmorphism Design System.
 
 ---
 
-## 1. Updated Project Directory Tree
+## 1. Directory Structure
 
 ```text
-24520225_NguyenBaoChinh_Lab03_HW3/
-├── index.html                           # [Upgraded] KRAFTON x PUBG Vietnam Arena HTML5 host shell
-├── package.json                         # [Upgraded] React 19 (^19.0.0), TypeScript 5, Vite 5 scripts
-├── package-lock.json                    # [Upgraded] Deterministic dependency lockfile (React 19.3.1)
-├── tsconfig.json                        # [Upgraded] Strict TypeScript config with allowJs: true
-├── vite.config.ts                       # [Retained] Vite bundler configuration (port 3001)
-├── TASK_DECOMPOSITION.md                # [Upgraded] Homework 3 WBS, phases, dependencies & checklist
-├── PROJECT_STRUCTURE.md                 # [Upgraded] Architecture, retained vs new modules & lifecycles
-├── AI_FAILURE_AUDIT.md                  # [Upgraded] 4 verified AI failure modes with DevTools proofs
-├── README.md                            # [Upgraded] Overview, domain contracts & execution guide
+24520225_NguyenBaoChinh_Lab02_HW3/
+├── index.html                     # Semantic HTML5 host shell with responsive viewport & #root container
+├── package.json                   # Project dependencies (React 18, TypeScript 5, Vite) & execution scripts
+├── package-lock.json              # Deterministic dependency lockfile
+├── tsconfig.json                  # TypeScript compiler configuration (strict mode, JSX React 18, DOM types)
+├── vite.config.ts                 # Vite bundler configuration with React plugin
+├── TASK_DECOMPOSITION.md          # 1-Week engineering roadmap, Work Breakdown Structure (WBS), risk matrix & DoD
+├── PROJECT_STRUCTURE.md           # Technical architecture, component contracts, state transitions & quality gates
+├── AI_FAILURE_AUDIT.md            # Comprehensive engineering audit of 3 AI failure modes, diagnostics & clean fixes
+├── README.md                      # Assignment overview, criteria verification & execution instructions
 └── src/
-    ├── main.tsx                         # [Retained] React 19 createRoot entrypoint under StrictMode
-    ├── types.ts                         # [Upgraded] Lab 02 FSM types + PUBG Domain Contracts
-    ├── anti-drift-timer.ts              # [Retained] Lab 02 rAF zero-drift timer, formatCountdown & CPU block
-    ├── inventory-state-machine.ts       # [Retained] Lab 02 7-state InventoryLockFSM & 30s lease TTL
-    ├── concurrency-engine.ts            # [Upgraded] Lab 02 OCC engine + claimDropOptimistic & 409 rollback
-    ├── products-data.ts                 # [Upgraded] PVS VIP Tickets, G-Coin Crates, PUBG VN Squads & Kill-Feed
-    ├── telemetry-verifier.ts            # [Upgraded] Automated OCC, drift & PUBG Arena verification suite
-    ├── App.tsx                          # [Upgraded] KRAFTON x PUBG Vietnam Arena UI, Leaderboard & Kill-Feed
-    ├── App.css                          # [Upgraded] Responsive esports dark glassmorphism styling
-    └── hooks/
-        ├── usePubgAirdropTimer.js       # [New HW3] Exact zero-drift PUBG airdrop countdown hook (Image 3)
-        └── usePubgAirdropTimer.d.ts     # [New HW3] Strict TypeScript declaration for usePubgAirdropTimer
+    ├── main.tsx                   # React 18 client entrypoint mounted with React.StrictMode
+    ├── App.tsx                    # Vietnam 11.11 flash-sale storefront, telemetry benchmark HUD & bot simulator
+    ├── App.css                    # Responsive dark glassmorphism styling, Shopee/Lazada theme & neon status cues
+    ├── anti-drift-timer.ts        # Zero-drift timer (requestAnimationFrame), setInterval comparison & CPU blocker
+    ├── inventory-state-machine.ts # Optimistic Inventory Lock FSM (7 states, 30s auto-expiry, stock conservation)
+    ├── concurrency-engine.ts      # Multi-product FSM coordinator, OCC versioning, bot flood simulator & ring logger
+    ├── telemetry-verifier.ts      # Automated concurrency invariant test suite & empirical timer drift benchmarker
+    ├── products-data.ts           # Realistic Vietnam flash-sale product catalog (iPhone 16 Pro Max, Sony ANC, etc.)
+    └── types.ts                   # Strict TypeScript domain interfaces for locks, orders, logs, and telemetry
 ```
 
 ---
 
-## 2. Existing Lab 02 Modules Retained vs. New PUBG Modules
+## 2. File Responsibilities
 
-### 2.1. Existing Lab 02 Modules Retained
-1. **`src/inventory-state-machine.ts` (`InventoryLockFSM`):**
-   - Retained 100% intact. Enforces the 7-state lifecycle (`AVAILABLE`, `RESERVED`, `CHECKING_OUT`, `PURCHASED`, `LOCK_EXPIRED`, `CANCELLED`, `OUT_OF_STOCK`), 30-second lease timeouts, `destroy()` timer cleanup, and the mathematical invariant $\text{totalStock} = \text{availableStock} + \text{reservedStock} + \text{soldStock}$.
-2. **`src/anti-drift-timer.ts` (`createAntiDriftTimer`, `createDriftProneIntervalTimer`, `formatCountdown`, `blockMainThreadSync`):**
-   - Retained 100% intact. Used to format countdown digits (`HH:MM:SS.mmm`) for both the arena wave and individual crate cards, and powers the side-by-side Zero-Drift vs. Naive `setInterval` benchmark and 300ms CPU lag stress test.
-3. **`src/concurrency-engine.ts` (`ConcurrencyEngine` core methods):**
-   - Retains `reserveItem`, `checkoutOrder`, `releaseLock`, `simulateBotFlood`, `verifyInventoryInvariant`, `resetInventory`, and `destroy`.
-
-### 2.2. New & Upgraded Homework 3 PUBG Modules
-1. **`src/hooks/usePubgAirdropTimer.js` (+ `.d.ts`):**
-   - New React hook implementing the exact Image 3 contract (`usePubgAirdropTimer(targetEpochMs, serverOffsetMs = 0)`), synchronizing every `200ms` via `window.setInterval` and immediately on tab wake via `document.addEventListener('visibilitychange', onWake)`.
-2. **`src/types.ts` (PUBG Domain Contracts):**
-   - Adds `DropPhase`, `PubgCrateDrop`, and `PubgVnSquadStanding` with exact `readonly` modifiers alongside Lab 02's `LockState` and `ProductInventory` interfaces.
-3. **`src/concurrency-engine.ts` (`claimDropOptimistic` & `inFlightClaims`):**
-   - Extends `ConcurrencyEngine` with `claimDropOptimistic`, `getInFlightClaimId`, and `hasInFlightClaim` to orchestrate optimistic stock decrements, in-flight `claimId` duplicate click prevention, and automatic `RELEASE_LOCK` rollback upon HTTP `409 Conflict (Looted Out)`.
-4. **`src/products-data.ts` (PUBG Arena Catalog, Squads & Kill-Feed):**
-   - Defines `INITIAL_CRATE_DROPS` (`PubgCrateDrop[]`), `INITIAL_SQUAD_STANDINGS` (`PubgVnSquadStanding[]` for `te`, `ces`, `ge`, `agg`), `INITIAL_KILL_FEED`, and `SQUAD_ROSTERS`.
-5. **`src/App.tsx` & `src/App.css` (PUBG Vietnam Arena UI):**
-   - Introduces `PubgCrateDropCard` component binding `usePubgAirdropTimer` per drop, optimistic claim & 409 rollback control bar, toast notifications, and the PVS Squad Leaderboard & Live Kill-Feed panel.
+| File | Responsibility | Key Exports / Elements | Design Invariants & Standards |
+|---|---|---|---|
+| `src/anti-drift-timer.ts` | High-precision countdown timer engine & benchmark | `createAntiDriftTimer`, `createDriftProneIntervalTimer`, `formatCountdown`, `blockMainThreadSync` | Zero-drift invariant via `Math.max(0, targetTime - Date.now())` on every animation frame; returns explicit unmount callback; zero innerHTML; CPU throttling demonstration. |
+| `src/inventory-state-machine.ts` | Finite State Machine for optimistic inventory reservation | `InventoryLockFSM`, `FSMEvent`, `FSMTransitionResult` | 7 discrete states (`AVAILABLE`, `RESERVED`, `CHECKING_OUT`, `PURCHASED`, `LOCK_EXPIRED`, `CANCELLED`, `OUT_OF_STOCK`); 30s auto-expiry; strict stock conservation invariant; zero overselling. |
+| `src/concurrency-engine.ts` | Concurrency coordinator & bot flood attack simulator | `ConcurrencyEngine` | Manages per-product FSMs; executes hyper-concurrent bot simulations (up to 100 bots); ring-buffer logging capped at 250 items; HTTP-like status codes (200, 409, 410, 408). |
+| `src/telemetry-verifier.ts` | Automated testing & telemetry verification suite | `runConcurrencyInvariantTest`, `benchmarkTimerDrift`, `VerificationReport` | Executes on application mount; dispatches 100 concurrent workers against 5 stock units; verifies mathematical invariants; logs styled proof matrices to Chrome DevTools console. |
+| `src/products-data.ts` | Realistic Vietnam e-commerce product catalog & vouchers | `FLASH_SALE_PRODUCTS`, `PROMOTIONAL_VOUCHERS` | 6 authentic Vietnam mega-sale deals (iPhone 16 Pro Max, Sony WH-1000XM5, NuPhy Air75, Lock&Lock, Biti's Hunter, Dyson); VND pricing; flash discount tags; promotional codes. |
+| `src/types.ts` | Domain data models & type definitions | `LockState`, `ProductInventory`, `InventoryLockLease`, `OrderRecord`, `ConcurrencyLogEntry`, `ConcurrencyMetrics` | Strict compile-time type safety; explicit user types (`HUMAN` vs `BOT`); status codes and invariant tracking fields. |
+| `src/App.tsx` | Main storefront harness, telemetry HUD & checkout UI | `App()` | Vietnam 11.11 header, live countdown timer, live drift telemetry comparison, stock meters, checkout modal (MoMo/VNPay/ShopeePay/COD), bot flood trigger, and live terminal console. |
+| `src/App.css` | Design system styling & responsive layout | Glassmorphism card styles, neon badges, responsive grid | High-contrast WCAG 2.2 compliant dark palette (`#0f172a`, `#ee4d2d`, `#facc15`, `#10b981`, `#ef4444`); smooth transitions and responsive mobile breakpoints. |
+| `src/main.tsx` | React 18 client bootstrapping | `ReactDOM.createRoot()` | Mounts the `<App />` root under `React.StrictMode`. |
+| `index.html` | HTML5 application host container | `<div id="root"></div>`, meta tags | Responsive viewport configuration, title, theme color `#0f172a`, dark UI background. |
+| `TASK_DECOMPOSITION.md` | Sprint planning & milestone tracking | 7-phase WBS, risk mitigation matrix, DoD checklist | Prescribes structured execution roadmap for zero-drift timer, inventory FSM, concurrency bot simulator, and audit. |
+| `PROJECT_STRUCTURE.md` | Architectural specification manual | Directory map, component contracts, state transitions, sequence flow | Authoritative engineering reference for code layout, data flow, concurrency, and memory safety. |
+| `AI_FAILURE_AUDIT.md` | Defect audit report on AI coding assistance | 3 AI failure modes: XSS via `innerHTML`, zombie timers/memory leaks, phantom keys & DOM thrashing | Documents root causes, diagnostic reproduction protocols, clean engineering implementations, and oral defense guide. |
+| `README.md` | User documentation & verification instructions | Project summary, criteria matrix, setup & build commands | Detailed overview of assignment requirements and verification steps. |
 
 ---
 
-## 3. File Responsibilities Matrix
+## 3. Architectural Specifications & Component Contracts
 
-| File | Status | Primary Responsibility | Key Exports |
-| :--- | :---: | :--- | :--- |
-| `src/types.ts` | Upgraded | Type and interface contracts for PUBG drops, squad standings, and FSM locks | `DropPhase`, `PubgCrateDrop`, `PubgVnSquadStanding`, `LockState`, `ProductInventory`, `InventoryLockLease` |
-| `src/hooks/usePubgAirdropTimer.js` | **New** | Zero-drift React countdown hook with 200ms sync and `visibilitychange` wake recovery | `usePubgAirdropTimer` |
-| `src/anti-drift-timer.ts` | Retained | Precision time formatting, rAF timer, drift benchmark, and synchronous CPU blocker | `createAntiDriftTimer`, `createDriftProneIntervalTimer`, `formatCountdown`, `blockMainThreadSync` |
-| `src/inventory-state-machine.ts` | Retained | Per-product Finite State Machine enforcing stock conservation and 30s lease expiry | `InventoryLockFSM`, `FSMEvent`, `FSMTransitionResult` |
-| `src/concurrency-engine.ts` | Upgraded | Multi-drop FSM coordinator, `claimId` lock guard, HTTP 409 rollback, and bot flood engine | `ConcurrencyEngine` |
-| `src/products-data.ts` | Upgraded | PVS VIP Tickets, G-Coin Crates, PUBG VN Squads (`te`, `ces`, `ge`, `agg`), and kill-feed data | `INITIAL_CRATE_DROPS`, `INITIAL_PRODUCTS`, `INITIAL_SQUAD_STANDINGS`, `INITIAL_KILL_FEED` |
-| `src/telemetry-verifier.ts` | Upgraded | Automated test suite verifying OCC invariants, timer drift, 409 rollback, and leaderboard | `runConcurrencyInvariantTest`, `benchmarkTimerDrift`, `runPubgArenaVerificationSuite` |
-| `src/App.tsx` | Upgraded | Main React 19 arena interface, crate cards, leaderboard, kill-feed, and concurrency console | `App`, `formatVnd` |
+### 3.1 Zero-Drift Countdown Timer Contract (`src/anti-drift-timer.ts`)
 
----
-
-## 4. Type and Interface Contracts
+The `createAntiDriftTimer` decouples timer progression from browser task queue delays by continuously calculating the delta between absolute wall-clock target time and the current timestamp:
 
 ```typescript
-export type DropPhase = 'WARMUP' | 'AIRDROP_LIVE' | 'LOOTED_OUT' | 'EXPIRED';
+export function createAntiDriftTimer(
+  durationMs: number,
+  onTick: (remaining: number) => void
+): () => void;
 
-export interface PubgCrateDrop {
-  readonly id: string;
-  readonly title: string;
-  readonly priceVnd: number;
-  readonly remainingStock: number;
-  readonly dropEpochMs: number;
+export function createDriftProneIntervalTimer(
+  durationMs: number,
+  onTick: (reportedRemaining: number, actualRemaining: number, driftMs: number) => void,
+  intervalMs?: number
+): () => void;
+
+export function formatCountdown(ms: number): {
+  hours: string;
+  minutes: string;
+  seconds: string;
+  milliseconds: string;
+  totalFormatted: string;
+  shortFormatted: string;
+};
+
+export function blockMainThreadSync(blockMs?: number): number;
+```
+
+#### Contract Guarantees:
+1. **Zero Cumulative Drift Invariant:**
+   $$\text{remaining} = \max(0, \text{targetTime} - \text{Date.now}())$$
+   Because `targetTime` is fixed at initialization, delays in executing `tick()` do not accumulate. On the next available frame, the timer instantly snaps back to the true wall-clock time.
+2. **Explicit Unmount Lifecycle:** Calling the returned closure sets an internal cancellation flag and triggers `cancelAnimationFrame(rafId)`, guaranteeing zero orphaned loops or memory leaks.
+3. **Empirical Side-by-Side Proof:** `createDriftProneIntervalTimer()` accumulates delay due to macrotask scheduling and garbage collection pauses, which is exposed to the UI and verified via `blockMainThreadSync()`.
+
+---
+
+### 3.2 Optimistic Inventory Lock Finite State Machine Contract (`src/inventory-state-machine.ts`)
+
+The `InventoryLockFSM` manages atomic state transitions for each product, enforcing strict stock conservation and auto-expiring 30-second leases:
+
+```typescript
+export type FSMEvent =
+  | { type: 'ACQUIRE_LOCK'; userId: string; userName: string; userType: 'HUMAN' | 'BOT'; leaseDurationMs: number }
+  | { type: 'START_CHECKOUT'; lockId: string }
+  | { type: 'COMPLETE_PURCHASE'; lockId: string }
+  | { type: 'EXPIRE_LOCK'; lockId: string }
+  | { type: 'RELEASE_LOCK'; lockId: string };
+
+export interface FSMTransitionResult {
+  success: boolean;
+  previousState: LockState;
+  nextState: LockState;
+  lease?: InventoryLockLease;
+  error?: string;
+  statusCode: 200 | 409 | 410 | 408 | 404;
 }
 
-export interface PubgVnSquadStanding {
-  readonly squadId: string;
-  readonly squadName: string;
-  readonly wwcdCount: number;
-  readonly placementPts: number;
-  readonly killPts: number;
+export class InventoryLockFSM {
+  constructor(product: ProductInventory);
+  public getProduct(): ProductInventory;
+  public getActiveLeases(): InventoryLockLease[];
+  public subscribe(listener: (product: ProductInventory, leases: InventoryLockLease[]) => void): () => void;
+  public transition(event: FSMEvent): FSMTransitionResult;
+  public destroy(): void;
 }
 ```
 
 ---
 
-## 5. Lifecycles, State Transitions & Data Flow
+## 4. State Machine Specification & Invariant Equations
 
-### 5.1. Countdown Lifecycle (`usePubgAirdropTimer`)
-1. **Initialization:** Computes initial `remainingMs = Math.max(0, targetEpochMs - (Date.now() + serverOffsetMs))`.
-2. **Active Tick (200ms):** Every `200ms`, `syncClock()` recomputes `calcRemaining()` from absolute wall-clock time `Date.now() + serverOffsetMs`.
-3. **Tab Wake Synchronization (`visibilitychange`):** When a backgrounded tab returns to `document.visibilityState === 'visible'`, `onWake()` immediately invokes `syncClock()` to eliminate background throttling lag.
-4. **Expiration Transition:** When `remainingMs === 0`, `isLive` transitions from `false` to `true`, switching `DropPhase` from `'WARMUP'` to `'AIRDROP_LIVE'`.
-5. **Unmount Cleanup:** Clears `timerId` via `window.clearInterval(timerId)` and detaches `onWake` via `document.removeEventListener('visibilitychange', onWake)`.
+### 4.1 State Transition Matrix
 
-### 5.2. Optimistic Claim & HTTP 409 Rollback Lifecycle
+```text
++---------------------------------------------------------------------------------------------------------+
+|                                OPTIMISTIC INVENTORY LOCK FSM TRANSITIONS                                |
++------------------+-------------------+--------------------+------------------+--------------------------+
+| Current State    | Event             | Guard Condition    | Next State       | HTTP Status Code         |
++------------------+-------------------+--------------------+------------------+--------------------------+
+| AVAILABLE        | ACQUIRE_LOCK      | availableStock > 0 | RESERVED         | 200 OK                   |
+| AVAILABLE        | ACQUIRE_LOCK      | availableStock = 0 | OUT_OF_STOCK     | 410 Gone                 |
+| RESERVED         | START_CHECKOUT    | now <= expiresAt   | CHECKING_OUT     | 200 OK                   |
+| RESERVED         | START_CHECKOUT    | now > expiresAt    | LOCK_EXPIRED     | 408 Request Timeout      |
+| RESERVED         | EXPIRE_LOCK       | 30s elapsed        | LOCK_EXPIRED     | 408 Request Timeout      |
+| RESERVED         | RELEASE_LOCK      | user cancels       | CANCELLED        | 200 OK                   |
+| CHECKING_OUT     | COMPLETE_PURCHASE | now <= expiresAt   | PURCHASED        | 200 OK                   |
+| CHECKING_OUT     | COMPLETE_PURCHASE | now > expiresAt    | LOCK_EXPIRED     | 408 Request Timeout      |
+| CHECKING_OUT     | EXPIRE_LOCK       | 30s elapsed        | LOCK_EXPIRED     | 408 Request Timeout      |
+| CHECKING_OUT     | RELEASE_LOCK      | user cancels       | CANCELLED        | 200 OK                   |
++------------------+-------------------+--------------------+------------------+--------------------------+
+```
+
+### 4.2 Mathematical Invariants
+
+1. **Stock Conservation Law:**  
+   At any point in time $t$, across all state transitions:
+   $$\text{totalStock} = \text{availableStock}(t) + \text{reservedStock}(t) + \text{soldStock}(t)$$
+
+2. **Strict Zero-Oversell Bound:**
+   $$\text{availableStock}(t) \ge 0, \quad \text{reservedStock}(t) \ge 0, \quad \text{soldStock}(t) \le \text{totalStock}$$
+
+3. **Optimistic Version Progression:**  
+   Every atomic modification increments the version vector:
+   $$\text{version}_{k+1} = \text{version}_k + 1$$
+
+---
+
+## 5. End-to-End Data Flow & Sequence Diagram
+
+The following sequence illustrates how a client or simulated bot interacts with the concurrency engine and state machine during a flash-sale reservation attempt:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Survivor (React UI)
+    actor Client as Customer / Bot Worker
     participant Engine as ConcurrencyEngine
     participant FSM as InventoryLockFSM
-    participant Server as Simulated OCC Verifier
+    participant Timer as Auto-Expiry Lease Timer
+    participant Store as React App State
 
-    User->>Engine: claimDropOptimistic(dropId, userId)
-    alt Duplicate Click (inFlightClaims.has(dropId))
-        Engine-->>User: 409 Blocked (In-flight claimId lock active)
-    else New Claim Request
-        Engine->>Engine: inFlightClaims.set(dropId, claimId)
-        Engine->>FSM: transition({ type: 'ACQUIRE_LOCK' })
+    Client->>Engine: requestReservation(productId, userId, 'HUMAN', 30000)
+    Engine->>FSM: transition({ type: 'ACQUIRE_LOCK', ... })
+    
+    alt Stock Exhausted (availableStock <= 0)
+        FSM-->>Engine: FSMTransitionResult (success: false, statusCode: 410 Gone)
+        Engine-->>Client: 410 Gone ("Flash sale allocation exhausted")
+    else Stock Available (availableStock > 0)
         FSM->>FSM: availableStock--, reservedStock++, version++
-        FSM-->>User: Optimistic UI Update (Stock decremented immediately)
-        Engine->>Server: Await verification (latencyMs)
-        alt Server Returns HTTP 409 Conflict (Looted Out)
-            Server-->>Engine: 409 Looted Out
-            Engine->>FSM: transition({ type: 'RELEASE_LOCK', lockId })
-            FSM->>FSM: reservedStock--, availableStock++, version++
-            Engine->>Engine: inFlightClaims.delete(dropId), conflicts409++
-            Engine-->>User: Automatic Rollback (Stock restored + 409 Toast)
-        else Server Confirms HTTP 200 OK
-            Server-->>Engine: 200 OK
-            Engine->>Engine: inFlightClaims.delete(dropId), successfulReservations++
-            Engine-->>User: Lease Confirmed (30s Checkout Modal Opened)
-        end
+        FSM->>Timer: setTimeout(EXPIRE_LOCK, 30000ms)
+        FSM-->>Engine: FSMTransitionResult (success: true, statusCode: 200 OK, lease)
+        Engine->>Engine: appendLog(200 OK), updateMetrics()
+        Engine-->>Client: 200 OK (InventoryLockLease issued)
+        Engine->>Store: notifySubscribers(updatedProduct, leases)
+    end
+
+    opt Customer Completes Checkout
+        Client->>Engine: completePurchase(productId, lockId, 'MOMO')
+        Engine->>FSM: transition({ type: 'COMPLETE_PURCHASE', lockId })
+        FSM->>Timer: clearTimeout(lockId)
+        FSM->>FSM: reservedStock--, soldStock++, version++
+        FSM-->>Engine: 200 OK (State: PURCHASED)
+        Engine->>Engine: recordOrder(OrderRecord)
+        Engine->>Store: notifySubscribers()
+        Engine-->>Client: Order Confirmation
+    end
+
+    opt Lease Expires (Customer Abandons)
+        Timer->>FSM: transition({ type: 'EXPIRE_LOCK', lockId })
+        FSM->>FSM: reservedStock--, availableStock++, version++
+        FSM-->>Engine: 408 Request Timeout (State: LOCK_EXPIRED)
+        Engine->>Store: notifySubscribers()
     end
 ```
 
-### 5.3. Inventory State Transitions (`InventoryLockFSM` + `DropPhase`)
-- **UI `DropPhase` Derivation:**
-  - `'WARMUP'`: `!isLive` (`remainingMs > 0`)
-  - `'AIRDROP_LIVE'`: `isLive && remainingStock > 0 && !forceExpired`
-  - `'LOOTED_OUT'`: `remainingStock <= 0`
-  - `'EXPIRED'`: `forceExpired || arenaWaveRemainingMs === 0`
-- **Engine `LockState` Transitions:**
-  - `AVAILABLE` $\xrightarrow{\text{ACQUIRE\_LOCK}}$ `RESERVED` (optimistic stock decrement)
-  - `RESERVED` $\xrightarrow{\text{RELEASE\_LOCK (409 Rollback / Cancel)}}$ `CANCELLED` (stock restored to `availableStock`)
-  - `RESERVED` $\xrightarrow{\text{EXPIRE\_LOCK (30s TTL)}}$ `LOCK_EXPIRED` (stock restored to `availableStock`)
-  - `RESERVED` $\xrightarrow{\text{COMPLETE\_PURCHASE}}$ `PURCHASED` (`reservedStock` moved permanently to `soldStock`)
+---
 
-### 5.4. Leaderboard & Live Kill-Feed Data Flow
-1. **Source State:** `squadStandings` holds `readonly PubgVnSquadStanding[]` for `te` (The Expendables), `ces` (Cerberus Esports), `ge` (Roy Esports), and `agg` (AGG).
-2. **Live Auto-Polling (`AbortController` Protected):** Every `4500ms` (when active), `triggerLiveKillEvent` uses `pollCounterRef` and functional state updates (`setSquadStandings(prev => ...)` and `setKillFeed(prev => ...)`) to append a new match elimination and increment the attacker squad's `killPts` (and `+10 placementPts` / `+1 wwcdCount` on WWCD finishers).
-3. **Pure Render Derivation (`useMemo`):** `filteredAndSortedStandings` filters by `selectedSquadFilter`, `squadSearchQuery`, and `minWwcdFilter`, computes `totalPts = sq.placementPts + sq.killPts`, and sorts by `TOTAL_PTS`, `KILL_PTS`, `PLACEMENT_PTS`, or `WWCD` in `DESC` or `ASC` order without mutating `PubgVnSquadStanding`.
+## 6. Concurrency Architecture & Bot Flood Simulation
+
+### 6.1 Optimistic Concurrency Control (OCC) Pipeline
+* When multiple workers attempt to lock the same limited item simultaneously, requests are processed deterministically against the current FSM state.
+* If stock is depleted, subsequent requests immediately receive `410 Gone` or `409 Conflict`.
+* No threads are blocked; atomicity is guaranteed within JavaScript's single-threaded event loop execution turn while supporting asynchronous arrival patterns.
+
+### 6.2 Bot Flood Attack Simulator (`simulateBotFlood`)
+* Supports dispatching 10, 25, 50, or 100 concurrent asynchronous bot workers attacking a target product within an artificial arrival window (e.g., 50–150ms).
+* Each worker simulates human-like network jitter (0–20ms) before issuing `requestReservation`.
+* Automatically measures peak RPS and live conflict resolution:
+  - Total Bot Requests: $N$
+  - Successful 200 OK Locks: $\min(N, \text{availableStock})$
+  - Rejected 409/410 Requests: $\max(0, N - \text{availableStock})$
+  - Oversell Violations: Strictly 0
 
 ---
 
-## 6. React Component Architecture
+## 7. Quality Gates & Verification Protocol
 
-- **`<App />` (`src/App.tsx`):**
-  - Top-level state coordinator binding `ConcurrencyEngine`, main arena `usePubgAirdropTimer`, optimistic claim controls, toast notifications, `<PubgCrateDropCard />` grid, PVS Squad Leaderboard & Kill-Feed section, Concurrency Bot Sniper Lab, and Checkout Modal.
-- **`<PubgCrateDropCard />` (`src/App.tsx`):**
-  - Encapsulates per-drop `usePubgAirdropTimer(drop.dropEpochMs, serverOffsetMs)`, derives `DropPhase`, renders `Intl.NumberFormat('vi-VN')` pricing, stock meter bar, active `claimId` lock badge, and claim/checkout actions.
+### 7.1 Automated Invariant Verification (`src/telemetry-verifier.ts`)
+* **Execution:** Triggered automatically upon application mount in `React.useEffect`.
+* **Assertion 1:** Dispatches 100 concurrent workers against 5 stock units. Verifies that exactly 5 succeed and 95 are rejected.
+* **Assertion 2:** Asserts `availableStock + reservedStock + soldStock === totalStock`.
+* **Assertion 3:** Asserts `oversellViolations === 0`.
+* **Console Output:** Formatted in Chrome DevTools using styled `console.group()` for audit verification.
+
+### 7.2 Memory Safety & Lifecycle Disposal
+* All timer loops initiated by `createAntiDriftTimer` return an unmount cancellation callback invoking `cancelAnimationFrame`.
+* `InventoryLockFSM.destroy()` explicitly iterates through `lockTimers` and cancels all pending `window.clearTimeout` handles.
+* Ring-buffer log in `ConcurrencyEngine` is strictly clamped to 250 items to prevent unbounded memory growth during continuous stress testing.
+
+### 7.3 Security Standard (Zero `innerHTML`)
+* All dynamic product labels, discount strings, and user identifiers are rendered strictly through typed React JSX virtual DOM text nodes.
+* Zero occurrences of `element.innerHTML`, `element.outerHTML`, or `dangerouslySetInnerHTML` in the entire codebase.
