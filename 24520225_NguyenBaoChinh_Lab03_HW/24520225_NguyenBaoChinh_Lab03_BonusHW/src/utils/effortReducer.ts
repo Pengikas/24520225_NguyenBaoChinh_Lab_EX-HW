@@ -1,5 +1,5 @@
 
-import type { EffortSignal } from '../types/relationship';
+import type { EffortSignal } from '../types/relationship.ts';
 
 /**
  * M2 - Asymmetric Effort Reducer

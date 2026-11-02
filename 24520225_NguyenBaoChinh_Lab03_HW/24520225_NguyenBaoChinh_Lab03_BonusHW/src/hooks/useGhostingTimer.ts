@@ -20,6 +20,7 @@ interface UseGhostingTimerOptions {
 
 const GHOSTING_TIMEOUT_MS = 5000;
 
+
 export function useGhostingTimer({
     messageId,
     isMessageSent,

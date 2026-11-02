@@ -60,12 +60,21 @@ The following tree represents the **real, verified filesystem state** as of Mile
 │       ├── relationshipReducer.ts      [EXISTING] FSM allowed transitions, canTransition, relationshipReducer
 │       └── effortReducer.ts            [EXISTING] M2: effortReducer, deriveEffortState, pure selectors
 │
-└── docs/                               [EXISTING] Documentation & audit evidence directory
-    └── evidence/                       [EXISTING] Milestone audit captures
-        ├── M4/                         [EXISTING] Milestone 4 accessibility verification
-        │   └── M4_EVIDENCE.md          [EXISTING] M4 verification table and manual capture protocol
-        └── M5/                         [EXISTING] Milestone 5 responsive UI verification
-            └── M5_EVIDENCE.md          [EXISTING] M5 verification matrix and viewport audit log
+├── docs/                               [EXISTING] Documentation & audit evidence directory
+│   ├── REPAIR_AUDIT.md                 [EXISTING] Root-cause diagnosis of unstyled screenshot defects & repair log
+│   └── evidence/                       [EXISTING] Milestone audit captures
+│       ├── M1/                         [EXISTING] M1 deterministic state machine evidence
+│       ├── M2/                         [EXISTING] M2 asymmetric effort reducer evidence
+│       ├── M3/                         [EXISTING] M3 abortable ghosting timer evidence
+│       ├── M4/                         [EXISTING] M4 accessibility verification (M4_EVIDENCE.md)
+│       ├── M5/                         [EXISTING] M5 responsive UI verification (M5_EVIDENCE.md)
+│       └── M6/                         [EXISTING] M6 testing & final audit log (M6_EVIDENCE.md)
+│           ├── Bug01/                 [EXISTING] Evidence captures for FSM identifier hallucination & dead code
+│           ├── Bug02/                 [EXISTING] Evidence captures for zombie timer restart on recipient toggle
+│           └── Bug03/                 [EXISTING] Evidence captures for zero-CSS bundle & missing accessible IDs
+│
+└── test/                               [EXISTING] Automated test suites (node --test)
+    └── fsm-audit.test.mjs              [EXISTING] M6 comprehensive unit test suite (13 passing tests)
 ```
 
 ---
@@ -95,7 +104,7 @@ The following tree represents the **real, verified filesystem state** as of Mile
 
 | File Path | Status | Key Responsibilities & Implementation Details |
 | :--- | :--- | :--- |
-| `src/types/relationship.ts` | **EXISTING** | Contains strict TypeScript contracts: <br>• `RelationshipPhase`: Union `'FRIENDS' \| 'DATING_NO_LOVE' \| 'OFFICIAL_LOVE' \| 'GHOSTED_EXIT'`. <br>• `EffortSignal`: Immutable interface with `id`, `actor: 'EM' \| 'AI_DO'`, `steps: number`, `multiplier: number`. <br>• `RelationshipState`: Readonly state object wrapping `phase`. <br>• `RelationshipAction`: Discriminated action union (`SET_PHASE`, `RESET`). <br>• `initialRelationshipState`: Immutable default state object (`phase: 'FRIENDS'`). |
+| `src/types/relationship.ts` | **EXISTING** | Contains strict TypeScript contracts: <br>• `RelationshipPhase`: Canonical union `'STRANGERS' \| 'DATING_NO_LOVE' \| 'COMMITTED' \| 'SELF_RESPECT_EXIT'`. <br>• `EffortSignal`: Immutable interface with `id`, `actor: 'EM' \| 'AI_DO'`, `steps: number`, `multiplier: number`. <br>• `RelationshipState`: Readonly state object wrapping `phase`. <br>• `RelationshipAction`: Discriminated action union (`SET_PHASE`, `RESET`). <br>• `initialRelationshipState`: Immutable default state object (`phase: 'STRANGERS'`). |
 
 ### Business Logic & State Machines (`src/utils/`)
 

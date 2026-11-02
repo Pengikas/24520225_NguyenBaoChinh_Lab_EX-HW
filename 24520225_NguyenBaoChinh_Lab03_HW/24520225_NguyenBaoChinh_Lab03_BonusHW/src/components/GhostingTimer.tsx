@@ -44,6 +44,9 @@ export function GhostingTimer({
     function handleSwitchRecipient(
         nextRecipient: 'EM' | 'AI_DO',
     ) {
+        if (status === 'WAITING') {
+            setIsMessageSent(false);
+        }
         setRecipient(nextRecipient);
     }
 
@@ -51,6 +54,7 @@ export function GhostingTimer({
         setIsMessageSent(false);
         setReplyReceived(false);
         setRecipient('EM');
+        setMessageId(0);
     }
 
     const statusLabels: Record<typeof status, string> = {
@@ -121,15 +125,20 @@ export function GhostingTimer({
             </div>
 
             <div className="ghosting-status">
-                <p>Message ID: {messageId}</p>
+                <div className="status-row">
+                    <span className="status-label">Message ID:</span>
+                    <strong className="status-value">{messageId}</strong>
+                </div>
 
-                <p>
-                    Recipient: <strong>{recipient}</strong>
-                </p>
+                <div className="status-row">
+                    <span className="status-label">Recipient:</span>
+                    <strong className="status-value">{recipient}</strong>
+                </div>
 
-                <p>
-                    Timer: <strong>{status}</strong>
-                </p>
+                <div className="status-row">
+                    <span className="status-label">Timer Status:</span>
+                    <strong className="status-value">{status}</strong>
+                </div>
 
                 <output
                     className="ghosting-announcement"

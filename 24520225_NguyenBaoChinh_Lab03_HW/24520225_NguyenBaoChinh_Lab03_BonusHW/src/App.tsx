@@ -1,4 +1,5 @@
 
+import './App.css';
 import { SituationShipAnalyzer } from './components/SituationShipAnalyzer';
 
 function App() {

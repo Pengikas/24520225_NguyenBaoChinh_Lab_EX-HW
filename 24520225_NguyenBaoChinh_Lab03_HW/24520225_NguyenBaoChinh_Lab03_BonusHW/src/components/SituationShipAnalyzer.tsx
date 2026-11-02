@@ -73,7 +73,7 @@ export function SituationShipAnalyzer() {
                 </h2>
 
                 <div className="current-state">
-                    <span>Current Relationship Phase</span>
+                    <span className="current-state-label">Current Relationship Phase</span>
 
                     <output
                         className="phase-value"

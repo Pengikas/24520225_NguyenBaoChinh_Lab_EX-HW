@@ -5,11 +5,12 @@
  */
 
 // 1. Strict relationship phase definition.
+// [OK] DETERMINISTIC FINITE STATE MACHINE CONTRACT:
 export type RelationshipPhase =
     | 'FRIENDS'
-    | 'DATING_NO_LOVE'
-    | 'OFFICIAL_LOVE'
-    | 'GHOSTED_EXIT';
+    | 'DATING_NO_LOVE' // 'Hẹn hò nhưng không yêu'
+    | 'OFFICIAL_LOVE' // Verified mutual commitment
+    | 'GHOSTED_EXIT'; // Unmounted & memory freed
 
 // 2. Asymmetric effort signal contract.
 export interface EffortSignal {

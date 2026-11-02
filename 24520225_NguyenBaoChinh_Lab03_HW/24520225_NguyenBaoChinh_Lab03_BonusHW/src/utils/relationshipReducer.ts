@@ -4,7 +4,7 @@ import {
     type RelationshipAction,
     type RelationshipPhase,
     type RelationshipState,
-} from '../types/relationship';
+} from '../types/relationship.ts';
 
 /**
  * Explicitly define all permitted transitions.

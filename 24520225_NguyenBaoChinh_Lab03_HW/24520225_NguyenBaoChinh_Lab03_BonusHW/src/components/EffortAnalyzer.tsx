@@ -164,38 +164,49 @@ export function EffortAnalyzer() {
             <div className="effort-results">
                 <article className="effort-card">
                     <h3>EM</h3>
-                    <p>Raw steps: {summary.emSteps}</p>
-                    <strong>
-                        {summary.emWeightedEffort.toFixed(2)}
-                    </strong>
-                    <span>Weighted effort</span>
+                    <p className="metric-raw">
+                        <span className="metric-label">Raw steps:</span>{' '}
+                        <span className="metric-raw-value">{summary.emSteps}</span>
+                    </p>
+                    <div className="metric">
+                        <span className="metric-label">Weighted effort</span>
+                        <strong className="metric-value">
+                            {summary.emWeightedEffort.toFixed(2)}
+                        </strong>
+                    </div>
                 </article>
 
                 <article className="effort-card">
                     <h3>AI_DO</h3>
-                    <p>Raw steps: {summary.aiDoSteps}</p>
-                    <strong>
-                        {summary.aiDoWeightedEffort.toFixed(2)}
-                    </strong>
-                    <span>Weighted effort</span>
+                    <p className="metric-raw">
+                        <span className="metric-label">Raw steps:</span>{' '}
+                        <span className="metric-raw-value">{summary.aiDoSteps}</span>
+                    </p>
+                    <div className="metric">
+                        <span className="metric-label">Weighted effort</span>
+                        <strong className="metric-value">
+                            {summary.aiDoWeightedEffort.toFixed(2)}
+                        </strong>
+                    </div>
                 </article>
             </div>
 
             <div className="effort-total">
-                <p>
-                    Total weighted effort
-                </p>
+                <div className="metric">
+                    <span className="metric-label">Total weighted effort</span>
+                    <strong className="metric-value">
+                        {summary.totalWeightedEffort.toFixed(2)}
+                    </strong>
+                </div>
 
-                <strong>
-                    {summary.totalWeightedEffort.toFixed(2)}
-                </strong>
-
-                <p>
-                    Imbalance ratio:{' '}
-                    {summary.imbalanceRatio === null
-                        ? 'N/A'
-                        : `${summary.imbalanceRatio.toFixed(2)}x`}
-                </p>
+                <div className="metric metric-ratio">
+                    <span className="metric-label">Imbalance ratio</span>
+                    <span className="metric-ratio-value">
+                        {summary.imbalanceRatio === null
+                            ? 'N/A'
+                            : `${summary.imbalanceRatio.toFixed(2)}x`}
+                    </span>
+                </div>
             </div>
 
 
