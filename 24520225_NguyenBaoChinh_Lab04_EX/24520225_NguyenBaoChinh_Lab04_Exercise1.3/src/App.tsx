@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import {
   BrowserRouter,
   Route,
@@ -7,10 +8,14 @@ import {
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import PeoplePage from './pages/PeoplePage';
+import ValidationPage from './pages/ValidationPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-import PersonDetail from './PersonDetail';
+import Skeleton from './Skeleton';
 import { people } from './data/people';
+
+// Dynamic import via React.lazy (Preserved from Exercise 1.1)
+const PersonDetail = React.lazy(() => import('./PersonDetail'));
 
 export default function App() {
   return (
@@ -27,9 +32,22 @@ export default function App() {
 
             <Route
               path=":id"
-              element={<PersonDetail people={people} />}
+              element={
+                <Suspense
+                  fallback={
+                    <Skeleton
+                      aria-busy="true"
+                      aria-live="polite"
+                    />
+                  }
+                >
+                  <PersonDetail people={people} />
+                </Suspense>
+              }
             />
           </Route>
+
+          <Route path="/validation" element={<ValidationPage />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Route>
