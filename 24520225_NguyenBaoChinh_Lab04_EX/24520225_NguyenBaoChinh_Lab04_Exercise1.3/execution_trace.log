@@ -1,0 +1,14 @@
+~ $ trace-render-cycle --target Ex1.6
+[1] User Event: onChange('a')
+ ├─► InputField render (local state)
+ └─► useEffect #1: syncToParent()
+     └─► SimpleForm render (parent state)
+         ├─► useEffect #2: validateField()
+         ├─► useEffect #3: calcFormValidity()
+         └─► useEffect #4: syncErrorsToChild()
+             └─► InputField re-render (errors)
+                 └─► useEffect #5: autoScrollToError()
+
+----------------------------------------------------
+🚨 CASCADE DETECTED: 5 re-renders / 1 keypress
+💥 Uncaught Error: Max update depth exceeded
