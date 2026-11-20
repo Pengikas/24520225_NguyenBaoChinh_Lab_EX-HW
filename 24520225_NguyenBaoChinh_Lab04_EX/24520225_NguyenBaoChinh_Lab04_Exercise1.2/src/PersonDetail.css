@@ -83,3 +83,26 @@
         flex-wrap: wrap;
     }
 }
+
+
+.person-details {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  margin: 0;
+}
+
+.person-details dt {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.person-details dd {
+  margin: 0;
+  color: #1e293b;
+}
+
+.not-found-state {
+  padding: 24px;
+  text-align: center;
+}

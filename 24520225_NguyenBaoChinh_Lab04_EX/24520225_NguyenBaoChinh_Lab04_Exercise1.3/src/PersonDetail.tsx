@@ -1,46 +1,42 @@
+import { useParams } from 'react-router';
+import type { Person } from './data/people';
 import './PersonDetail.css';
 
-export default function PersonDetail() {
-    return (
-        <section className="person-detail">
-            <div className="person-avatar">
-                JD
-            </div>
-
-            <div className="person-info">
-                <h2>John Doe</h2>
-                <p className="person-role">
-                    Software Engineer
-                </p>
-
-                <div className="person-divider"></div>
-
-                <div className="person-field">
-                    <span className="field-label">Full Name</span>
-                    <span className="field-value">John Doe</span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Role</span>
-                    <span className="field-value">
-                        Software Engineer
-                    </span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Department</span>
-                    <span className="field-value">
-                        Information Technology
-                    </span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Status</span>
-                    <span className="status-active">
-                        Active
-                    </span>
-                </div>
-            </div>
-        </section>
-    );
+interface PersonDetailProps {
+  people: Person[];
 }
+
+function NotFoundState() {
+  return (
+    <div className="not-found-state">
+      <h2>404 - Person Not Found</h2>
+      <p>The person you are looking for does not exist.</p>
+    </div>
+  );
+}
+
+const PersonDetail = ({ people }: PersonDetailProps) => {
+  const { id } = useParams();
+
+  const person = people.find(p => p.id === id);
+
+  if (!person) return <NotFoundState />;
+
+  return (
+    <dl className="person-details">
+      <dt>Name:</dt>
+      <dd>{person.name}</dd>
+
+      <dt>Role:</dt>
+      <dd>{person.role}</dd>
+
+      <dt>Department:</dt>
+      <dd>{person.department}</dd>
+
+      <dt>Status:</dt>
+      <dd>{person.status}</dd>
+    </dl>
+  );
+};
+
+export default PersonDetail;
