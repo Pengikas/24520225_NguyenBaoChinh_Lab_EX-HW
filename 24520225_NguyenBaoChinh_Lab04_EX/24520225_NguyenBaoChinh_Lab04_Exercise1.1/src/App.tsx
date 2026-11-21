@@ -1,13 +1,13 @@
-
 import React, { Suspense } from 'react';
 import './App.css';
 
 import Skeleton from './Skeleton';
 
-// Dynamic import via React.lazy
-const PersonDetail = React.lazy(() =>
-  import('./PersonDetail')
-);
+// Dynamic import via React.lazy (temporary 10s delay so you can test in Console)
+const PersonDetail = React.lazy(async () => {
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+  return import('./PersonDetail.jsx');
+});
 
 function App() {
   return (

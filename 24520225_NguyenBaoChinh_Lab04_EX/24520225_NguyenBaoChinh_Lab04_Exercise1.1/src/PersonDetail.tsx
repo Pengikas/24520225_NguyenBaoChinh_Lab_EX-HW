@@ -1,46 +1,24 @@
-import './PersonDetail.css';
+// PersonDetail.tsx — Lazy Loading
+import React, { Suspense } from 'react';
+import Skeleton from './Skeleton';
 
-export default function PersonDetail() {
-    return (
-        <section className="person-detail">
-            <div className="person-avatar">
-                JD
-            </div>
+// Dynamic import via React.lazy
+const PersonDetail = React.lazy(() =>
+  import('./PersonDetail.jsx')
+);
 
-            <div className="person-info">
-                <h2>John Doe</h2>
-                <p className="person-role">
-                    Software Engineer
-                </p>
-
-                <div className="person-divider"></div>
-
-                <div className="person-field">
-                    <span className="field-label">Full Name</span>
-                    <span className="field-value">John Doe</span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Role</span>
-                    <span className="field-value">
-                        Software Engineer
-                    </span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Department</span>
-                    <span className="field-value">
-                        Information Technology
-                    </span>
-                </div>
-
-                <div className="person-field">
-                    <span className="field-label">Status</span>
-                    <span className="status-active">
-                        Active
-                    </span>
-                </div>
-            </div>
-        </section>
-    );
+export default function PersonDetailLazy() {
+  return (
+    // Resilient wrapper with Skeleton fallback
+    <Suspense
+      fallback={
+        <Skeleton
+          aria-busy="true"
+          aria-live="polite"
+        />
+      }
+    >
+      <PersonDetail />
+    </Suspense>
+  );
 }
