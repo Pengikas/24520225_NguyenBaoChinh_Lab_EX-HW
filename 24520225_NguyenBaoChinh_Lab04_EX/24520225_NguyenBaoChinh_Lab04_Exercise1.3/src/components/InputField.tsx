@@ -5,7 +5,8 @@ export interface InputFieldProps {
   value: string;
   error?: string;
   onValueChange: (value: string) => void;
-  onTraceStep?: (step: string) => void;
+  onTraceStep?: (step: string, category: 'event' | 'render' | 'effect') => void;
+  onChildRender?: () => void;
 }
 
 export default function InputField({
@@ -14,24 +15,30 @@ export default function InputField({
   error,
   onValueChange,
   onTraceStep,
+  onChildRender,
 }: InputFieldProps) {
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // useEffect #1: Sync local state to parent
+  // Track InputField render in effect telemetry
+  useEffect(() => {
+    onChildRender?.();
+  });
+
+  // useEffect #1: syncToParent()
   useEffect(() => {
     console.log('useEffect #1: syncToParent()');
-    onTraceStep?.('useEffect #1: syncToParent()');
+    onTraceStep?.('useEffect #1: syncToParent()', 'effect');
 
     if (localValue !== value) {
       onValueChange(localValue);
     }
   }, [localValue, value, onValueChange, onTraceStep]);
 
-  // useEffect #5: Automatically scroll to error
+  // useEffect #5: autoScrollToError()
   useEffect(() => {
     console.log('useEffect #5: autoScrollToError()');
-    onTraceStep?.('useEffect #5: autoScrollToError()');
+    onTraceStep?.('useEffect #5: autoScrollToError()', 'effect');
 
     if (error && inputRef.current) {
       inputRef.current.scrollIntoView({
@@ -57,9 +64,9 @@ export default function InputField({
         value={localValue}
         onChange={(event) => {
           const nextVal = event.target.value;
-          console.log(`User Event: onChange('${nextVal}')`);
-          onTraceStep?.(`User Event: onChange('${nextVal}')`);
-          onTraceStep?.('InputField render (local state)');
+          console.log(`[1] User Event: onChange('${nextVal}')`);
+          onTraceStep?.(`[1] User Event: onChange('${nextVal}')`, 'event');
+          onTraceStep?.('InputField render (local state)', 'render');
           setLocalValue(nextVal);
         }}
         placeholder="Enter full name (min 3 characters)..."
@@ -69,7 +76,10 @@ export default function InputField({
 
       {error && (
         <p id="name-error" className="ex13-error-message" role="alert">
-          <span className="ex13-error-icon" aria-hidden="true">⚠</span> {error}
+          <span className="ex13-error-icon" aria-hidden="true">
+            ⚠
+          </span>{' '}
+          {error}
         </p>
       )}
     </div>

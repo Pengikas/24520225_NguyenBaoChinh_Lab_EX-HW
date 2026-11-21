@@ -9,6 +9,69 @@
              └─► InputField re-render (errors)
                  └─► useEffect #5: autoScrollToError()
 
-----------------------------------------------------
+========================================
 🚨 CASCADE DETECTED: 5 re-renders / 1 keypress
 💥 Uncaught Error: Max update depth exceeded
+========================================
+
+[OBSERVED APPLICATION TELEMETRY LOG - EXERCISE 1.3]
+1. Initial Mount (Empty Input):
+   - InputField render
+   - SimpleForm render
+   - useEffect #1: syncToParent()
+   - useEffect #5: autoScrollToError()
+   - useEffect #2: validateField() -> sets validationErrors.name = "Name is required"
+   - useEffect #3: calcFormValidity() -> isFormValid = false
+   - useEffect #4: syncErrorsToChild() -> sets childErrors.name = "Name is required"
+   - InputField re-render (errors)
+   - useEffect #5: autoScrollToError() -> inputRef.current.scrollIntoView()
+
+2. Keystroke Event: User types 'a' (onChange('a')):
+   - [1] User Event: onChange('a')
+   - InputField render (local state: localValue = "a")
+   - useEffect #1: syncToParent() -> calls onValueChange("a")
+   - SimpleForm render (parent state: formData.name = "a")
+   - useEffect #2: validateField() -> sets validationErrors.name = "Name must contain at least 3 characters"
+   - useEffect #3: calcFormValidity() -> isFormValid = false
+   - useEffect #4: syncErrorsToChild() -> sets childErrors.name = "Name must contain at least 3 characters"
+   - InputField re-render (errors)
+   - useEffect #5: autoScrollToError() -> inputRef.current.scrollIntoView()
+
+3. Keystroke Event: User types 'abc' (Valid Input):
+   - [1] User Event: onChange('abc')
+   - InputField render (local state: localValue = "abc")
+   - useEffect #1: syncToParent() -> calls onValueChange("abc")
+   - SimpleForm render (parent state: formData.name = "abc")
+   - useEffect #2: validateField() -> clears validationErrors ({})
+   - useEffect #3: calcFormValidity() -> sets isFormValid = true
+   - useEffect #4: syncErrorsToChild() -> clears childErrors ({})
+   - InputField re-render (errors cleared)
+   - useEffect #5: autoScrollToError() -> no error present, skip scroll
+
+========================================
+ARCHITECTURAL FLAW ANALYSIS
+========================================
+A. Cascading Re-renders:
+   Duplicate state ownership across InputField (localValue) and SimpleForm
+   (formData, validationErrors, isFormValid, childErrors) forces state changes
+   to ping-pong across the parent-child boundary via 5 chained useEffect hooks.
+   Note: While 5 chained effect hooks execute, React 19 automatic batching
+   combines synchronous state updates within the same effect tick.
+
+B. Race Conditions (MODE A Legacy vs. MODE B Protected):
+   - MODE A (Legacy Async Validation): Without request sequence ordering, a slow
+     validation request for an early keystroke ("a", 650ms latency) resolves AFTER
+     a fast validation request for a later keystroke ("abc", 140ms latency),
+     overwriting the valid state with a stale error.
+   - MODE B (Protected Validation): Tracks a monotonically increasing request
+     sequence ID (seq < latestRaceSeqRef.current) and ignores stale out-of-order
+     responses so only the latest user input determines validation state.
+
+C. Infinite Loop Risk (Maximum update depth exceeded):
+   When an effect unconditionally creates a new object reference:
+     useEffect(() => {
+       setFormState({ ...formState });
+     });
+   or when mutual parent-child effects lack deep-equality guards, every render
+   allocates a new reference and schedules another render pass until React throws:
+   Uncaught Error: Maximum update depth exceeded.
