@@ -16,16 +16,16 @@ export const people: Person[] = [
   },
   {
     id: '2',
-    name: 'Jane Smith',
-    role: 'Product Manager',
-    department: 'Product Development',
+    name: 'Nguyen Bao Chinh',
+    role: 'Student',
+    department: 'Information Technology',
     status: 'Active',
   },
   {
     id: '3',
-    name: 'Alex Nguyen',
-    role: 'Frontend Architect',
-    department: 'Engineering',
+    name: 'Tran Trong Khiem',
+    role: 'Lecturer',
+    department: 'Information Technology',
     status: 'Active',
   },
   {
